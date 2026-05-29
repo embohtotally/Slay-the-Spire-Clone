@@ -167,6 +167,54 @@ Here is the file structure mapping of the core code files located in `Assets/_Pr
 ```
 _Project/Scripts/
 │
+├── Creators/
+│   ├── CardViewCreator.cs                  # Spawns and initializes CardViews
+│   └── EnemyViewCreator.cs                 # Spawns and initializes EnemyViews
+│
+├── Data/ (ScriptableObjects)
+│   ├── CardData.cs                         # Configures cards
+│   ├── EnemyData.cs                        # Configures enemies
+│   ├── HeroData.cs                         # Configures hero starting stats/deck
+│   └── PerkData.cs                         # Configures perks/relics
+│
+├── Effects/
+│   ├── DealDamageEffect.cs                 # Generates DealDamageGA
+│   └── DrawCardsEffect.cs                  # Generates DrawCardsGA
+│
+├── Extensions/
+│   └── ListExtensions.cs                   # Helper methods for lists (e.g. shuffling)
+│
+├── Game Actions/
+│   ├── AttackHeroGA.cs                     # Enemy attacks the hero
+│   ├── DealDamageGA.cs                     # Applies damage to a combatant
+│   ├── DiscardAllCardsGA.cs                # Moves all cards in hand to discard
+│   ├── DrawCardsGA.cs                      # Draws specified number of cards
+│   ├── EnemyTurnGA.cs                      # Triggers the enemy turn sequence
+│   ├── KillEnemyGA.cs                      # Handles enemy death and removal
+│   ├── PerformEffectGA.cs                  # Executes a card or perk effect
+│   ├── PlayCardGA.cs                       # Plays a card from the hand
+│   ├── RefillManaGA.cs                     # Refills hero's mana pool
+│   └── SpendManaGA.cs                      # Deducts mana cost from player
+│
+├── General/
+│   ├── Singleton.cs                        # Generic singleton pattern base class
+│   └── Utils/
+│       └── MouseUtils.cs                   # Helper for mouse/screen coordinate math
+│
+├── Interfaces/
+│   └── IHaveCaster.cs                      # Interface for actions/effects that have a caster
+│
+├── Models/
+│   ├── AutoTargetEffect.cs                 # Groups TargetMode and Effect
+│   ├── Card.cs                             # Runtime card instancing model
+│   ├── Effect.cs                           # Abstract command factory for visual effects
+│   ├── Perk.cs                             # Relic-like trigger wrapper
+│   ├── PerkCondition.cs                    # Abstract validator for Perk triggers
+│   └── TargetMode.cs                       # Target resolver logic
+│
+├── Perk Condtions/
+│   └── OnEnemyAttackCondition.cs           # Condition triggering on enemy attack
+│
 ├── Systems/
 │   ├── Action System/
 │   │   ├── ActionSystem.cs                 # Main gameplay loop executor
@@ -178,38 +226,31 @@ _Project/Scripts/
 │   ├── EffectSystem.cs                     # Resolves PerformEffectGA to active reactions
 │   ├── EnemySystem.cs                      # Orchestrates enemy attacks and deaths
 │   ├── HeroSystem.cs                       # Simple holder of HeroView reference
+│   ├── Interactions.cs                     # Input gatekeeper, preventing actions when busy
 │   ├── ManaSystem.cs                       # Tracks player mana, refilling it after enemy turns
 │   ├── ManualTargetingSystem.cs            # Checks for targeted enemy raycasts
-│   └── MatchSetupSystem.cs                 # Initializes battle scene states
+│   ├── MatchSetupSystem.cs                 # Initializes battle scene states
+│   └── PerkSystem.cs                       # Manages active perks and their lifecycles
 │
-├── Models/
-│   ├── AutoTargetEffect.cs                 # Groups TargetMode and Effect
-│   ├── Card.cs                             # Runtime card instancing model
-│   ├── Effect.cs                           # Abstract command factory for visual effects
-│   ├── Perk.cs                             # Relic-like trigger wrapper
-│   ├── PerkCondition.cs                    # Abstract validator for Perk triggers
-│   └── TargetMode.cs                       # Target resolver logic
+├── Target Modes/
+│   ├── AllEnemiesTM.cs                     # Targets all active enemies
+│   ├── NoTM.cs                             # Targets nothing / self
+│   └── RandomEnemyTM.cs                    # Targets a random active enemy
 │
-├── Data/ (ScriptableObjects)
-│   ├── CardData.cs                         # Configures cards
-│   ├── EnemyData.cs                        # Configures enemies
-│   ├── HeroData.cs                         # Configures hero starting stats/deck
-│   └── PerkData.cs                         # Configures perks/relics
+├── UI/
+│   ├── EndTurnButtonUI.cs                  # Triggers EnemyTurnGA
+│   ├── ManaUI.cs                           # Displays player mana status
+│   ├── PerksUI.cs                          # Relic bar horizontal grid layout
+│   └── PerkUI.cs                           # Displays single relic sprite
 │
-├── Views/
-│   ├── ArrowView.cs                        # Draws targeting arrows
-│   ├── CardView.cs                         # Interactive card view component
-│   ├── CombatantView.cs                    # Handles health UI and shakes
-│   ├── EnemyBoardView.cs                   # Position-mapping grid for enemies
-│   ├── EnemyView.cs                        # Renders enemy stats and ATK intent
-│   ├── HandView.cs                         # Spline-based card visual alignment
-│   └── HeroView.cs                         # Renders hero visuals
-│
-└── UI/
-    ├── EndTurnButtonUI.cs                  # Triggers EnemyTurnGA
-    ├── ManaUI.cs                           # Displays player mana status
-    ├── PerkUI.cs                           # Displays single relic sprite
-    └── PerksUI.cs                          # Relic bar horizontal grid layout
+└── Views/
+    ├── ArrowView.cs                        # Draws targeting arrows
+    ├── CardView.cs                         # Interactive card view component
+    ├── CombatantView.cs                    # Handles health UI and shakes
+    ├── EnemyBoardView.cs                   # Position-mapping grid for enemies
+    ├── EnemyView.cs                        # Renders enemy stats and ATK intent
+    ├── HandView.cs                         # Spline-based card visual alignment
+    └── HeroView.cs                         # Renders hero visuals
 ```
 
 ---
