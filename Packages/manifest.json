@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "com.masonbell.tools": "file:C:/Users/mason/Documents/Unity Packages/Tools",
     "com.unity.ai.navigation": "2.0.7",
     "com.unity.collab-proxy": "2.7.1",
     "com.unity.ide.rider": "3.0.36",

@@ -13,7 +13,14 @@ public class MatchSetupSystem : MonoBehaviour
     private void Start()
     {
         HeroSystem.Instance.Setup(heroData);
-        EnemySystem.Instance.Setup(enemyDataList);
+
+        List<EnemyData> enemiesForThisMatch = enemyDataList;
+        if (RunManager.Instance != null && RunManager.Instance.SelectedEncounter != null)
+        {
+            enemiesForThisMatch = RunManager.Instance.SelectedEncounter.Enemies;
+        }
+
+        EnemySystem.Instance.Setup(enemiesForThisMatch);
         CardSystem.Instance.Setup(heroData.Deck);
         PerkSystem.Instance.AddPerk(new Perk(perkData));
         DrawCardsGA drawCardsGA = new(startingHandSize);

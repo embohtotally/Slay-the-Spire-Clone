@@ -60,6 +60,11 @@ public class EnemySystem : Singleton<EnemySystem>
     private IEnumerator KillEnemyPerformer(KillEnemyGA killEnemyGA)
     {
         yield return enemyBoardView.RemoveEnemy(killEnemyGA.EnemyView);
+
+        if (enemyBoardView.EnemyViews.Count == 0)
+        {
+            ActionSystem.Instance.AddReaction(new CombatWonGA());
+        }
     }
     #endregion
 }

@@ -1,11 +1,5 @@
 {
   "dependencies": {
-    "com.masonbell.tools": {
-      "version": "file:C:/Users/mason/Documents/Unity Packages/Tools",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
     "com.unity.ai.navigation": {
       "version": "2.0.7",
       "depth": 0,
