@@ -35,6 +35,9 @@ public class ManualTargetingSystem : Singleton<ManualTargetingSystem>
 
     public void StartAutoTargeting(Card card, Vector3 startPosition)
     {
+        autoArrows.RemoveAll(a => a == null);
+        autoVfxs.RemoveAll(v => v == null);
+
         List<CombatantView> targets = new();
         if (card.OtherEffects != null)
         {
@@ -79,6 +82,12 @@ public class ManualTargetingSystem : Singleton<ManualTargetingSystem>
             {
                 autoVfxs[i].gameObject.SetActive(true);
                 autoVfxs[i].transform.position = targets[i].transform.position;
+                
+                var particles = autoVfxs[i].GetComponentsInChildren<ParticleSystem>();
+                foreach (var ps in particles)
+                {
+                    ps.Play();
+                }
             }
         }
 
@@ -97,7 +106,7 @@ public class ManualTargetingSystem : Singleton<ManualTargetingSystem>
     {
         foreach (var arrow in autoArrows)
         {
-            if (arrow.gameObject.activeSelf)
+            if (arrow != null && arrow.gameObject.activeSelf)
             {
                 arrow.SetStartPosition(startPosition);
             }
@@ -108,12 +117,14 @@ public class ManualTargetingSystem : Singleton<ManualTargetingSystem>
     {
         foreach (var arrow in autoArrows)
         {
-            arrow.gameObject.SetActive(false);
+            if (arrow != null)
+                arrow.gameObject.SetActive(false);
         }
 
         foreach (var vfx in autoVfxs)
         {
-            vfx.gameObject.SetActive(false);
+            if (vfx != null)
+                vfx.gameObject.SetActive(false);
         }
     }
 }

@@ -1403,7 +1403,7 @@ MonoBehaviour:
   targetLayerMask:
     serializedVersion: 2
     m_Bits: 128
-  targetVfxPrefab: {fileID: 0}
+  targetVfxPrefab: {fileID: 6294508013172393196, guid: 043176b6a68be2b43b073aaaa4782c7d, type: 3}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -3492,7 +3492,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   heroData: {fileID: 11400000, guid: cae3ff5400bfc3e4d88ab3921131ba98, type: 2}
-  perkData: {fileID: 11400000, guid: 3ab2f0b2d8ee3b0479bbd09e7d2af416, type: 2}
   enemyDataList:
   - {fileID: 11400000, guid: f96a4dd9f192f9c499b9e9575a8a2afa, type: 2}
   - {fileID: 11400000, guid: 48a9bfa41cad7a8489c7a6646e23656a, type: 2}
