@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54611d92b9fb72441bc8e7786fe25ea5, type: 3}
+  m_Name: Default Map Encounter Pool
+  m_EditorClassIdentifier: 
+  enemyEncounters:
+  - {fileID: 11400000, guid: dcd91aa1bc204164dab1b19ae1493d5a, type: 2}
+  - {fileID: 11400000, guid: 12db8729d0c48e04ca18528ad071c11e, type: 2}
+  eliteEncounters:
+  - {fileID: 11400000, guid: 12db8729d0c48e04ca18528ad071c11e, type: 2}
+  bossEncounters:
+  - {fileID: 11400000, guid: 06b22bf01a413354a84581428a162a7d, type: 2}

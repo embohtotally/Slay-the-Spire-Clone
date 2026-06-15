@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7988c5558c63ea544970513ecffe80fd, type: 3}
+  m_Name: Default Map Generator Config
+  m_EditorClassIdentifier: 
+  UseSyntheticStartNode: 0
+  SyntheticStartDistance: 190
+  NumberOfStartingNodes:
+    Min: 2
+    Max: 3
+  NumberOfPreBossNodes:
+    Min: 2
+    Max: 3
+  ExtraPaths: 2
+  RandomNodeTypes: 0300000004000000060000000100000005000000
+  Layers:
+  - NodeType: 1
+    RandomizeNodes: 0
+    DistanceFromPreviousLayer:
+      Min: 0
+      Max: 0
+    NodesApartDistance: 220
+    RandomizePosition: 0.15
+  - NodeType: 1
+    RandomizeNodes: 0.25
+    DistanceFromPreviousLayer:
+      Min: 140
+      Max: 170
+    NodesApartDistance: 220
+    RandomizePosition: 0.25
+  - NodeType: 1
+    RandomizeNodes: 0.35
+    DistanceFromPreviousLayer:
+      Min: 140
+      Max: 170
+    NodesApartDistance: 220
+    RandomizePosition: 0.3
+  - NodeType: 1
+    RandomizeNodes: 0.4
+    DistanceFromPreviousLayer:
+      Min: 140
+      Max: 170
+    NodesApartDistance: 220
+    RandomizePosition: 0.3
+  - NodeType: 5
+    RandomizeNodes: 0
+    DistanceFromPreviousLayer:
+      Min: 140
+      Max: 170
+    NodesApartDistance: 220
+    RandomizePosition: 0.1
+  - NodeType: 7
+    RandomizeNodes: 0
+    DistanceFromPreviousLayer:
+      Min: 170
+      Max: 210
+    NodesApartDistance: 220
+    RandomizePosition: 0
+  FallbackLayerCount: 6
+  FallbackGridWidth: 4
