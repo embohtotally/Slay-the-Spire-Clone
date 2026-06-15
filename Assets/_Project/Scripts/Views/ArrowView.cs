@@ -9,20 +9,32 @@ public class ArrowView : MonoBehaviour
     [SerializeField] private LineRenderer lineRenderer;
 
     private Vector3 startPosition;
+    private Transform targetTransform;
 
     private void Update()
     {
-        Vector3 endPosition = MouseUtils.GetMousePositionInWorldSpace();
-        Vector3 direction = -(startPosition - arrowHead.transform.position).normalized;
-        lineRenderer.SetPosition(1, endPosition - direction * 0.5f);
+        Vector3 endPosition = targetTransform != null ? targetTransform.position : MouseUtils.GetMousePositionInWorldSpace();
+        Vector3 direction = (endPosition - startPosition).normalized;
+        
+        if (direction != Vector3.zero)
+        {
+            lineRenderer.SetPosition(1, endPosition - direction * 0.5f);
+            arrowHead.transform.right = direction;
+        }
         arrowHead.transform.position = endPosition;
-        arrowHead.transform.right = direction;
     }
 
-    public void SetupArrow(Vector3 startPosition)
+    public void SetupArrow(Vector3 startPosition, Transform targetTransform = null)
+    {
+        this.startPosition = startPosition;
+        this.targetTransform = targetTransform;
+        lineRenderer.SetPosition(0, startPosition);
+        Update();
+    }
+
+    public void SetStartPosition(Vector3 startPosition)
     {
         this.startPosition = startPosition;
         lineRenderer.SetPosition(0, startPosition);
-        lineRenderer.SetPosition(1, MouseUtils.GetMousePositionInWorldSpace());
     }
 }

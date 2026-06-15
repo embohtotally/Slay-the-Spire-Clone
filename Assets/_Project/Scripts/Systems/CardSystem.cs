@@ -2,8 +2,10 @@ using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
+[System.Serializable]
 public class CardSystem : Singleton<CardSystem>
 {
     [SerializeField] private HandView handView;
@@ -12,6 +14,8 @@ public class CardSystem : Singleton<CardSystem>
     [SerializeField] private float doTweenScaleDuration = 0.15f;
     [SerializeField] private float doTweenMoveDuration = 0.15f;
     [SerializeField] private int enemyDrawCardsAmount = 5;
+    [SerializeField] private TMP_Text drawPileText;
+    [SerializeField] private TMP_Text discardPileText;
 
     private readonly List<Card> drawPile = new();
     private readonly List<Card> discardPile = new();
@@ -24,6 +28,7 @@ public class CardSystem : Singleton<CardSystem>
         ActionSystem.AttachPerformer<PlayCardGA>(PlayCardPerformer);
         ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPreReaction, ReactionTiming.PRE);
         ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
+        ActionSystem.SubscribeReaction<CombatWonGA>(CombatWonReaction, ReactionTiming.POST);
     }
 
     private void OnDisable()
@@ -33,15 +38,20 @@ public class CardSystem : Singleton<CardSystem>
         ActionSystem.DetachPerformer<PlayCardGA>();
         ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPreReaction, ReactionTiming.PRE);
         ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
+        ActionSystem.UnsubscribeReaction<CombatWonGA>(CombatWonReaction, ReactionTiming.POST);
     }
 
     public void Setup(List<CardData> deckData)
     {
+        int count = 0;
         foreach (CardData cardData in deckData)
         {
+            if (count >= 20) break;
             Card card = new(cardData);
             drawPile.Add(card);
+            count++;
         }
+        UpdatePileTexts();
     }
 
     #region Performers
@@ -59,7 +69,8 @@ public class CardSystem : Singleton<CardSystem>
         {
             RefillDeck();
 
-            for (int i = 0; i < notDrawnAmount; i++)
+            int remainingAmount = Mathf.Min(notDrawnAmount, drawPile.Count);
+            for (int i = 0; i < remainingAmount; i++)
             {
                 yield return DrawCard();
             }
@@ -101,12 +112,20 @@ public class CardSystem : Singleton<CardSystem>
         DrawCardsGA drawCardsGA = new(enemyDrawCardsAmount);
         ActionSystem.Instance.AddReaction(drawCardsGA);
     }
+
+    private void CombatWonReaction(CombatWonGA combatWonGA)
+    {
+        drawPile.Clear();
+        discardPile.Clear();
+        UpdatePileTexts();
+    }
     #endregion
 
     #region Helpers
     private IEnumerator DiscardCard(CardView cardView)
     {
         discardPile.Add(cardView.Card);
+        UpdatePileTexts();
         cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
         Tween tween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return tween.WaitForCompletion();
@@ -116,6 +135,7 @@ public class CardSystem : Singleton<CardSystem>
     private IEnumerator DrawCard()
     {
         Card card = drawPile.Draw();
+        UpdatePileTexts();
         CardView cardView = CardViewCreator.Instance.CreateCardView(card, drawPilePoint.position, drawPilePoint.rotation);
         hand.Add(card);
         yield return handView.AddCard(cardView);
@@ -123,8 +143,17 @@ public class CardSystem : Singleton<CardSystem>
 
     private void RefillDeck()
     {
+        for (int i = 0; i < discardPile.Count; i++)
+        {
+            int randomIndex = UnityEngine.Random.Range(i, discardPile.Count);
+            Card temp = discardPile[i];
+            discardPile[i] = discardPile[randomIndex];
+            discardPile[randomIndex] = temp;
+        }
+
         drawPile.AddRange(discardPile);
         discardPile.Clear();
+        UpdatePileTexts();
     }
 
     private void SpendMana(PlayCardGA playCardGA)
@@ -150,6 +179,12 @@ public class CardSystem : Singleton<CardSystem>
             PerformEffectGA performEffectGA = new(effectWrapper.Effect, targets);
             ActionSystem.Instance.AddReaction(performEffectGA);
         }
+    }
+
+    private void UpdatePileTexts()
+    {
+        if (drawPileText != null) drawPileText.text = drawPile.Count.ToString();
+        if (discardPileText != null) discardPileText.text = discardPile.Count.ToString();
     }
     #endregion
 }

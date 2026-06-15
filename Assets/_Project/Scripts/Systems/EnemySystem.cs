@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class EnemySystem : Singleton<EnemySystem>
 {
     public List<EnemyView> Enemies => enemyBoardView.EnemyViews;
@@ -16,14 +17,14 @@ public class EnemySystem : Singleton<EnemySystem>
     private void OnEnable()
     {
         ActionSystem.AttachPerformer<EnemyTurnGA>(EnemyTurnPerformer);
-        ActionSystem.AttachPerformer<AttackHeroGA>(AttackHeroPerformer);
+        ActionSystem.AttachPerformer<ExecuteEnemyIntentGA>(ExecuteIntentPerformer);
         ActionSystem.AttachPerformer<KillEnemyGA>(KillEnemyPerformer);
     }
 
     private void OnDisable()
     {
         ActionSystem.DetachPerformer<EnemyTurnGA>();
-        ActionSystem.DetachPerformer<AttackHeroGA>();
+        ActionSystem.DetachPerformer<ExecuteEnemyIntentGA>();
         ActionSystem.DetachPerformer<KillEnemyGA>();
     }
 
@@ -40,21 +41,38 @@ public class EnemySystem : Singleton<EnemySystem>
     {
         foreach (EnemyView enemy in enemyBoardView.EnemyViews)
         {
-            AttackHeroGA attackHeroGA = new(enemy);
-            ActionSystem.Instance.AddReaction(attackHeroGA);
+            if (enemy.NextIntent != null)
+            {
+                ExecuteEnemyIntentGA executeIntentGA = new(enemy, enemy.NextIntent);
+                ActionSystem.Instance.AddReaction(executeIntentGA);
+            }
         }
 
         yield return null;
     }
 
-    private IEnumerator AttackHeroPerformer(AttackHeroGA attackHeroGA)
+    private IEnumerator ExecuteIntentPerformer(ExecuteEnemyIntentGA executeIntentGA)
     {
-        EnemyView attacker = attackHeroGA.Attacker;
+        EnemyView attacker = executeIntentGA.Attacker;
+        EnemyIntent intent = executeIntentGA.Intent;
+
         Tween tween = attacker.transform.DOMoveX(attacker.transform.position.x - 1f, attackMoveDuration);
         yield return tween.WaitForCompletion();
         attacker.transform.DOMoveX(attacker.transform.position.x + 1f, attackReturnDuration);
-        DealDamageGA dealDamageGA = new(attacker.AttackPower, new() { HeroSystem.Instance.HeroView }, attackHeroGA.Caster);
-        ActionSystem.Instance.AddReaction(dealDamageGA);
+        
+        if (intent.Effects != null)
+        {
+            foreach (AutoTargetEffect effect in intent.Effects)
+            {
+                if (effect.Effect != null && effect.TargetMode != null)
+                {
+                    List<CombatantView> targets = effect.TargetMode.GetTargets();
+                    ActionSystem.Instance.AddReaction(effect.Effect.GetGameAction(targets, attacker));
+                }
+            }
+        }
+
+        attacker.PickNextIntent();
     }
 
     private IEnumerator KillEnemyPerformer(KillEnemyGA killEnemyGA)
