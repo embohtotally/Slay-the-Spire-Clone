@@ -15,6 +15,7 @@
   <Project Path="Unity.InputSystem.csproj" />
   <Project Path="Unity.Searcher.Editor.csproj" />
   <Project Path="Unity.VisualScripting.Core.csproj" />
+  <Project Path="BrunoMikoski.AnimationSequencer.csproj" />
   <Project Path="Unity.AI.Navigation.Editor.ConversionSystem.csproj" />
   <Project Path="Unity.VisualScripting.State.Editor.csproj" />
   <Project Path="Unity.Burst.CodeGen.csproj" />
@@ -32,8 +33,9 @@
   <Project Path="CFXRDemo.csproj" />
   <Project Path="NaughtyAttributes.Test.csproj" />
   <Project Path="CFXREditor.csproj" />
-  <Project Path="Assembly-CSharp-firstpass.csproj" />
+  <Project Path="DOTween.Modules.csproj" />
   <Project Path="Unity.InputSystem.ForUI.csproj" />
+  <Project Path="BrunoMikoski.AnimationSequencer.Editor.csproj" />
   <Project Path="Unity.AI.Navigation.csproj" />
   <Project Path="Unity.Collections.CodeGen.csproj" />
   <Project Path="Unity.Mathematics.Editor.csproj" />

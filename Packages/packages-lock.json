@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.brunomikoski.animationsequencer": {
+      "version": "0.5.5",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
     "com.dbrizov.naughtyattributes": {
       "version": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
       "depth": 0,
