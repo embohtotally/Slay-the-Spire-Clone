@@ -1,14 +1,16 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class DamageSystem : MonoBehaviour
 {
     [SerializeField] private GameObject damageVFX;
     [SerializeField] private float damageDuration;
+    [SerializeField] private string gameOverSceneName = "GameOver";
+    [SerializeField] private float gameOverDelay = 0.75f;
 
     private WaitForSeconds damageWaitForSeconds;
+    private bool isLoadingGameOver;
 
     private void Awake()
     {
@@ -40,10 +42,17 @@ public class DamageSystem : MonoBehaviour
                     KillEnemyGA killEnemyGA = new(enemyView);
                     ActionSystem.Instance.AddReaction(killEnemyGA);
                 }
-                else
+                else if (!isLoadingGameOver)
                 {
-                    // Do some game over logic here or something
-                    // Open Game Over Scene
+                    isLoadingGameOver = true;
+
+                    if (RunManager.Instance != null)
+                    {
+                        RunManager.Instance.AbandonRun();
+                    }
+
+                    yield return new WaitForSeconds(gameOverDelay);
+                    SceneManager.LoadScene(gameOverSceneName);
                 }
             }
         }
