@@ -14,4 +14,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Image>k__BackingField: {fileID: 21300000, guid: 78dfb63536c3b204db86ff8bb1d27fe5, type: 3}
   <Health>k__BackingField: 26
-  <AttackPower>k__BackingField: 6
+  <Intents>k__BackingField:
+  - <IntentName>k__BackingField: RedSlime
+    <Effects>k__BackingField:
+    - <TargetMode>k__BackingField:
+        rid: 5978926881917108521
+      <Effect>k__BackingField:
+        rid: 5978926881917108522
+    - <TargetMode>k__BackingField:
+        rid: 5978926881917108523
+      <Effect>k__BackingField:
+        rid: 5978926881917108524
+  references:
+    version: 2
+    RefIds:
+    - rid: 5978926881917108521
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978926881917108522
+      type: {class: ApplyDoTEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damagePerTurn: 3
+        duration: 2
+    - rid: 5978926881917108523
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978926881917108524
+      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damageAmount: 5

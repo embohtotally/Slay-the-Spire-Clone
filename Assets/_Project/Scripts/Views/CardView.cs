@@ -66,6 +66,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
             dragStartPosition = transform.position;
             dragStartRotation = transform.rotation;
             transform.SetPositionAndRotation(MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue), Quaternion.Euler(0, 0, 0));
+            ManualTargetingSystem.Instance.StartAutoTargeting(Card, transform.position);
         }
     }
 
@@ -84,6 +85,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         }
         else
         {
+            ManualTargetingSystem.Instance.EndAutoTargeting();
             PlayCardOrResetPosition();
 
             Interactions.Instance.PlayerIsDragging = false;
@@ -96,6 +98,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         if (Card.ManualTargetEffect != null) return;
 
         transform.position = MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue);
+        ManualTargetingSystem.Instance.UpdateAutoTargeting(transform.position);
     }
 
     private bool CanPlayCard()

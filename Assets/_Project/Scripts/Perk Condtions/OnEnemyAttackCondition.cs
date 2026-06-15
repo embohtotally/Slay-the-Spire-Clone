@@ -11,11 +11,11 @@ public class OnEnemyAttackCondition : PerkCondition
 
     public override void SubscribeCondition(Action<GameAction> reaction)
     {
-        ActionSystem.SubscribeReaction<AttackHeroGA>(reaction, reactionTiming);
+        ActionSystem.SubscribeReaction<ExecuteEnemyIntentGA>(reaction, reactionTiming);
     }
 
     public override void UnsubscribeCondition(Action<GameAction> reaction)
     {
-        ActionSystem.UnsubscribeReaction<AttackHeroGA>(reaction, reactionTiming);
+        ActionSystem.UnsubscribeReaction<ExecuteEnemyIntentGA>(reaction, reactionTiming);
     }
 }

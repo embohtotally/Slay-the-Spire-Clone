@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class MatchSetupSystem : MonoBehaviour
 {
     [SerializeField] private HeroData heroData;
-    [SerializeField] private PerkData perkData;
     [SerializeField] private List<EnemyData> enemyDataList;
     [SerializeField] private int startingHandSize = 5;
 
@@ -22,7 +22,14 @@ public class MatchSetupSystem : MonoBehaviour
 
         EnemySystem.Instance.Setup(enemiesForThisMatch);
         CardSystem.Instance.Setup(heroData.Deck);
-        PerkSystem.Instance.AddPerk(new Perk(perkData));
+
+        if (heroData.StartingPerks != null)
+        {
+            foreach (PerkData perkData in heroData.StartingPerks)
+            {
+                PerkSystem.Instance.AddPerk(new Perk(perkData));
+            }
+        }
         DrawCardsGA drawCardsGA = new(startingHandSize);
         ActionSystem.Instance.Perform(drawCardsGA);
     }

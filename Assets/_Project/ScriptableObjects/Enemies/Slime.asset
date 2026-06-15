@@ -14,4 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Image>k__BackingField: {fileID: 21300000, guid: 9abc7a1d3f6a05d438a05ae4640eadb5, type: 3}
   <Health>k__BackingField: 15
-  <AttackPower>k__BackingField: 4
+  <Intents>k__BackingField:
+  - <IntentName>k__BackingField: 
+    <Effects>k__BackingField:
+    - <TargetMode>k__BackingField:
+        rid: 5978926881917108525
+      <Effect>k__BackingField:
+        rid: 5978926881917108526
+  references:
+    version: 2
+    RefIds:
+    - rid: 5978926881917108525
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978926881917108526
+      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damageAmount: 5
