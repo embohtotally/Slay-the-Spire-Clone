@@ -56,9 +56,16 @@ public class EnemySystem : Singleton<EnemySystem>
         EnemyView attacker = executeIntentGA.Attacker;
         EnemyIntent intent = executeIntentGA.Intent;
 
-        Tween tween = attacker.transform.DOMoveX(attacker.transform.position.x - 1f, attackMoveDuration);
-        yield return tween.WaitForCompletion();
-        attacker.transform.DOMoveX(attacker.transform.position.x + 1f, attackReturnDuration);
+        bool isAttackComplete = false;
+        attacker.StateMachine.ChangeState(new CombatantAttackState(
+            attacker,
+            attackXMoveAmount,
+            attackMoveDuration,
+            attackReturnDuration,
+            () => isAttackComplete = true
+        ));
+
+        yield return new WaitUntil(() => isAttackComplete);
         
         if (intent.Effects != null)
         {
