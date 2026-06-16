@@ -147,7 +147,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _targetCanvas: {fileID: 9059274977634537820}
-  _textFontSize: 72
+  _textFontSize: 208.64
   _textFont: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  _textColor: {r: 1, g: 0, b: 0, a: 1}
+  _textColor: {r: 1, g: 1, b: 1, a: 1}
+  _cam: {fileID: 0}
   <IsPaused>k__BackingField: 0
