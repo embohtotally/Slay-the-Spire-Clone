@@ -38,6 +38,9 @@ public class DamageSystem : MonoBehaviour
             {
                 Instantiate(damageVFX, target.transform.position, Quaternion.identity);
             }
+            
+            GameManager.GenerateFloatingText("-" + dealDamageGA.Amount.ToString(), target.transform);
+            
             yield return damageWaitForSeconds;
 
             if (target.CurrentHealth <= 0)

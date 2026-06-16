@@ -14,6 +14,8 @@ public class CombatantView : MonoBehaviour
 
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
+    public int HealthPenalty { get; protected set; }
+    public int EffectiveMaxHealth => Mathf.Max(1, MaxHealth - HealthPenalty);
 
     public int StunDuration { get; private set; }
     public bool IsStunned => StunDuration > 0;
@@ -50,6 +52,7 @@ public class CombatantView : MonoBehaviour
         CurrentShield = 0;
         StunDuration = 0;
         TauntDuration = 0;
+        HealthPenalty = 0;
         UpdateHealthText();
     }
 
@@ -101,9 +104,21 @@ public class CombatantView : MonoBehaviour
     public void Heal(int healAmount)
     {
         CurrentHealth += healAmount;
-        if (CurrentHealth > MaxHealth)
+        if (CurrentHealth > EffectiveMaxHealth)
         {
-            CurrentHealth = MaxHealth;
+            CurrentHealth = EffectiveMaxHealth;
+        }
+        UpdateHealthText();
+    }
+
+    public void ApplyHealthPenalty(int amount)
+    {
+        HealthPenalty += amount;
+        if (HealthPenalty >= MaxHealth) HealthPenalty = MaxHealth - 1; // Always keep at least 1 max HP
+
+        if (CurrentHealth > EffectiveMaxHealth)
+        {
+            CurrentHealth = EffectiveMaxHealth;
         }
         UpdateHealthText();
     }
@@ -151,6 +166,7 @@ public class CombatantView : MonoBehaviour
     protected virtual void UpdateHealthText()
     {
         string shieldText = CurrentShield > 0 ? $" [+{CurrentShield}]" : "";
-        healthText.text = $"HP: {CurrentHealth}{shieldText}";
+        string penaltyText = HealthPenalty > 0 ? $" (Blocked: {HealthPenalty})" : "";
+        healthText.text = $"HP: {CurrentHealth}/{EffectiveMaxHealth}{shieldText}{penaltyText}";
     }
 }

@@ -19,6 +19,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     private Vector3 dragStartPosition;
     private Quaternion dragStartRotation;
+    private bool isFeebleBlocked;
 
     private readonly float cardHoverYOffset = -2f;
     private readonly float mousePositionZValue = -1f;
@@ -31,6 +32,22 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         description.text = Card.Description;
         mana.text = Card.Mana.ToString();
         imageSR.sprite = Card.Image;
+    }
+
+    private void Update()
+    {
+        if (Card == null) return;
+        
+        isFeebleBlocked = Card.Type == CardType.Attack && HeroSystem.Instance != null && HeroSystem.Instance.HeroView.HealthPenalty > 0;
+        
+        if (isFeebleBlocked)
+        {
+            imageSR.color = new Color(0.4f, 0.4f, 0.4f, 1f);
+        }
+        else
+        {
+            imageSR.color = Color.white;
+        }
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -53,6 +70,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     public void OnPointerDown(PointerEventData eventData)
     {
         if (!Interactions.Instance.PlayerCanInteract()) return;
+        if (isFeebleBlocked) return;
 
         if (Card.ManualTargetEffect != null)
         {
@@ -73,10 +91,11 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     public void OnPointerUp(PointerEventData eventData)
     {
         if (!Interactions.Instance.PlayerCanInteract()) return;
+        if (isFeebleBlocked) return;
 
         if (Card.ManualTargetEffect != null)
         {
-            EnemyView target = ManualTargetingSystem.Instance.EndTargeting(MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue));
+            CombatantView target = ManualTargetingSystem.Instance.EndTargeting(MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue), Card.TargetType);
             if (target != null && ManaSystem.Instance.HasEnoughMana(Card.Mana))
             {
                 PlayCardGA playCardGA = new(Card, target);
@@ -95,6 +114,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     public void OnDrag(PointerEventData eventData)
     {
         if (!Interactions.Instance.PlayerCanInteract()) return;
+        if (isFeebleBlocked) return;
         if (Card.ManualTargetEffect != null) return;
 
         transform.position = MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue);
