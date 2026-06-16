@@ -1,7 +1,7 @@
-using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 [System.Serializable]
@@ -41,6 +41,14 @@ public class EnemySystem : Singleton<EnemySystem>
     {
         foreach (EnemyView enemy in enemyBoardView.EnemyViews)
         {
+            enemy.DecreaseTaunt();
+
+            if (enemy.IsStunned)
+            {
+                enemy.DecreaseStun();
+                continue;
+            }
+
             if (enemy.NextIntent != null)
             {
                 ExecuteEnemyIntentGA executeIntentGA = new(enemy, enemy.NextIntent);
@@ -56,10 +64,17 @@ public class EnemySystem : Singleton<EnemySystem>
         EnemyView attacker = executeIntentGA.Attacker;
         EnemyIntent intent = executeIntentGA.Intent;
 
-        Tween tween = attacker.transform.DOMoveX(attacker.transform.position.x - 1f, attackMoveDuration);
-        yield return tween.WaitForCompletion();
-        attacker.transform.DOMoveX(attacker.transform.position.x + 1f, attackReturnDuration);
-        
+        bool isAttackComplete = false;
+        attacker.StateMachine.ChangeState(new CombatantAttackState(
+            attacker,
+            attackXMoveAmount,
+            attackMoveDuration,
+            attackReturnDuration,
+            () => isAttackComplete = true
+        ));
+
+        yield return new WaitUntil(() => isAttackComplete);
+
         if (intent.Effects != null)
         {
             foreach (AutoTargetEffect effect in intent.Effects)

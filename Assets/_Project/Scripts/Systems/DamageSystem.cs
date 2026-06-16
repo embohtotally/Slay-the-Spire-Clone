@@ -34,8 +34,10 @@ public class DamageSystem : MonoBehaviour
         foreach (CombatantView target in dealDamageGA.Targets)
         {
             target.Damage(dealDamageGA.Amount);
-            Instantiate(damageVFX, target.transform.position, Quaternion.identity);
-            GameManager.GenerateFloatingText(dealDamageGA.Amount.ToString(), target.transform);
+            if (damageVFX != null)
+            {
+                Instantiate(damageVFX, target.transform.position, Quaternion.identity);
+            }
             yield return damageWaitForSeconds;
 
             if (target.CurrentHealth <= 0)
