@@ -9,9 +9,21 @@ public class HeroView : CombatantView
     [SerializeField] private Slider stressSlider;
     
     public int CurrentStress { get; private set; }
-    public int MaxStress { get; private set; } = 100;
+    public int MaxStress { get; private set; } = 35;
 
     private List<GameObject> heroSprites = new List<GameObject>();
+
+    private void Awake()
+    {
+        if (stressSlider == null)
+        {
+            GameObject sliderObj = GameObject.Find("StressSliderUI");
+            if (sliderObj != null)
+            {
+                stressSlider = sliderObj.GetComponent<Slider>();
+            }
+        }
+    }
 
     public void Setup(List<HeroData> heroTeam)
     {
@@ -88,9 +100,9 @@ public class HeroView : CombatantView
         if (CurrentStress >= MaxStress)
         {
             CurrentStress = 0;
-            // Breakdown: Deal 20% max HP direct damage (minimum 1)
-            int breakdownDamage = Mathf.Max(1, MaxHealth / 5);
-            ReduceHealth(breakdownDamage);
+            // Breakdown: Reduce Max HP by 20% (minimum 1)
+            int penaltyAmount = Mathf.Max(1, MaxHealth / 5);
+            ApplyHealthPenalty(penaltyAmount);
         }
 
         UpdateStressSlider();

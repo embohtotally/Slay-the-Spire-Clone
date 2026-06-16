@@ -19,21 +19,27 @@ public class ManualTargetingSystem : Singleton<ManualTargetingSystem>
         arrowView.SetupArrow(startPosition);
     }
 
-    public EnemyView EndTargeting(Vector3 endPosition)
+    public CombatantView EndTargeting(Vector3 endPosition, CardTargetType targetType)
     {
         arrowView.gameObject.SetActive(false);
 
         if (Physics.Raycast(endPosition, Vector3.forward, out RaycastHit hit, 10f, targetLayerMask)
             && hit.collider != null
-            && hit.transform.TryGetComponent(out EnemyView enemyView))
+            && hit.transform.TryGetComponent(out CombatantView combatantView))
         {
-            bool anyTaunt = EnemySystem.Instance.Enemies.Exists(e => e.IsTaunted);
-            if (anyTaunt && !enemyView.IsTaunted)
+            if (targetType == CardTargetType.Enemy && combatantView is not EnemyView) return null;
+            if (targetType == CardTargetType.Hero && combatantView is not HeroView) return null;
+
+            if (combatantView is EnemyView enemyView)
             {
-                return null;
+                bool anyTaunt = EnemySystem.Instance.Enemies.Exists(e => e.IsTaunted);
+                if (anyTaunt && !enemyView.IsTaunted)
+                {
+                    return null;
+                }
             }
 
-            return enemyView;
+            return combatantView;
         }
 
         return null;

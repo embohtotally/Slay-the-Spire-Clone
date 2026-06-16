@@ -49,7 +49,7 @@ namespace Gameseed26
             tmPro.verticalAlignment = VerticalAlignmentOptions.Middle;
             tmPro.fontSize = _textFontSize;
             if (_textFont) tmPro.font = _textFont;
-            if (string.IsNullOrWhiteSpace(colorHex) && ColorUtility.TryParseHtmlString(colorHex, out var color))
+            if (!string.IsNullOrWhiteSpace(colorHex) && ColorUtility.TryParseHtmlString(colorHex, out var color))
                 tmPro.color = color;
             else
                 tmPro.color = _textColor;

@@ -4,7 +4,6 @@ using UnityEngine;
 [System.Serializable]
 public class HealSystem : MonoBehaviour
 {
-    [SerializeField] private DamagePopupView popupPrefab;
 
     private void OnEnable()
     {
@@ -21,11 +20,7 @@ public class HealSystem : MonoBehaviour
         foreach (CombatantView target in healGA.Targets)
         {
             target.Heal(healGA.Amount);
-            if (popupPrefab != null)
-            {
-                DamagePopupView popup = Instantiate(popupPrefab);
-                popup.Setup("+" + healGA.Amount, target.transform.position, Color.green);
-            }
+            Gameseed26.GameManager.GenerateFloatingText("+" + healGA.Amount, target.transform, 1f, 1f, "#00FF00");
         }
         
         yield return null;
