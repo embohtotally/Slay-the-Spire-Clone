@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 namespace Gameseed26
 {
@@ -12,6 +14,56 @@ namespace Gameseed26
         {
             T component = gameObject.GetComponent<T>();
             return component != null ? component : gameObject.AddComponent<T>();
+        }
+
+        /// <summary>
+        /// Add Trigger Component to GameObject with specified Type and Action.
+        /// </summary>
+        public static void RegisterTrigger(this GameObject target, EventTriggerType eventTriggerType, UnityAction<BaseEventData> action)
+        {
+            if (target == null) return;
+            if (!target.TryGetComponent<EventTrigger>(out var eventTrigger))
+                eventTrigger = target.AddComponent<EventTrigger>();
+
+            var entry = eventTrigger.triggers.Find(e => e.eventID == eventTriggerType);
+
+            if (entry == null)
+            {
+                entry = new EventTrigger.Entry
+                {
+                    eventID = eventTriggerType
+                };
+                eventTrigger.triggers.Add(entry);
+            }
+
+            entry.callback.AddListener(action);
+        }
+
+        /// <summary>
+        /// Remove Trigger Component to GameObject with specified Type and Action.
+        /// </summary>
+        public static void UnregisterTrigger(this GameObject target, EventTriggerType eventTriggerType, UnityAction<BaseEventData> action)
+        {
+            if (target == null) return;
+            if (!target.TryGetComponent<EventTrigger>(out var eventTrigger)) return;
+
+            EventTrigger.Entry entry = eventTrigger.triggers.Find(e => e.eventID == eventTriggerType);
+
+            if (entry != null)
+            {
+                entry.callback.RemoveListener(action);
+            }
+        }
+
+        /// <summary>
+        /// Destroy Trigger Component to GameObject
+        /// </summary>
+        public static void RemoveAllTriggers(this GameObject target)
+        {
+            if (target == null) return;
+            if (!target.TryGetComponent<EventTrigger>(out var eventTrigger)) return;
+
+            Object.Destroy(eventTrigger);
         }
         #endregion
 

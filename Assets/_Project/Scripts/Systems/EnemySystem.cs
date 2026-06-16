@@ -1,7 +1,7 @@
-using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 [System.Serializable]
@@ -74,7 +74,7 @@ public class EnemySystem : Singleton<EnemySystem>
         ));
 
         yield return new WaitUntil(() => isAttackComplete);
-        
+
         if (intent.Effects != null)
         {
             foreach (AutoTargetEffect effect in intent.Effects)

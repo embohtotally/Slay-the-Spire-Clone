@@ -88,7 +88,7 @@ public class ManualTargetingSystem : Singleton<ManualTargetingSystem>
             {
                 autoVfxs[i].gameObject.SetActive(true);
                 autoVfxs[i].transform.position = targets[i].transform.position;
-                
+
                 var particles = autoVfxs[i].GetComponentsInChildren<ParticleSystem>();
                 foreach (var ps in particles)
                 {
