@@ -11,6 +11,11 @@ public class DamagePopupView : MonoBehaviour
 
     public void Setup(int damageAmount, Vector3 startPos)
     {
+        Setup(damageAmount.ToString(), startPos, null);
+    }
+
+    public void Setup(string text, Vector3 startPos, Color? colorOverride = null)
+    {
         if (textMesh == null) textMesh = GetComponentInChildren<TMP_Text>();
 
         Vector3 finalStartPos = startPos + spawnOffset;
@@ -21,8 +26,13 @@ public class DamagePopupView : MonoBehaviour
 
         if (textMesh != null)
         {
-            textMesh.text = damageAmount.ToString();
+            textMesh.text = text;
             
+            if (colorOverride.HasValue)
+            {
+                textMesh.color = colorOverride.Value;
+            }
+
             // Reset Alpha
             Color c = textMesh.color;
             c.a = 1f;

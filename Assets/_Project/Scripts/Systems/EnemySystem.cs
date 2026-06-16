@@ -41,6 +41,14 @@ public class EnemySystem : Singleton<EnemySystem>
     {
         foreach (EnemyView enemy in enemyBoardView.EnemyViews)
         {
+            enemy.DecreaseTaunt();
+
+            if (enemy.IsStunned)
+            {
+                enemy.DecreaseStun();
+                continue;
+            }
+
             if (enemy.NextIntent != null)
             {
                 ExecuteEnemyIntentGA executeIntentGA = new(enemy, enemy.NextIntent);

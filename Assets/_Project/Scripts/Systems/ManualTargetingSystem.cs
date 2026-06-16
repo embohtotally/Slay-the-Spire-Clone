@@ -27,6 +27,12 @@ public class ManualTargetingSystem : Singleton<ManualTargetingSystem>
             && hit.collider != null
             && hit.transform.TryGetComponent(out EnemyView enemyView))
         {
+            bool anyTaunt = EnemySystem.Instance.Enemies.Exists(e => e.IsTaunted);
+            if (anyTaunt && !enemyView.IsTaunted)
+            {
+                return null;
+            }
+
             return enemyView;
         }
 

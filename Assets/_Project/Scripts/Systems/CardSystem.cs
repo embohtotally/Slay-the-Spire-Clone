@@ -109,6 +109,8 @@ public class CardSystem : Singleton<CardSystem>
 
     private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
     {
+        if (HeroSystem.Instance.HeroView.IsStunned) return;
+
         DrawCardsGA drawCardsGA = new(enemyDrawCardsAmount);
         ActionSystem.Instance.AddReaction(drawCardsGA);
     }

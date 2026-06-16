@@ -7,7 +7,15 @@ public class RandomEnemyTM : TargetMode
 {
     public override List<CombatantView> GetTargets()
     {
-        CombatantView target = EnemySystem.Instance.Enemies[UnityEngine.Random.Range(0, EnemySystem.Instance.Enemies.Count)];
+        List<EnemyView> validEnemies = EnemySystem.Instance.Enemies;
+        
+        bool anyTaunt = validEnemies.Exists(e => e.IsTaunted);
+        if (anyTaunt)
+        {
+            validEnemies = validEnemies.FindAll(e => e.IsTaunted);
+        }
+
+        CombatantView target = validEnemies[UnityEngine.Random.Range(0, validEnemies.Count)];
         return new() { target };
     }
 }

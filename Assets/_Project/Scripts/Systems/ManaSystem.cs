@@ -55,6 +55,8 @@ public class ManaSystem : Singleton<ManaSystem>
 
     private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
     {
+        if (HeroSystem.Instance.HeroView.IsStunned) return;
+
         RefillManaGA refillManaGA = new();
         ActionSystem.Instance.AddReaction(refillManaGA);
     }

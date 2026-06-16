@@ -8,8 +8,8 @@ public class HeroSystem : Singleton<HeroSystem>
 {
     [field: SerializeField] public HeroView HeroView { get; private set; }
 
-    public void Setup(HeroData heroData)
+    public void Setup(List<HeroData> heroTeam)
     {
-        HeroView.Setup(heroData);
+        HeroView.Setup(heroTeam);
     }
 }
