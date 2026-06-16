@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+[System.Serializable]
 public class ActionSystem : Singleton<ActionSystem>
 {
     public bool IsPerforming { get; private set; } = false;
@@ -10,7 +11,17 @@ public class ActionSystem : Singleton<ActionSystem>
     private static Dictionary<Type, Func<GameAction, IEnumerator>> performers = new();
     private static Dictionary<Type, List<Action<GameAction>>> postSubs = new();
 
+    private static Dictionary<Delegate, Action<GameAction>> delegateMap = new();
+
     private List<GameAction> reactions = null;
+
+    private void OnDestroy()
+    {
+        preSubs.Clear();
+        performers.Clear();
+        postSubs.Clear();
+        delegateMap.Clear();
+    }
 
     public static void AttachPerformer<T>(Func<T, IEnumerator> performer) where T : GameAction
     {
@@ -36,6 +47,7 @@ public class ActionSystem : Singleton<ActionSystem>
         Dictionary<Type, List<Action<GameAction>>> subs = timing == ReactionTiming.PRE ? preSubs : postSubs;
 
         void wrappedReaction(GameAction action) => reaction((T)action);
+        delegateMap[reaction] = wrappedReaction;
 
         if (subs.ContainsKey(typeof(T)))
             subs[typeof(T)].Add(wrappedReaction);
@@ -50,10 +62,10 @@ public class ActionSystem : Singleton<ActionSystem>
     {
         Dictionary<Type, List<Action<GameAction>>> subs = timing == ReactionTiming.PRE ? preSubs : postSubs;
 
-        if (subs.ContainsKey(typeof(T)))
+        if (subs.ContainsKey(typeof(T)) && delegateMap.TryGetValue(reaction, out var wrappedReaction))
         {
-            void wrappedReaction(GameAction action ) => reaction((T)action);
             subs[typeof(T)].Remove(wrappedReaction);
+            delegateMap.Remove(reaction);
         }
     }
 

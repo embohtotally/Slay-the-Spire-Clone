@@ -8,17 +8,26 @@ public class EnemyView : CombatantView
 {
     [SerializeField] private TMP_Text attackText;
 
-    public int AttackPower { get; set; }
+    public EnemyData Data { get; private set; }
+    public EnemyIntent NextIntent { get; private set; }
 
     public void Setup(EnemyData enemyData)
     {
-        AttackPower = enemyData.AttackPower;
-        UpdateAttackText();
+        Data = enemyData;
+        PickNextIntent();
         SetupBase(enemyData.Health, enemyData.Image);
     }
 
-    private void UpdateAttackText()
+    public void PickNextIntent()
     {
-        attackText.text = "ATK: " + AttackPower;
+        if (Data.Intents != null && Data.Intents.Count > 0)
+        {
+            NextIntent = Data.Intents[UnityEngine.Random.Range(0, Data.Intents.Count)];
+            attackText.text = NextIntent.IntentName;
+        }
+        else
+        {
+            attackText.text = "";
+        }
     }
 }

@@ -1,7 +1,9 @@
 using System.Collections;
+using Gameseed26;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[System.Serializable]
 public class DamageSystem : MonoBehaviour
 {
     [SerializeField] private GameObject damageVFX;
@@ -33,6 +35,7 @@ public class DamageSystem : MonoBehaviour
         {
             target.Damage(dealDamageGA.Amount);
             Instantiate(damageVFX, target.transform.position, Quaternion.identity);
+            GameManager.GenerateFloatingText(dealDamageGA.Amount.ToString(), target.transform);
             yield return damageWaitForSeconds;
 
             if (target.CurrentHealth <= 0)

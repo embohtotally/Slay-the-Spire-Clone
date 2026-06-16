@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class CardViewHoverSystem : Singleton<CardViewHoverSystem>
 {
     [SerializeField] private CardView cardViewHover;

@@ -6,12 +6,20 @@ using UnityEngine.InputSystem;
 
 public static class MouseUtils
 {
-    private static Camera camera = Camera.main;
+    private static Camera _camera;
+    private static Camera Camera
+    {
+        get
+        {
+            if (_camera == null) _camera = Camera.main;
+            return _camera;
+        }
+    }
 
     public static Vector3 GetMousePositionInWorldSpace(float zValue = 0f)
     {
-        Plane dragPlane = new(Camera.main.transform.forward, new Vector3(0, 0, zValue));
-        Ray ray = camera.ScreenPointToRay(Mouse.current.position.ReadValue());
+        Plane dragPlane = new(Camera.transform.forward, new Vector3(0, 0, zValue));
+        Ray ray = Camera.ScreenPointToRay(Mouse.current.position.ReadValue());
 
         if (dragPlane.Raycast(ray, out float distance))
         {
