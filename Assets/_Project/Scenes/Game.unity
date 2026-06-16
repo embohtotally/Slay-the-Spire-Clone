@@ -1403,7 +1403,7 @@ MonoBehaviour:
   targetLayerMask:
     serializedVersion: 2
     m_Bits: 128
-  targetVfxPrefab: {fileID: 0}
+  targetVfxPrefab: {fileID: 7786565535723663171, guid: 8220164efe3fb07418ecfe14f1535247, type: 3}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

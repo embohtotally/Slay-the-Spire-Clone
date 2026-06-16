@@ -2,8 +2,6 @@ using System.Collections;
 using NaughtyAttributes;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.EventSystems;
 
 namespace Gameseed26
 {
@@ -21,7 +19,6 @@ namespace Gameseed26
         [field: SerializeField, ReadOnly]
         public bool IsPaused { get; private set; }
 
-
         public void SetPaused(bool pause)
         {
             IsPaused = pause;
@@ -30,49 +27,9 @@ namespace Gameseed26
             else Time.timeScale = 0f;
         }
 
-        public static void RegisterTrigger(GameObject target, EventTriggerType eventTriggerType, UnityAction<BaseEventData> action)
-        {
-            if (target == null) return;
-            if (!target.TryGetComponent<EventTrigger>(out var eventTrigger))
-                eventTrigger = target.AddComponent<EventTrigger>();
-
-            var entry = eventTrigger.triggers.Find(e => e.eventID == eventTriggerType);
-
-            if (entry == null)
-            {
-                entry = new EventTrigger.Entry
-                {
-                    eventID = eventTriggerType
-                };
-                eventTrigger.triggers.Add(entry);
-            }
-
-            entry.callback.AddListener(action);
-        }
-
-        public static void UnregisterTrigger(GameObject target, EventTriggerType eventTriggerType, UnityAction<BaseEventData> action)
-        {
-            if (target == null) return;
-            if (!target.TryGetComponent<EventTrigger>(out var eventTrigger)) return;
-
-            EventTrigger.Entry entry = eventTrigger.triggers.Find(e => e.eventID == eventTriggerType);
-
-            if (entry != null)
-            {
-                entry.callback.RemoveListener(action);
-            }
-        }
-
-        public static void RemoveAllTriggers(GameObject target)
-        {
-            if (target == null) return;
-            if (!target.TryGetComponent<EventTrigger>(out var eventTrigger)) return;
-
-            Destroy(eventTrigger);
-        }
-
         public static void GenerateFloatingText(string text, Transform target, float duration = 1f, float speed = 1f, string colorHex = "")
         {
+            if (Instance == null) return;
             if (!Instance._targetCanvas) return;
 
             if (!Instance._cam) Instance._cam = Camera.main;
