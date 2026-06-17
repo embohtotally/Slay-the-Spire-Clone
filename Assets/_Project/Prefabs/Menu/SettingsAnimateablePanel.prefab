@@ -1474,7 +1474,7 @@ MonoBehaviour:
     SliderRef: {fileID: 7471025939619346144}
   - Name: SFXVolume
     SliderRef: {fileID: 4262615112433934525}
-  _slidingSound: 0
+  _slidingSound: 2
   _soundDebounce: 0.1
 --- !u!1 &7505286574958352977
 GameObject:
@@ -2067,6 +2067,10 @@ PrefabInstance:
     - target: {fileID: 6109398676895006139, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
+      objectReference: {fileID: 3551412829220888667}
+    - target: {fileID: 6109398676895006139, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Play
       objectReference: {fileID: 0}
     - target: {fileID: 6694093776149922599, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
       propertyPath: onStartEvent.m_PersistentCalls.m_Calls.Array.size
@@ -2129,6 +2133,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1938165470463451669, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
   m_PrefabInstance: {fileID: 4226269442186085283}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3551412829220888667 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 860080380448793592, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
+  m_PrefabInstance: {fileID: 4226269442186085283}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c10d422b52559da41aa9676770a8fc65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &4043992290963771042 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 196359833631804673, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}

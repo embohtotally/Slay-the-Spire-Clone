@@ -7,15 +7,14 @@ namespace Gameseed26
 	public enum SfxID
 	{
 		None,
-		NewTuneClips_1,
-		NewTuneClips,
+		click,
+		hover,
 	}
 
 	public enum MusicID
 	{
 		None,
-		CheerfulAnnoyance,
-		NewTuneTrack,
+		Space_Cadet,
 	}
 
 }
