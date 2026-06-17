@@ -346,7 +346,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   fallbackSceneName: MainMenu
-  minimumLoadingTime: 2
+  minimumLoadingTime: 1
 --- !u!4 &723578160
 Transform:
   m_ObjectHideFlags: 0

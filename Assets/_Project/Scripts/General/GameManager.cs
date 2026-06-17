@@ -30,9 +30,10 @@ namespace Gameseed26
         public static void GenerateFloatingText(string text, Transform target, float duration = 1f, float speed = 1f, string colorHex = "")
         {
             if (Instance == null) return;
-            if (!Instance._targetCanvas) return;
+            if (Instance._targetCanvas == null) return;
 
-            if (!Instance._cam) Instance._cam = Camera.main;
+            if (Instance._cam == null) Instance._cam = Camera.main;
+            if (Instance._cam == null) return;
 
             Instance.StartCoroutine(Instance.GenerateFloatingTextCoroutine(
                 text, target, duration, speed, colorHex
@@ -66,7 +67,7 @@ namespace Gameseed26
             Vector3 lastKnownPosition = target.position;
             while (t < duration)
             {
-                if (!rect) break;
+                if (rect == null || _cam == null) break;
 
                 tmPro.color = new Color(tmPro.color.r, tmPro.color.g, tmPro.color.b, 1 - t / duration);
 
