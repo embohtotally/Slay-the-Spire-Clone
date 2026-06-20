@@ -4018,6 +4018,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 539629503558487835, guid: 2860bd5c0a1c4bc43a96618ebf41de4f, type: 3}
+      propertyPath: stressSlider
+      value: 
+      objectReference: {fileID: 1471974771}
     - target: {fileID: 3869922272863160898, guid: 2860bd5c0a1c4bc43a96618ebf41de4f, type: 3}
       propertyPath: m_Name
       value: Hero View

@@ -1792,7 +1792,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _exitButton: {fileID: 884105182}
   _gameplaySceneName: Map
-  _bgMusic: 1
+  _bgMusic: 0
 --- !u!4 &1708031079
 Transform:
   m_ObjectHideFlags: 0
