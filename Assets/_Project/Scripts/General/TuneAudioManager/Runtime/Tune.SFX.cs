@@ -24,7 +24,14 @@ namespace Gameseed26
             TuneSource tune = GetAvailableSource();
             AudioSource source = tune.Source;
 
+            ResetTuneSource(tune);
             InitializeSource(source, tuneClips);
+
+            if (source.clip == null)
+            {
+                Logger.LogWarning(transform, $"{tuneClips.name} doesn't have any AudioClip registered, cannot play the sfx!");
+                return;
+            }
 
             source.transform.position = position;
 
@@ -32,7 +39,11 @@ namespace Gameseed26
             tune.IsLooping = tuneClips.Loop;
 
             source.Play();
-            StartCoroutine(WaitForAudioComplete(tune));
+
+            if (!tune.IsLooping)
+            {
+                StartCoroutine(WaitForAudioComplete(tune));
+            }
         }
 
         /// <summary>
@@ -50,7 +61,14 @@ namespace Gameseed26
             TuneSource tune = GetAvailableSource();
             AudioSource source = tune.Source;
 
+            ResetTuneSource(tune);
             InitializeSource(source, tuneClips);
+
+            if (source.clip == null)
+            {
+                Logger.LogWarning(transform, $"{tuneClips.name} doesn't have any AudioClip registered, cannot play the sfx!");
+                return;
+            }
 
             tune.Target = targetToFollow;
             tune.transform.position = targetToFollow.position;
@@ -59,7 +77,6 @@ namespace Gameseed26
             _activeTrackingSources.Add(tune);
 
             source.Play();
-            StartCoroutine(WaitForAudioComplete(tune));
         }
 
         /// <summary>
@@ -122,11 +139,14 @@ namespace Gameseed26
             if (sfxID == SfxID.None) return;
             if (_sfxMap.TryGetValue(sfxID, out TuneClipsSO tuneClips))
             {
+                if (tuneClips.Clips == null || tuneClips.Clips.Length == 0) return;
+
                 foreach (var tune in _sfxSources)
                 {
                     if (tune.Source.isPlaying && tuneClips.Clips.Contains(tune.Source.clip))
                     {
                         tune.Source.Stop();
+                        ResetTuneSource(tune);
                     }
                 }
             }
@@ -140,7 +160,10 @@ namespace Gameseed26
             foreach (var tune in _sfxSources)
             {
                 tune.Source.Stop();
+                ResetTuneSource(tune);
             }
+
+            _activeTrackingSources.Clear();
         }
 
         void InitializeSFXPool()
@@ -198,6 +221,17 @@ namespace Gameseed26
                     -3,
                     3)
                 : tuneClips.Pitch;
+        }
+
+        void ResetTuneSource(TuneSource tune)
+        {
+            if (tune == null) return;
+
+            tune.Target = null;
+            tune.IsLooping = false;
+            tune.PlayStartTime = 0f;
+            tune.transform.position = Vector3.zero;
+            _activeTrackingSources.Remove(tune);
         }
 
         /// <summary>
@@ -270,8 +304,19 @@ namespace Gameseed26
 
         IEnumerator WaitForAudioComplete(TuneSource tuneSource)
         {
-            yield return new WaitForSeconds(tuneSource.Source.clip.length);
-            OnSFXComplete?.Invoke(tuneSource);
+            if (tuneSource == null || tuneSource.Source == null || tuneSource.Source.clip == null)
+                yield break;
+
+            AudioClip playingClip = tuneSource.Source.clip;
+            float playingPitch = Mathf.Abs(tuneSource.Source.pitch);
+            float duration = playingPitch > 0f ? playingClip.length / playingPitch : playingClip.length;
+
+            yield return new WaitForSeconds(duration);
+
+            if (tuneSource.Source.clip == playingClip && !tuneSource.Source.loop)
+            {
+                OnSFXComplete?.Invoke(tuneSource);
+            }
         }
     }
 }

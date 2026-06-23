@@ -44,6 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dedc637c70836a41804cfa006054e3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Sfxs: []
-  Musics: []
+  Sfxs:
+  - {fileID: 11400000, guid: a08a8e8f6f8bd6e428d79f0dc76f2a34, type: 2}
+  - {fileID: 11400000, guid: 45c331f7d68068347a8216c97facca5e, type: 2}
+  Musics:
+  - {fileID: 11400000, guid: 6629456881065dc4bbc347bdc56fc4ba, type: 2}
   _poolSize: 10

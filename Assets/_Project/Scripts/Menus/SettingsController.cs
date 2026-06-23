@@ -63,7 +63,7 @@ namespace Gameseed26
 
                         if (_soundTimer <= 0f)
                         {
-                            Tune.Instance.PlaySFX(_slidingSound);
+                            Tune.SFX(_slidingSound);
                             _soundTimer = _soundDebounce;
                         }
                     }

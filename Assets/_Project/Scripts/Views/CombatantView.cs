@@ -1,13 +1,22 @@
-using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
+using NaughtyAttributes;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CombatantView : MonoBehaviour
 {
-    [SerializeField] private TMP_Text healthText;
+    [Header("Health Visual")]
+    [SerializeField] private bool useSlider;
+    [SerializeField, HideIf("useSlider")] private TMP_Text healthText;
+    [SerializeField, ShowIf("useSlider")] private Slider healthSlider;
+    [SerializeField, ShowIf("useSlider")] private Slider blockedSlider;
+    [SerializeField, ShowIf("useSlider")] private Slider shieldSlider;
+
+    [Header("Others")]
     [SerializeField] protected SpriteRenderer spriteRenderer;
     [SerializeField] private float shakeDuration;
     [SerializeField] private float shakeStrength;
@@ -21,12 +30,14 @@ public class CombatantView : MonoBehaviour
     public bool IsStunned => StunDuration > 0;
 
     public int CurrentShield { get; private set; }
-    
+
     public int TauntDuration { get; private set; }
     public bool IsTaunted => TauntDuration > 0;
 
     public float ShakeDuration => shakeDuration;
     public float ShakeStrength => shakeStrength;
+
+    private bool hasHealthVisual;
 
     public StateMachine StateMachine { get; private set; }
 
@@ -34,17 +45,18 @@ public class CombatantView : MonoBehaviour
     {
         MaxHealth = CurrentHealth = maxHealth;
         spriteRenderer.sprite = image;
-        
+
         StateMachine = new StateMachine();
         StateMachine.Initialize(new CombatantIdleState(this));
 
-        UpdateHealthText();
+        SetupHealthVisual();
+        UpdateHealthVisual();
     }
 
     public void SetCurrentHealth(int health)
     {
-        CurrentHealth = health;
-        UpdateHealthText();
+        CurrentHealth = Mathf.Clamp(health, 0, EffectiveMaxHealth);
+        UpdateHealthVisual();
     }
 
     public virtual void ClearStats()
@@ -53,7 +65,7 @@ public class CombatantView : MonoBehaviour
         StunDuration = 0;
         TauntDuration = 0;
         HealthPenalty = 0;
-        UpdateHealthText();
+        UpdateHealthVisual();
     }
 
     private void Update()
@@ -80,7 +92,7 @@ public class CombatantView : MonoBehaviour
         }
         else
         {
-            UpdateHealthText();
+            UpdateHealthVisual();
         }
     }
 
@@ -91,12 +103,12 @@ public class CombatantView : MonoBehaviour
         if (CurrentHealth <= 0)
         {
             CurrentHealth = 0;
-            UpdateHealthText();
+            UpdateHealthVisual();
             StateMachine.ChangeState(new CombatantDeadState(this));
         }
         else
         {
-            UpdateHealthText();
+            UpdateHealthVisual();
             StateMachine.ChangeState(new CombatantHurtState(this, shakeDuration, shakeStrength));
         }
     }
@@ -108,7 +120,7 @@ public class CombatantView : MonoBehaviour
         {
             CurrentHealth = EffectiveMaxHealth;
         }
-        UpdateHealthText();
+        UpdateHealthVisual();
     }
 
     public void ApplyHealthPenalty(int amount)
@@ -120,7 +132,7 @@ public class CombatantView : MonoBehaviour
         {
             CurrentHealth = EffectiveMaxHealth;
         }
-        UpdateHealthText();
+        UpdateHealthVisual();
     }
 
     public void ApplyStun(int duration)
@@ -139,13 +151,13 @@ public class CombatantView : MonoBehaviour
     public void AddShield(int amount)
     {
         CurrentShield += amount;
-        UpdateHealthText();
+        UpdateHealthVisual();
     }
 
     public void ClearShield()
     {
         CurrentShield = 0;
-        UpdateHealthText();
+        UpdateHealthVisual();
     }
 
     public void ApplyTaunt(int duration)
@@ -163,10 +175,59 @@ public class CombatantView : MonoBehaviour
 
     public virtual void AddStress(int amount) { }
 
-    protected virtual void UpdateHealthText()
+    protected virtual void SetupHealthVisual()
     {
-        string shieldText = CurrentShield > 0 ? $" [+{CurrentShield}]" : "";
-        string penaltyText = HealthPenalty > 0 ? $" (Blocked: {HealthPenalty})" : "";
-        healthText.text = $"HP: {CurrentHealth}/{EffectiveMaxHealth}{shieldText}{penaltyText}";
+        hasHealthVisual = !HealthObjectIsNull();
+        if (!hasHealthVisual) return;
+
+        if (healthText != null) healthText.gameObject.SetActive(!useSlider);
+
+        List<Slider> sliders = new() { healthSlider, blockedSlider, shieldSlider };
+        foreach (var slider in sliders)
+        {
+            if (slider == null) continue;
+            slider.gameObject.SetActive(useSlider);
+        }
+    }
+
+    protected virtual void UpdateHealthVisual()
+    {
+        if (!hasHealthVisual) return;
+
+        if (useSlider)
+        {
+            healthSlider.value = Mathf.Clamp01((float)CurrentHealth / MaxHealth);
+            blockedSlider.value = Mathf.Clamp01((float)HealthPenalty / MaxHealth);
+            shieldSlider.value = Mathf.Clamp01((float)CurrentShield / MaxHealth);
+        }
+        else
+        {
+            string shieldText = CurrentShield > 0 ? $" [+{CurrentShield}]" : "";
+            string penaltyText = HealthPenalty > 0 ? $" (Blocked: {HealthPenalty})" : "";
+            healthText.text = $"HP: {CurrentHealth}/{EffectiveMaxHealth}{shieldText}{penaltyText}";
+        }
+
+    }
+
+    protected bool HealthObjectIsNull()
+    {
+        if (useSlider)
+        {
+            if (healthSlider == null || blockedSlider == null || shieldSlider == null)
+            {
+                Debug.LogError($"[{name}] Any slider is not assigned or null!", this);
+                return true;
+            }
+        }
+        else
+        {
+            if (healthText == null)
+            {
+                Debug.LogError($"[{name}] Any slider is not assigned or null!", this);
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -12,9 +12,8 @@ namespace Gameseed26
         /// </summary>
         public void PlayMusic(TuneTracksSO track, int variation = 0)
         {
-            if (track.Clips.Length == 0)
+            if (!IsValidMusicTrack(track))
             {
-                Logger.LogError(transform, $"{track.name} doesn't have any Clip registered, please add one first.");
                 return;
             }
 
@@ -68,9 +67,8 @@ namespace Gameseed26
         /// </summary>
         public void PlayMusicWithFade(TuneTracksSO track, int variation = 0, float fadeDuration = 1f)
         {
-            if (track.Clips.Length == 0)
+            if (!IsValidMusicTrack(track))
             {
-                Logger.LogError(transform, $"{track.name} doesn't have any Clip registered, please add one first.");
                 return;
             }
 
@@ -117,9 +115,8 @@ namespace Gameseed26
         /// </summary>
         public void CrossFade(TuneTracksSO track, int variation = 0, float duration = 2.0f)
         {
-            if (track.Clips.Length == 0)
+            if (!IsValidMusicTrack(track))
             {
-                Logger.LogError(transform, $"{track.name} doesn't have any Clip registered, please add one first.");
                 return;
             }
 
@@ -195,6 +192,23 @@ namespace Gameseed26
                 yield return null;
             }
             activeSource.volume = targetVol;
+        }
+
+        bool IsValidMusicTrack(TuneTracksSO track)
+        {
+            if (track == null)
+            {
+                Logger.LogWarning(transform, "TuneTrack is null, cannot play the music!");
+                return false;
+            }
+
+            if (track.Clips == null || track.Clips.Length == 0)
+            {
+                Logger.LogError(transform, $"{track.name} doesn't have any Clip registered, please add one first.");
+                return false;
+            }
+
+            return true;
         }
 
         IEnumerator MusicCrossFadeRoutine(AudioSource oldSource, AudioSource newSource, float targetVolume, float duration)

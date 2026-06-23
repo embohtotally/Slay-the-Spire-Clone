@@ -193,8 +193,8 @@ MonoBehaviour:
   lineViewPrefab: {fileID: 737273219749926967, guid: ab8764a4bdcd8a54bbd8e39244c1bd80, type: 3}
   lineParent: {fileID: 276950965}
   nodeParent: {fileID: 719928264}
-  orientation: 1
-  orientationOffset: {x: 0, y: 0}
+  orientation: 3
+  orientationOffset: {x: -300, y: 0}
 --- !u!114 &29118115
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -119,6 +119,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &62217122 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3551412829220888667, guid: 6448581afdf83554b865403f77c2dacf, type: 3}
+  m_PrefabInstance: {fileID: 1299436248}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c10d422b52559da41aa9676770a8fc65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &348316276
 GameObject:
   m_ObjectHideFlags: 0
@@ -1252,11 +1263,15 @@ PrefabInstance:
     - target: {fileID: 7957376826190757400, guid: 6448581afdf83554b865403f77c2dacf, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1656317099}
+      objectReference: {fileID: 62217122}
     - target: {fileID: 7957376826190757400, guid: 6448581afdf83554b865403f77c2dacf, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
       objectReference: {fileID: 1656317099}
+    - target: {fileID: 7957376826190757400, guid: 6448581afdf83554b865403f77c2dacf, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Play
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1777,6 +1792,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _exitButton: {fileID: 884105182}
   _gameplaySceneName: Map
+  _bgMusic: 0
 --- !u!4 &1708031079
 Transform:
   m_ObjectHideFlags: 0
@@ -1939,6 +1955,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1721666793}
   m_CullTransparentMesh: 1
+--- !u!1 &1739995889
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1739995891}
+  - component: {fileID: 1739995890}
+  m_Layer: 0
+  m_Name: SfxSpreader
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1739995890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739995889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e36e4fa19ec764e4d9def0bf76a2129e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _clickSound: 1
+  _hoverSound: 2
+  _excludeButtons: []
+--- !u!4 &1739995891
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739995889}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1754665932
 GameObject:
   m_ObjectHideFlags: 0
@@ -2617,3 +2680,4 @@ SceneRoots:
   - {fileID: 1439301017}
   - {fileID: 870355077}
   - {fileID: 1708031079}
+  - {fileID: 1739995891}

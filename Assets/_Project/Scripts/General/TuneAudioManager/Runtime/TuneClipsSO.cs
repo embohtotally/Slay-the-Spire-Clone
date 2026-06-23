@@ -35,7 +35,7 @@ namespace Gameseed26
 
         public AudioClip GetRandomAudioClip()
         {
-            if (Clips.Length == 0) return null;
+            if (Clips == null || Clips.Length == 0) return null;
             return Clips[Random.Range(0, Clips.Length)];
         }
     }
