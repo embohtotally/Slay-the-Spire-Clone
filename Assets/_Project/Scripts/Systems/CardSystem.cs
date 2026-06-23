@@ -43,14 +43,24 @@ public class CardSystem : Singleton<CardSystem>
 
     public void Setup(List<CardData> deckData)
     {
-        int count = 0;
+        drawPile.Clear();
+        discardPile.Clear();
+        hand.Clear();
+
+        if (deckData == null)
+        {
+            UpdatePileTexts();
+            return;
+        }
+
         foreach (CardData cardData in deckData)
         {
-            if (count >= 20) break;
+            if (cardData == null) continue;
+
             Card card = new(cardData);
             drawPile.Add(card);
-            count++;
         }
+
         UpdatePileTexts();
     }
 

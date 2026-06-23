@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c755a9bdd5e46cabff39ff2f8efc17d, type: 3}
+  m_Name: Default Card Reward Pool
+  m_EditorClassIdentifier: 
+  newCardRewards:
+  - {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
+  - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
+  - {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
+  - {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
+  - {fileID: 11400000, guid: d5ba679f2ef5c13459e021d26a1841b4, type: 2}
+  upgradeRewards: []

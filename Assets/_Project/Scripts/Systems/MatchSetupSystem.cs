@@ -21,13 +21,11 @@ public class MatchSetupSystem : MonoBehaviour
         }
 
         EnemySystem.Instance.Setup(enemiesForThisMatch);
-        List<CardData> combinedDeck = new List<CardData>();
-        foreach (var hero in heroTeam)
-        {
-            if (hero.Deck != null)
-                combinedDeck.AddRange(hero.Deck);
-        }
-        CardSystem.Instance.Setup(combinedDeck);
+
+        List<CardData> combinedDeck = BuildStartingDeck();
+        EnsureRunDeckManagerExists();
+        RunDeckManager.Instance.InitializeIfEmpty(combinedDeck);
+        CardSystem.Instance.Setup(RunDeckManager.Instance.GetDeckCopy());
 
         foreach (var hero in heroTeam)
         {
@@ -41,5 +39,27 @@ public class MatchSetupSystem : MonoBehaviour
         }
         DrawCardsGA drawCardsGA = new(startingHandSize);
         ActionSystem.Instance.Perform(drawCardsGA);
+    }
+
+    private List<CardData> BuildStartingDeck()
+    {
+        List<CardData> combinedDeck = new();
+        foreach (HeroData hero in heroTeam)
+        {
+            if (hero != null && hero.Deck != null)
+            {
+                combinedDeck.AddRange(hero.Deck);
+            }
+        }
+
+        return combinedDeck;
+    }
+
+    private static void EnsureRunDeckManagerExists()
+    {
+        if (RunDeckManager.Instance != null) return;
+
+        GameObject deckManagerObject = new("Run Deck Manager");
+        deckManagerObject.AddComponent<RunDeckManager>();
     }
 }
