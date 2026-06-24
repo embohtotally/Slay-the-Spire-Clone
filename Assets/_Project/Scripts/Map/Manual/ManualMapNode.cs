@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -35,7 +36,7 @@ public class ManualMapNode : MonoBehaviour
     [Header("References")]
     [SerializeField] private Button button;
     [SerializeField] private Image iconImage;
-    [SerializeField] private Text labelText;
+    [SerializeField] private TMP_Text labelText;
 
     [Header("Node Data")]
     [Tooltip("Optional unique id. Leave empty to use this GameObject name.")]
@@ -298,7 +299,7 @@ public class ManualMapNode : MonoBehaviour
     {
         if (button == null) button = GetComponent<Button>();
         if (iconImage == null) iconImage = GetComponent<Image>();
-        if (labelText == null) labelText = GetComponentInChildren<Text>(true);
+        if (labelText == null) labelText = GetComponentInChildren<TMP_Text>(true);
     }
 
     private static string GetLabel(MapNodeType type)

@@ -10,10 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21d7b07925ceb9b48875388ffb0b5c69, type: 3}
-  m_Name: click
+  m_Name: on_start_game
   m_EditorClassIdentifier: 
   Clips:
-  - {fileID: 8300000, guid: 6326bacffeeaa8f4db6334341c753064, type: 3}
+  - {fileID: 8300000, guid: 5467a6beb2a6c4042b78c1b70bae3de8, type: 3}
+  - {fileID: 8300000, guid: 8a562238107f3454f958f1f9570401f7, type: 3}
+  - {fileID: 8300000, guid: 595a3ee3ec675d6489bd4dc488a7ee7c, type: 3}
   MixerGroup: {fileID: 514884215846408687, guid: dc2918a13f4532046913a785e411c04e, type: 2}
   UseRandomVolume: 0
   Volume: 1

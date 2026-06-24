@@ -17,6 +17,9 @@ namespace Gameseed26
             RegisterButtons();
         }
 
+        public void PlayClickSound() => Tune.SFX(_clickSound);
+        public void PlayHoverSound() => Tune.SFX(_hoverSound);
+
         private void RegisterButtons()
         {
             var buttons = GetAllButtons();
@@ -30,15 +33,8 @@ namespace Gameseed26
             }
         }
 
-        private void OnButtonClick(BaseEventData data)
-        {
-            if (Tune.Instance != null) Tune.Instance.PlaySFX(_clickSound);
-        }
-
-        private void OnButtonHover(BaseEventData data)
-        {
-            if (Tune.Instance != null) Tune.Instance.PlaySFX(_hoverSound);
-        }
+        private void OnButtonClick(BaseEventData data) => PlayClickSound();
+        private void OnButtonHover(BaseEventData data) => PlayHoverSound();
 
         private List<Button> GetAllButtons()
         {

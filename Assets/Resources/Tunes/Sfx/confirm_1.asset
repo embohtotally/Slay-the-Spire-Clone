@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21d7b07925ceb9b48875388ffb0b5c69, type: 3}
-  m_Name: hover
+  m_Name: confirm_1
   m_EditorClassIdentifier: 
   Clips:
-  - {fileID: 8300000, guid: 289803dd997b16942a3ed1e8e9ea3835, type: 3}
+  - {fileID: 8300000, guid: c149091c9fd00a049b6e9799940c2525, type: 3}
   MixerGroup: {fileID: 514884215846408687, guid: dc2918a13f4532046913a785e411c04e, type: 2}
   UseRandomVolume: 0
   Volume: 1

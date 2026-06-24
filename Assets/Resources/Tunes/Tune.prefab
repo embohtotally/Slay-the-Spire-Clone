@@ -45,8 +45,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Sfxs:
-  - {fileID: 11400000, guid: a08a8e8f6f8bd6e428d79f0dc76f2a34, type: 2}
-  - {fileID: 11400000, guid: 45c331f7d68068347a8216c97facca5e, type: 2}
+  - {fileID: 11400000, guid: 3188c7ca7ea5213428d4729f7569208c, type: 2}
+  - {fileID: 11400000, guid: 3c56d04bd5a944349b745758fb1b2d7b, type: 2}
+  - {fileID: 11400000, guid: 77d9cb7f230515b4f82078a2aed50af8, type: 2}
+  - {fileID: 11400000, guid: 22533359fe337d9499064194b77f2710, type: 2}
+  - {fileID: 11400000, guid: 8d49d041a6c3847428eb827d95d0a672, type: 2}
+  - {fileID: 11400000, guid: eddb5b8175c4f154a9f766631b918049, type: 2}
   Musics:
-  - {fileID: 11400000, guid: 6629456881065dc4bbc347bdc56fc4ba, type: 2}
+  - {fileID: 11400000, guid: d16ccb05b38755a45894920a4c0e1b0d, type: 2}
   _poolSize: 10

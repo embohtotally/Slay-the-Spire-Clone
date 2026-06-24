@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cf1a73a9f866d5a4488a873371191a7d, type: 3}
-  m_Name: Space Cadet
+  m_Name: MainMenuMusic
   m_EditorClassIdentifier: 
   Clips:
-  - {fileID: 8300000, guid: 60b90d75792c1bc41a9a856ab72263f5, type: 3}
+  - {fileID: 8300000, guid: 7021ee29da375174192f8443ad8d9e9e, type: 3}
   MixerGroup: {fileID: -742341445087112513, guid: dc2918a13f4532046913a785e411c04e, type: 2}
-  Volume: 0.5
+  Volume: 1
