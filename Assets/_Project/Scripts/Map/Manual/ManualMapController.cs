@@ -19,13 +19,32 @@ public class ManualMapController : MonoBehaviour
     [Tooltip("Reset RunManager only when there is no saved manual map state yet. Keeps combat returns from restarting the map.")]
     [SerializeField] private bool resetRunWhenNoSavedState = true;
 
-    [Header("State Persistence")]
+    [Header("Runtime Run State")]
     [Tooltip("Unique key for saving this manual map's runtime node states between scene reloads.")]
     [SerializeField] private string mapId = "ManualMap";
     [Tooltip("Useful during testing. If true, inspector Initial State is applied every time this scene starts.")]
     [SerializeField] private bool forceResetStateOnStart;
 
     private static readonly Dictionary<string, Dictionary<string, ManualMapNodeState>> SavedStatesByMapId = new();
+
+    public string MapId => mapId;
+
+    public void SetRuntimeMapId(string newMapId)
+    {
+        if (string.IsNullOrWhiteSpace(newMapId)) return;
+        mapId = newMapId.Trim();
+    }
+
+    public static void ClearSavedState(string targetMapId)
+    {
+        if (string.IsNullOrWhiteSpace(targetMapId)) return;
+        SavedStatesByMapId.Remove(targetMapId.Trim());
+    }
+
+    public static void ClearAllSavedStates()
+    {
+        SavedStatesByMapId.Clear();
+    }
 
     private void Awake()
     {
@@ -118,14 +137,14 @@ public class ManualMapController : MonoBehaviour
     public void DeactivateNode(ManualMapNode node)
     {
         if (node == null || node.IsCompleted) return;
-        node.SetInactive();
+        node.SetDisabled();
         SaveStates();
     }
 
     public void HideNode(ManualMapNode node)
     {
         if (node == null || node.IsCompleted) return;
-        node.SetHidden();
+        node.SetHiddenDisabled();
         SaveStates();
     }
 

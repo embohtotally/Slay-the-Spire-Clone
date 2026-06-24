@@ -8,7 +8,9 @@ public enum ManualMapNodeState
     Active,
     Inactive,
     Hidden,
-    Completed
+    Completed,
+    Disabled,
+    HiddenDisabled
 }
 
 public enum ManualMapNodeAction
@@ -78,6 +80,7 @@ public class ManualMapNode : MonoBehaviour
     public bool CompleteOnClick => completeOnClick;
     public string SceneNameOverride => sceneNameOverride;
     public bool IsCompleted => currentState == ManualMapNodeState.Completed;
+    public bool IsDisabled => currentState == ManualMapNodeState.Disabled || currentState == ManualMapNodeState.HiddenDisabled;
     public bool CanSelect => currentState == ManualMapNodeState.Active;
 
     private void Awake()
@@ -131,6 +134,16 @@ public class ManualMapNode : MonoBehaviour
         SetState(ManualMapNodeState.Hidden);
     }
 
+    public void SetDisabled()
+    {
+        SetState(ManualMapNodeState.Disabled);
+    }
+
+    public void SetHiddenDisabled()
+    {
+        SetState(ManualMapNodeState.HiddenDisabled);
+    }
+
     public void SetCompleted()
     {
         SetState(ManualMapNodeState.Completed);
@@ -144,7 +157,7 @@ public class ManualMapNode : MonoBehaviour
 
     public void RefreshUnlockRule()
     {
-        if (currentState == ManualMapNodeState.Completed || unlockRule == ManualMapUnlockRule.ManualOnly)
+        if (currentState == ManualMapNodeState.Completed || IsDisabled || unlockRule == ManualMapUnlockRule.ManualOnly)
         {
             RefreshVisual();
             return;
@@ -173,12 +186,12 @@ public class ManualMapNode : MonoBehaviour
 
         foreach (ManualMapNode node in deactivateOnComplete)
         {
-            if (node != null && !node.IsCompleted) node.SetInactive();
+            if (node != null && !node.IsCompleted) node.SetDisabled();
         }
 
         foreach (ManualMapNode node in hideOnComplete)
         {
-            if (node != null && !node.IsCompleted) node.SetHidden();
+            if (node != null && !node.IsCompleted) node.SetHiddenDisabled();
         }
     }
 
@@ -253,7 +266,7 @@ public class ManualMapNode : MonoBehaviour
 
     private void RefreshVisual()
     {
-        bool hidden = currentState == ManualMapNodeState.Hidden;
+        bool hidden = currentState == ManualMapNodeState.Hidden || currentState == ManualMapNodeState.HiddenDisabled;
         if (gameObject.activeSelf == hidden)
         {
             gameObject.SetActive(!hidden);
@@ -276,6 +289,7 @@ public class ManualMapNode : MonoBehaviour
             ManualMapNodeState.Active => activeColor,
             ManualMapNodeState.Completed => completedColor,
             ManualMapNodeState.Hidden => hiddenColor,
+            ManualMapNodeState.HiddenDisabled => hiddenColor,
             _ => inactiveColor
         };
     }

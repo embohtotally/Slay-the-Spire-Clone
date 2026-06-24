@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,10 +7,10 @@ public class CardRewardOptionView : MonoBehaviour
     [Header("References")]
     [SerializeField] private Button button;
     [SerializeField] private Image cardImage;
-    [SerializeField] private Text titleText;
-    [SerializeField] private Text descriptionText;
-    [SerializeField] private Text manaText;
-    [SerializeField] private Text actionText;
+    [SerializeField] private TMP_Text titleText;
+    [SerializeField] private TMP_Text descriptionText;
+    [SerializeField] private TMP_Text manaText;
+    [SerializeField] private TMP_Text actionText;
 
     [Header("Labels")]
     [SerializeField] private string newCardActionLabel = "Choose Card";
@@ -88,7 +89,7 @@ public class CardRewardOptionView : MonoBehaviour
     {
         if (button == null) button = GetComponent<Button>();
 
-        Text[] texts = GetComponentsInChildren<Text>(true);
+        TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
         if (titleText == null && texts.Length > 0) titleText = texts[0];
         if (descriptionText == null && texts.Length > 1) descriptionText = texts[1];
         if (manaText == null && texts.Length > 2) manaText = texts[2];

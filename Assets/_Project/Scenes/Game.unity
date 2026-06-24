@@ -515,6 +515,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapSceneName: Map
   returnToMapDelay: 0.75
+  openRewardSceneAfterCombatWin: 1
+  rewardSceneName: CardReward
+  OnCombatWon:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &314454078
 Transform:
   m_ObjectHideFlags: 0
