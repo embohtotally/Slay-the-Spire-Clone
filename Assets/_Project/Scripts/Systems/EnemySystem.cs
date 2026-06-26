@@ -19,6 +19,8 @@ public class EnemySystem : Singleton<EnemySystem>
         ActionSystem.AttachPerformer<EnemyTurnGA>(EnemyTurnPerformer);
         ActionSystem.AttachPerformer<ExecuteEnemyIntentGA>(ExecuteIntentPerformer);
         ActionSystem.AttachPerformer<KillEnemyGA>(KillEnemyPerformer);
+        ActionSystem.AttachPerformer<SummonEnemyGA>(SummonEnemyPerformer);
+        ActionSystem.AttachPerformer<SimultaneousGA>(SimultaneousPerformer);
     }
 
     private void OnDisable()
@@ -26,6 +28,8 @@ public class EnemySystem : Singleton<EnemySystem>
         ActionSystem.DetachPerformer<EnemyTurnGA>();
         ActionSystem.DetachPerformer<ExecuteEnemyIntentGA>();
         ActionSystem.DetachPerformer<KillEnemyGA>();
+        ActionSystem.DetachPerformer<SummonEnemyGA>();
+        ActionSystem.DetachPerformer<SimultaneousGA>();
     }
 
     public void Setup(List<EnemyData> enemyDataList)
@@ -79,9 +83,9 @@ public class EnemySystem : Singleton<EnemySystem>
         {
             foreach (AutoTargetEffect effect in intent.Effects)
             {
-                if (effect.Effect != null && effect.TargetMode != null)
+                if (effect.Effect != null)
                 {
-                    List<CombatantView> targets = effect.TargetMode.GetTargets();
+                    List<CombatantView> targets = effect.TargetMode != null ? effect.TargetMode.GetTargets(attacker) : null;
                     ActionSystem.Instance.AddReaction(effect.Effect.GetGameAction(targets, attacker));
                 }
             }
@@ -98,6 +102,33 @@ public class EnemySystem : Singleton<EnemySystem>
         {
             ActionSystem.Instance.AddReaction(new CombatWonGA());
         }
+    }
+
+    private IEnumerator SummonEnemyPerformer(SummonEnemyGA summonEnemyGA)
+    {
+        for (int i = 0; i < summonEnemyGA.Count; i++)
+        {
+            if (enemyBoardView.HasAvailableSlot(out Transform slot))
+            {
+                yield return enemyBoardView.SummonEnemy(summonEnemyGA.EnemyData);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    private IEnumerator SimultaneousPerformer(SimultaneousGA simultaneousGA)
+    {
+        if (simultaneousGA.Actions != null)
+        {
+            foreach (GameAction action in simultaneousGA.Actions)
+            {
+                ActionSystem.Instance.AddReaction(action);
+            }
+        }
+        yield return null;
     }
     #endregion
 }

@@ -7,6 +7,19 @@ public class ActionSystem : Singleton<ActionSystem>
 {
     public bool IsPerforming { get; private set; } = false;
 
+    protected override void Awake()
+    {
+        base.Awake();
+        if (DamageOverTimeSystem.Instance == null && GetComponent<DamageOverTimeSystem>() == null)
+        {
+            gameObject.AddComponent<DamageOverTimeSystem>();
+        }
+        if (BuffSystem.Instance == null && GetComponent<BuffSystem>() == null)
+        {
+            gameObject.AddComponent<BuffSystem>();
+        }
+    }
+
     private static Dictionary<Type, List<Action<GameAction>>> preSubs = new();
     private static Dictionary<Type, Func<GameAction, IEnumerator>> performers = new();
     private static Dictionary<Type, List<Action<GameAction>>> postSubs = new();

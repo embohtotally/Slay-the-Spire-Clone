@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class AllEnemiesTM : TargetMode
 {
-    public override List<CombatantView> GetTargets()
+    public override List<CombatantView> GetTargets(CombatantView caster = null)
     {
         return new(EnemySystem.Instance.Enemies);
     }
