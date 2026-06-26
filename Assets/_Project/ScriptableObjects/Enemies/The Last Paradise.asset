@@ -10,71 +10,60 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
-  m_Name: Wilted Rhino
+  m_Name: The Last Paradise
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 21300004, guid: 7ab74e659e1f0a34d9cfec21c478fc12, type: 3}
-  <Health>k__BackingField: 55
+  <Image>k__BackingField: {fileID: 0}
+  <Health>k__BackingField: 200
   <Intents>k__BackingField:
-  - <IntentName>k__BackingField: Wilted Rhino
+  - <IntentName>k__BackingField: The Last Paradise
     <Effects>k__BackingField:
     - <TargetMode>k__BackingField:
-        rid: 5978927107236954379
+        rid: 5978927130765950984
       <Effect>k__BackingField:
-        rid: 5978927107236954385
+        rid: 5978927130765950985
     - <TargetMode>k__BackingField:
-        rid: 5978927107236954381
+        rid: 5978927130765950990
       <Effect>k__BackingField:
-        rid: 5978927107236954382
-  - <IntentName>k__BackingField: Wilted Rhino
-    <Effects>k__BackingField:
-    - <TargetMode>k__BackingField:
-        rid: 5978927130765950976
-      <Effect>k__BackingField:
-        rid: 5978927130765950977
+        rid: 5978927130765951062
   <AttackPattern>k__BackingField: 1
   references:
     version: 2
     RefIds:
-    - rid: 5978927107236954379
+    - rid: 5978927130765950984
       type: {class: HeroTM, ns: , asm: Assembly-CSharp}
       data: 
-    - rid: 5978927107236954381
-      type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
-    - rid: 5978927107236954382
-      type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
-      data:
-        shieldAmount: 8
-    - rid: 5978927107236954385
+    - rid: 5978927130765950985
       type: {class: SimultaneousEffect, ns: , asm: Assembly-CSharp}
       data:
         <Effects>k__BackingField:
         - <TargetMode>k__BackingField:
-            rid: 5978927107236954386
+            rid: 5978927130765950986
           <Effect>k__BackingField:
-            rid: 5978927107236954389
+            rid: 5978927130765950987
         - <TargetMode>k__BackingField:
-            rid: 5978927107236954390
+            rid: 5978927130765950988
           <Effect>k__BackingField:
-            rid: 5978927107236954391
-    - rid: 5978927107236954386
+            rid: 5978927130765950989
+    - rid: 5978927130765950986
       type: {class: HeroTM, ns: , asm: Assembly-CSharp}
       data: 
-    - rid: 5978927107236954389
+    - rid: 5978927130765950987
       type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
       data:
-        damageAmount: 6
-    - rid: 5978927107236954390
+        damageAmount: 15
+    - rid: 5978927130765950988
       type: {class: HeroTM, ns: , asm: Assembly-CSharp}
       data: 
-    - rid: 5978927107236954391
+    - rid: 5978927130765950989
       type: {class: AddStressEffect, ns: , asm: Assembly-CSharp}
       data:
-        stressAmount: 3
-    - rid: 5978927130765950976
+        stressAmount: 5
+    - rid: 5978927130765950990
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
       data: 
-    - rid: 5978927130765950977
-      type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
+    - rid: 5978927130765951062
+      type: {class: ApplyBuffEffect, ns: , asm: Assembly-CSharp}
       data:
-        shieldAmount: 8
+        buffType: 0
+        value: 5
+        duration: 2
