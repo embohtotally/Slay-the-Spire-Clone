@@ -10,6 +10,7 @@ public class HeroView : CombatantView
     
     public int CurrentStress { get; private set; }
     public int MaxStress { get; private set; } = 35;
+    public bool IsStressed { get; private set; } = false;
 
     private List<GameObject> heroSprites = new List<GameObject>();
 
@@ -78,28 +79,26 @@ public class HeroView : CombatantView
     {
         base.ClearStats();
         CurrentStress = 0;
+        IsStressed = false;
         UpdateStressSlider();
     }
 
     public override void Damage(int damageAmount)
     {
-        int initialHealth = CurrentHealth;
         base.Damage(damageAmount);
-        int damageTaken = initialHealth - CurrentHealth;
-
-        if (damageTaken > 0)
-        {
-            AddStress(damageTaken);
-        }
+        // Fear/stress from regular enemy damage is reduced to 0. It can now only be inflicted by intent effects.
     }
 
     public override void AddStress(int amount)
     {
+        if (IsStressed) return;
+
         CurrentStress += amount;
 
         if (CurrentStress >= MaxStress)
         {
-            CurrentStress = 0;
+            CurrentStress = MaxStress;
+            IsStressed = true;
             // Breakdown: Reduce Max HP by 20% (minimum 1)
             int penaltyAmount = Mathf.Max(1, MaxHealth / 5);
             ApplyHealthPenalty(penaltyAmount);
@@ -113,6 +112,16 @@ public class HeroView : CombatantView
         if (stressSlider != null)
         {
             stressSlider.value = (float)CurrentStress / MaxStress;
+        }
+    }
+
+    public void ClearStressedState()
+    {
+        if (IsStressed)
+        {
+            IsStressed = false;
+            CurrentStress = 0;
+            UpdateStressSlider();
         }
     }
 }

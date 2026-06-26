@@ -1,11 +1,18 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 public class RunProgressSystem : MonoBehaviour
 {
+    [Header("Scene Flow")]
     [SerializeField] private string mapSceneName = "Map";
     [SerializeField] private float returnToMapDelay = 0.75f;
+
+    [Header("Combat Win Events")]
+    [SerializeField] private bool openRewardSceneAfterCombatWin = false;
+    [SerializeField] private string rewardSceneName = "Card Reward";
+    public UnityEvent OnCombatWon;
 
     private void OnEnable()
     {
@@ -26,6 +33,16 @@ public class RunProgressSystem : MonoBehaviour
         }
 
         RunManager.Instance.CompleteCurrentEncounter();
+        OnCombatWon?.Invoke();
+
+        if (openRewardSceneAfterCombatWin && !string.IsNullOrWhiteSpace(rewardSceneName))
+        {
+            Debug.Log("Combat won. Opening card reward scene.");
+            yield return new WaitForSeconds(returnToMapDelay);
+            SceneManager.LoadScene(rewardSceneName);
+            yield break;
+        }
+
         Debug.Log("Combat won. Returning to map.");
         yield return new WaitForSeconds(returnToMapDelay);
         SceneManager.LoadScene(mapSceneName);

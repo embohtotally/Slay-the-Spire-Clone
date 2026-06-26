@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
+  m_Name: King Lizard
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 0}
+  <Health>k__BackingField: 120
+  <Intents>k__BackingField:
+  - <IntentName>k__BackingField: King Lizard
+    <Effects>k__BackingField:
+    - <TargetMode>k__BackingField:
+        rid: 5978927107236954443
+      <Effect>k__BackingField:
+        rid: 5978927107236954442
+  - <IntentName>k__BackingField: King Lizard
+    <Effects>k__BackingField:
+    - <TargetMode>k__BackingField:
+        rid: 5978927107236954501
+      <Effect>k__BackingField:
+        rid: 5978927107236954502
+  - <IntentName>k__BackingField: King Lizard
+    <Effects>k__BackingField:
+    - <TargetMode>k__BackingField:
+        rid: 5978927107236954503
+      <Effect>k__BackingField:
+        rid: 5978927107236954504
+  <AttackPattern>k__BackingField: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 5978927107236954442
+      type: {class: SimultaneousEffect, ns: , asm: Assembly-CSharp}
+      data:
+        <Effects>k__BackingField:
+        - <TargetMode>k__BackingField:
+            rid: 5978927107236954445
+          <Effect>k__BackingField:
+            rid: 5978927107236954446
+        - <TargetMode>k__BackingField:
+            rid: 5978927107236954448
+          <Effect>k__BackingField:
+            rid: 5978927107236954450
+    - rid: 5978927107236954443
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954445
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954446
+      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damageAmount: 12
+    - rid: 5978927107236954448
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954450
+      type: {class: AddStressEffect, ns: , asm: Assembly-CSharp}
+      data:
+        stressAmount: 3
+    - rid: 5978927107236954501
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954502
+      type: {class: ApplyDoTEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damagePerTurn: 8
+        duration: 2
+    - rid: 5978927107236954503
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954504
+      type: {class: SummonEnemyEffect, ns: , asm: Assembly-CSharp}
+      data:
+        enemyToSummon: {fileID: 11400000, guid: 48a9bfa41cad7a8489c7a6646e23656a, type: 2}
+        summonCount: 2

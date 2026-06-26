@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class RandomEnemyTM : TargetMode
 {
-    public override List<CombatantView> GetTargets()
+    public override List<CombatantView> GetTargets(CombatantView caster = null)
     {
         List<EnemyView> validEnemies = EnemySystem.Instance.Enemies;
         

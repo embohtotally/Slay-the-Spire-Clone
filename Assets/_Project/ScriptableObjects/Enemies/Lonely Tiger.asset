@@ -1,0 +1,104 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
+  m_Name: Lonely Tiger
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 21300000, guid: 7ab74e659e1f0a34d9cfec21c478fc12, type: 3}
+  <Health>k__BackingField: 35
+  <Intents>k__BackingField:
+  - <IntentName>k__BackingField: Lonely Tiger
+    <Effects>k__BackingField:
+    - <TargetMode>k__BackingField:
+        rid: 5978927107236954422
+      <Effect>k__BackingField:
+        rid: 5978927107236954427
+  - <IntentName>k__BackingField: Lonely Tiger
+    <Effects>k__BackingField:
+    - <TargetMode>k__BackingField:
+        rid: 5978927107236954528
+      <Effect>k__BackingField:
+        rid: 5978927107236954529
+  - <IntentName>k__BackingField: Lonely Tiger
+    <Effects>k__BackingField:
+    - <TargetMode>k__BackingField:
+        rid: 5978927107236954532
+      <Effect>k__BackingField:
+        rid: 5978927107236954531
+  <AttackPattern>k__BackingField: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 5978927107236954422
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954427
+      type: {class: SimultaneousEffect, ns: , asm: Assembly-CSharp}
+      data:
+        <Effects>k__BackingField:
+        - <TargetMode>k__BackingField:
+            rid: 5978927107236954428
+          <Effect>k__BackingField:
+            rid: 5978927107236954429
+        - <TargetMode>k__BackingField:
+            rid: 5978927107236954430
+          <Effect>k__BackingField:
+            rid: 5978927107236954431
+    - rid: 5978927107236954428
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954429
+      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damageAmount: 4
+    - rid: 5978927107236954430
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954431
+      type: {class: AddStressEffect, ns: , asm: Assembly-CSharp}
+      data:
+        stressAmount: 1
+    - rid: 5978927107236954528
+      type: {class: SelfTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954529
+      type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
+      data:
+        shieldAmount: 3
+    - rid: 5978927107236954531
+      type: {class: SimultaneousEffect, ns: , asm: Assembly-CSharp}
+      data:
+        <Effects>k__BackingField:
+        - <TargetMode>k__BackingField:
+            rid: 5978927107236954533
+          <Effect>k__BackingField:
+            rid: 5978927107236954534
+        - <TargetMode>k__BackingField:
+            rid: 5978927107236954535
+          <Effect>k__BackingField:
+            rid: 5978927107236954536
+    - rid: 5978927107236954532
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954533
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954534
+      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damageAmount: 10
+    - rid: 5978927107236954535
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954536
+      type: {class: AddStressEffect, ns: , asm: Assembly-CSharp}
+      data:
+        stressAmount: 3

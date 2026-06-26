@@ -7,14 +7,18 @@ namespace Gameseed26
 	public enum SfxID
 	{
 		None,
-		click,
+		button_click,
+		cancel,
+		confirm_1,
+		confirm_2,
 		hover,
+		on_start_game,
 	}
 
 	public enum MusicID
 	{
 		None,
-		Space_Cadet,
+		MainMenuMusic,
 	}
 
 }

@@ -13,20 +13,21 @@ namespace Gameseed26
 
         [Header("Settings")]
         [SerializeField] private string _gameplaySceneName = "Map";
+        [SerializeField] private SfxID _onPlaySfx;
         [SerializeField] private MusicID _bgMusic;
 
         void Start()
         {
             SetExitButton();
 
-            if (Tune.Instance != null) Tune.Instance.PlayMusicWithFade(_bgMusic, fadeDuration: .5f);
+            Tune.MusicFade(_bgMusic, fadeDuration: .5f);
         }
 
         public void StartGame()
         {
             SceneLoader.LoadScene(_gameplaySceneName);
 
-            if (Tune.Instance != null) Tune.Instance.StopMusic();
+            Tune.StopMusicSafe();
         }
 
         public void ExitGame()

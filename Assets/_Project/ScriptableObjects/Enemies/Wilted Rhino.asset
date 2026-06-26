@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
+  m_Name: Wilted Rhino
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 21300004, guid: 7ab74e659e1f0a34d9cfec21c478fc12, type: 3}
+  <Health>k__BackingField: 55
+  <Intents>k__BackingField:
+  - <IntentName>k__BackingField: Wilted Rhino Rhino
+    <Effects>k__BackingField:
+    - <TargetMode>k__BackingField:
+        rid: 5978927107236954379
+      <Effect>k__BackingField:
+        rid: 5978927107236954385
+    - <TargetMode>k__BackingField:
+        rid: 5978927107236954381
+      <Effect>k__BackingField:
+        rid: 5978927107236954382
+  <AttackPattern>k__BackingField: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 5978927107236954379
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954381
+      type: {class: SelfTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954382
+      type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
+      data:
+        shieldAmount: 8
+    - rid: 5978927107236954385
+      type: {class: SimultaneousEffect, ns: , asm: Assembly-CSharp}
+      data:
+        <Effects>k__BackingField:
+        - <TargetMode>k__BackingField:
+            rid: 5978927107236954386
+          <Effect>k__BackingField:
+            rid: 5978927107236954389
+        - <TargetMode>k__BackingField:
+            rid: 5978927107236954390
+          <Effect>k__BackingField:
+            rid: 5978927107236954391
+    - rid: 5978927107236954386
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954389
+      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damageAmount: 6
+    - rid: 5978927107236954390
+      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927107236954391
+      type: {class: AddStressEffect, ns: , asm: Assembly-CSharp}
+      data:
+        stressAmount: 3

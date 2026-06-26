@@ -515,6 +515,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapSceneName: Map
   returnToMapDelay: 0.75
+  openRewardSceneAfterCombatWin: 1
+  rewardSceneName: CardReward
+  OnCombatWon:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &314454078
 Transform:
   m_ObjectHideFlags: 0
@@ -1149,6 +1154,8 @@ MonoBehaviour:
   - {fileID: 879865811}
   - {fileID: 1749930830}
   removeEnemyScaleDuration: 0.25
+  summonRiseDuration: 0.5
+  summonStartingYOffset: -5
 --- !u!1 &495470911
 GameObject:
   m_ObjectHideFlags: 0
@@ -3930,9 +3937,9 @@ MonoBehaviour:
   heroTeam:
   - {fileID: 11400000, guid: cae3ff5400bfc3e4d88ab3921131ba98, type: 2}
   enemyDataList:
-  - {fileID: 11400000, guid: f96a4dd9f192f9c499b9e9575a8a2afa, type: 2}
-  - {fileID: 11400000, guid: 48a9bfa41cad7a8489c7a6646e23656a, type: 2}
-  - {fileID: 11400000, guid: 48a9bfa41cad7a8489c7a6646e23656a, type: 2}
+  - {fileID: 11400000, guid: eb08ed9ce92bcf14fa1ea625113a9c7e, type: 2}
+  - {fileID: 11400000, guid: eb08ed9ce92bcf14fa1ea625113a9c7e, type: 2}
+  - {fileID: 11400000, guid: eb08ed9ce92bcf14fa1ea625113a9c7e, type: 2}
   startingHandSize: 5
 --- !u!1 &1996649046
 GameObject:

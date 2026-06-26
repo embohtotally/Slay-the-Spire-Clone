@@ -43,14 +43,24 @@ public class CardSystem : Singleton<CardSystem>
 
     public void Setup(List<CardData> deckData)
     {
-        int count = 0;
+        drawPile.Clear();
+        discardPile.Clear();
+        hand.Clear();
+
+        if (deckData == null)
+        {
+            UpdatePileTexts();
+            return;
+        }
+
         foreach (CardData cardData in deckData)
         {
-            if (count >= 20) break;
+            if (cardData == null) continue;
+
             Card card = new(cardData);
             drawPile.Add(card);
-            count++;
         }
+
         UpdatePileTexts();
     }
 
@@ -92,7 +102,7 @@ public class CardSystem : Singleton<CardSystem>
     {
         hand.Remove(playCardGA.Card);
         CardView cardView = handView.RemoveCard(playCardGA.Card);
-        yield return DiscardCard(cardView);
+        yield return PlayAndDiscardCard(cardView);
 
         SpendMana(playCardGA);
         DoManualTargetEffect(playCardGA);
@@ -124,6 +134,25 @@ public class CardSystem : Singleton<CardSystem>
     #endregion
 
     #region Helpers
+    private IEnumerator PlayAndDiscardCard(CardView cardView)
+    {
+        discardPile.Add(cardView.Card);
+        UpdatePileTexts();
+
+        cardView.transform.DOMove(new Vector3(0, 0, -1f), doTweenMoveDuration);
+        cardView.transform.DORotate(Vector3.zero, doTweenMoveDuration);
+        Tween scaleTween = cardView.transform.DOScale(Vector3.one * 1.5f, doTweenScaleDuration);
+        yield return scaleTween.WaitForCompletion();
+
+        yield return new WaitForSeconds(0.2f);
+
+        cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
+        Tween moveTween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
+        yield return moveTween.WaitForCompletion();
+
+        Destroy(cardView.gameObject);
+    }
+
     private IEnumerator DiscardCard(CardView cardView)
     {
         discardPile.Add(cardView.Card);
