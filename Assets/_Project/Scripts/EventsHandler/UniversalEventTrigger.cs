@@ -213,6 +213,7 @@ namespace ModularEvents
         public UnityEvent onEventTriggered;
     }
 
+    [AddComponentMenu("Modular Events/Event Listener Binding")]
     public class EventListenerBinding : MonoBehaviour
     {
         [SerializeField] private List<ModularEventListener> listeners = new List<ModularEventListener>();
@@ -240,6 +241,7 @@ namespace ModularEvents
     /// Broadcaster that can be used directly from UI/Animation events, or
     /// from code with any custom event name.
     /// </summary>
+    [AddComponentMenu("Modular Events/Event Broadcaster Proxy")]
     public class EventBroadcasterProxy : MonoBehaviour
     {
         [SerializeField] private string defaultEventName;
@@ -251,6 +253,7 @@ namespace ModularEvents
     /// <summary>
     /// Fires UnityEvents on common GameObject lifecycle events.
     /// </summary>
+    [AddComponentMenu("Modular Events/Lifecycle Event Relay")]
     public class LifecycleEventRelay : MonoBehaviour
     {
         public UnityEvent onAwake, onStart, onEnable, onDisable, onDestroy;
@@ -267,6 +270,7 @@ namespace ModularEvents
     /// delay elapses cancels the pending invoke instead of stacking a second
     /// one (set allowStacking = true to restore the old stacking behavior).
     /// </summary>
+    [AddComponentMenu("Modular Events/Delayed Event Invoker")]
     public class DelayedEventInvoker : MonoBehaviour
     {
         [SerializeField] private bool startAutomatically = false;
@@ -313,6 +317,7 @@ namespace ModularEvents
     /// Tag-filtered 2D physics relay, with optional fan-out to EventBus
     /// using any custom event name per collision callback.
     /// </summary>
+    [AddComponentMenu("Modular Events/Collision Event Relay 2D")]
     public class CollisionEventRelay2D : MonoBehaviour
     {
         [SerializeField] private string targetTag = "Player";
@@ -354,5 +359,14 @@ namespace ModularEvents
             onCollisionExit2D?.Invoke();
             if (!string.IsNullOrEmpty(broadcastNameOnCollisionExit)) EventBus.Broadcast(broadcastNameOnCollisionExit);
         }
+    }
+
+    /// <summary>
+    /// Unified wrapper matching the filename so Unity's Add Component menu finds it instantly.
+    /// Acts as an EventListenerBinding.
+    /// </summary>
+    [AddComponentMenu("Modular Events/Universal Event Trigger")]
+    public class UniversalEventTrigger : EventListenerBinding
+    {
     }
 }
