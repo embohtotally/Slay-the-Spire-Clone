@@ -967,12 +967,8 @@ MonoBehaviour:
   descriptionText: {fileID: 7075004463726517481}
   manaText: {fileID: 8184793426039016677}
   typeText: {fileID: 2449839840033641008}
-  actionText: {fileID: 0}
-  countText: {fileID: 0}
   cardImage: {fileID: 0}
   cardSpriteRenderer: {fileID: 4294085405384746176}
-  button: {fileID: 0}
-  countRoot: {fileID: 0}
   worldWrapper: {fileID: 5953651418682161023}
   enableCombatInteractions: 1
   enableCombatHoverPreview: 1
@@ -1049,7 +1045,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7258076715414124641}
