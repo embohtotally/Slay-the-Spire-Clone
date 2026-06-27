@@ -1,13 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 using TMPro;
 using UnityEngine.UI;
 // using Code.Scripts.Managers;
 using DG.Tweening;
 
 [System.Serializable]
-public struct DialogueLine
+public struct NPCDialogueLine
 {
     public string speakerName;
     [TextArea(3, 5)]
@@ -24,7 +26,7 @@ public class NPCInteraction : MonoBehaviour
     [SerializeField] private GameObject interactIndicator;
 
     [Header("Dialogue Settings")]
-    [SerializeField] private List<DialogueLine> dialogueLines;
+    [SerializeField] private List<NPCDialogueLine> dialogueLines;
     [SerializeField] private GameObject dialogueUI;
     [SerializeField] private TextMeshProUGUI speakerText;
     [SerializeField] private TextMeshProUGUI dialogueText;
@@ -60,6 +62,10 @@ public class NPCInteraction : MonoBehaviour
 
     [Header("Events")]
     public UnityEngine.Events.UnityEvent onDialogueFinished;
+    [SerializeField] private string nextSceneName;
+
+    [Header("SFX")]
+    [SerializeField] private AudioClip dialogueAdvanceSFX;
 
     // [Header("Reference")]
     // [SerializeField] GameManager gameManager;
@@ -74,7 +80,7 @@ public class NPCInteraction : MonoBehaviour
     private string currentFullLine = "";
     private Coroutine typingCoroutine;
     private Coroutine autoStartCoroutine;
-    private Queue<DialogueLine> dialogueQueue;
+    private Queue<NPCDialogueLine> dialogueQueue;
 
     private float previousTimeScale = 1f;
 
@@ -92,11 +98,7 @@ public class NPCInteraction : MonoBehaviour
     private void Awake()
     {
         // gameManager = FindFirstObjectByType<GameManager>();
-    }
-
-    private void Start()
-    {
-        dialogueQueue = new Queue<DialogueLine>();
+        dialogueQueue = new Queue<NPCDialogueLine>();
         dialogueUI.SetActive(false);
 
         if (interactIndicator != null)
@@ -113,7 +115,10 @@ public class NPCInteraction : MonoBehaviour
 
         speakerImageA.enabled = false;
         speakerImageB.enabled = false;
+    }
 
+    private void Start()
+    {
         if (autoStartDialogue && !hasTriggered)
         {
             autoStartCoroutine = StartCoroutine(WaitAndStartDialogue());
@@ -147,7 +152,9 @@ public class NPCInteraction : MonoBehaviour
         // Advance Dialogue
         if (isDialogueActive)
         {
-            if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.F))
+            bool advancePressed = (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
+                                  (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.fKey.wasPressedThisFrame));
+            if (advancePressed)
             {
                 if (isTyping)
                 {
@@ -158,6 +165,7 @@ public class NPCInteraction : MonoBehaviour
                 }
                 else
                 {
+                    // AudioManager.instance?.PlaySFX(dialogueAdvanceSFX);
                     DisplayNextSentence();
                 }
             }
@@ -165,7 +173,7 @@ public class NPCInteraction : MonoBehaviour
         }
 
         // Manual Start
-        if (isPlayerInRange && Input.GetKeyDown(KeyCode.F))
+        if (isPlayerInRange && Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
         {
             StartDialogue();
         }
@@ -201,8 +209,8 @@ public class NPCInteraction : MonoBehaviour
             return;
         }
 
-        previousTimeScale = Time.timeScale;
-        Time.timeScale = 0f;
+        // previousTimeScale = Time.timeScale;
+        // Time.timeScale = 0f;
 
         isDialogueActive = true;
         dialogueQueue.Clear();
@@ -300,7 +308,7 @@ public class NPCInteraction : MonoBehaviour
 
     private void EndDialogue()
     {
-        Time.timeScale = previousTimeScale;
+        // Time.timeScale = previousTimeScale;
 
         isDialogueActive = false;
         dialogueUI.SetActive(false);
@@ -333,6 +341,10 @@ public class NPCInteraction : MonoBehaviour
         }
 
         onDialogueFinished?.Invoke();
+
+        // if (!string.IsNullOrEmpty(nextSceneName))
+        //     SceneTransitionManager.LoadScene(nextSceneName);
+
         // gameManager.GameStart();
     }
 
