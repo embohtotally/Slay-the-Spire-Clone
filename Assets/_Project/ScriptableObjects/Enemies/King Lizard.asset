@@ -80,5 +80,5 @@ MonoBehaviour:
     - rid: 5978927107236954504
       type: {class: SummonEnemyEffect, ns: , asm: Assembly-CSharp}
       data:
-        enemyToSummon: {fileID: 11400000, guid: 48a9bfa41cad7a8489c7a6646e23656a, type: 2}
+        enemyToSummon: {fileID: 11400000, guid: fd8a37b8d5b4b2142a2a5b532ff30aee, type: 2}
         summonCount: 2

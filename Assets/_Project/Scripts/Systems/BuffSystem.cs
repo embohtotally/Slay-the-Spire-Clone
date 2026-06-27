@@ -48,6 +48,11 @@ public class BuffSystem : Singleton<BuffSystem>
                     {
                         dealDamageGA.Amount = Mathf.FloorToInt(dealDamageGA.Amount * 0.75f);
                     }
+                    else if (buff.Type == BuffType.DamageReductionPercentage)
+                    {
+                        float multiplier = Mathf.Max(0f, 1f - (buff.Value / 100f));
+                        dealDamageGA.Amount = Mathf.Max(0, Mathf.FloorToInt(dealDamageGA.Amount * multiplier));
+                    }
                 }
             }
         }
