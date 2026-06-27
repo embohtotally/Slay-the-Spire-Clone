@@ -1,76 +1,237 @@
 using DG.Tweening;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+using NaughtyAttributes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
+
+public enum CardViewMode
+{
+    CanvasDisplay,
+    WorldCombat,
+}
 
 public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IDragHandler
 {
-    [SerializeField] private TMP_Text mana;
-    [SerializeField] private TMP_Text title;
-    [SerializeField] private TMP_Text description;
-    [SerializeField] private SpriteRenderer imageSR;
-    [SerializeField] private GameObject wrapper;
+    [BoxGroup("Mode")]
+    [SerializeField] private CardViewMode viewMode = CardViewMode.CanvasDisplay;
+
+    [BoxGroup("Text References (TMP World or UI)")]
+    [SerializeField] private TMP_Text titleText;
+
+    [BoxGroup("Text References (TMP World or UI)")]
+    [SerializeField] private TMP_Text descriptionText;
+
+    [BoxGroup("Text References (TMP World or UI)")]
+    [SerializeField] private TMP_Text manaText;
+
+    [BoxGroup("Text References (TMP World or UI)")]
+    [SerializeField] private TMP_Text typeText;
+
+
+    [BoxGroup("Visual References")]
+    [ShowIf(nameof(viewMode), CardViewMode.CanvasDisplay)]
+    [SerializeField] private Image cardImage;
+
+    [BoxGroup("Visual References")]
+    [ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
+    [SerializeField] private SpriteRenderer cardSpriteRenderer;
+
+
+    [BoxGroup("Optional Combat References"), ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
+    [SerializeField] private GameObject worldWrapper;
+
+    [BoxGroup("Combat Interaction"), ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
+    [SerializeField] private bool enableCombatInteractions = true;
+
+    [BoxGroup("Combat Interaction"), ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
+    [SerializeField] private bool enableCombatHoverPreview = true;
+
+    [BoxGroup("Combat Interaction"), ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
+    [SerializeField] private bool enableFeebleTint = true;
+
+    [BoxGroup("Combat Interaction"), ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
     [SerializeField] private LayerMask dropAreaLayer;
 
+    [BoxGroup("Combat Interaction"), ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
+    [SerializeField] private float cardHoverYOffset = -2f;
+
+    [BoxGroup("Combat Interaction"), ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
+    [SerializeField] private float mousePositionZValue = -1f;
+
+    [BoxGroup("Combat Interaction"), ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
+    [SerializeField] private float mouseUpRaycastDistance = 10f;
+
+    [Foldout("Hover / Press Juice")]
+    [SerializeField] private bool enableHoverJuice;
+
+    [Foldout("Hover / Press Juice")]
+    [ShowIf(nameof(enableHoverJuice))]
+    [SerializeField] private Transform hoverTarget;
+
+    [Foldout("Hover / Press Juice")]
+    [ShowIf(nameof(enableHoverJuice))]
+    [SerializeField] private float hoverScale = 1.08f;
+
+    [Foldout("Hover / Press Juice")]
+    [ShowIf(nameof(enableHoverJuice))]
+    [SerializeField] private float pressedScale = 0.97f;
+
+    [Foldout("Hover / Press Juice")]
+    [ShowIf(nameof(enableHoverJuice))]
+    [SerializeField] private float tweenDuration = 0.12f;
+
+    [Foldout("Hover / Press Juice")]
+    [ShowIf(nameof(enableHoverJuice))]
+    [SerializeField] private Ease hoverEase = Ease.OutBack;
+
+    [Foldout("Hover / Press Juice")]
+    [ShowIf(nameof(enableHoverJuice))]
+    [SerializeField] private bool bringToFrontOnHover = true;
+
     public Card Card { get; private set; }
+    public CardData CardData { get; private set; }
 
     private Vector3 dragStartPosition;
     private Quaternion dragStartRotation;
     private bool isFeebleBlocked;
+    private Vector3 baseHoverScale = Vector3.one;
+    private Tween hoverTween;
 
-    private readonly float cardHoverYOffset = -2f;
-    private readonly float mousePositionZValue = -1f;
-    private readonly float mouseUpRaycastDistance = 10f;
+    protected virtual void Awake()
+    {
+        CacheReferences();
+        CacheBaseHoverScale();
+    }
+
+    protected virtual void OnValidate()
+    {
+        CacheReferences();
+
+        if (viewMode == CardViewMode.CanvasDisplay)
+        {
+            enableCombatInteractions = false;
+        }
+        else if (viewMode == CardViewMode.WorldCombat)
+        {
+            enableCombatInteractions = true;
+        }
+    }
+
+    protected virtual void OnEnable()
+    {
+        CacheBaseHoverScale();
+    }
+
+    protected virtual void OnDisable()
+    {
+        hoverTween?.Kill();
+        ResetHoverScale();
+    }
+
+    protected virtual void Update()
+    {
+        RefreshCombatTint();
+    }
 
     public void Setup(Card card)
     {
         Card = card;
-        title.text = Card.Title;
-        description.text = Card.Description;
-        mana.text = Card.Mana.ToString();
-        imageSR.sprite = Card.Image;
-    }
+        CardData = null;
 
-    private void Update()
-    {
-        if (Card == null) return;
-        
-        isFeebleBlocked = Card.Type == CardType.Attack && HeroSystem.Instance != null && HeroSystem.Instance.HeroView.HealthPenalty > 0;
-        
-        if (isFeebleBlocked)
+        if (card == null)
         {
-            imageSR.color = new Color(0.4f, 0.4f, 0.4f, 1f);
+            ClearCardVisuals();
+            return;
         }
-        else
+
+        ApplyVisuals(card.Title, card.Description, card.Mana, card.Type, card.Image);
+    }
+
+    public void Setup(CardData cardData)
+    {
+        Card = null;
+        CardData = cardData;
+
+        if (cardData == null)
         {
-            imageSR.color = Color.white;
+            ClearCardVisuals();
+            return;
         }
+
+        ApplyVisuals(cardData.Title, cardData.Description, cardData.Mana, cardData.Type, cardData.Image);
     }
 
-    public void OnPointerExit(PointerEventData eventData)
+    public void SetupCard(CardData cardData, string titleOverride = null, string descriptionOverride = null)
     {
-        if (!Interactions.Instance.PlayerCanHover()) return;
+        Card = null;
+        CardData = cardData;
 
-        CardViewHoverSystem.Instance.Hide();
-        wrapper.SetActive(true);
+        if (cardData == null)
+        {
+            ClearCardVisuals();
+            return;
+        }
+
+        string displayTitle = string.IsNullOrWhiteSpace(titleOverride) ? cardData.Title : titleOverride;
+        string displayDescription = string.IsNullOrWhiteSpace(descriptionOverride) ? cardData.Description : descriptionOverride;
+        ApplyVisuals(displayTitle, displayDescription, cardData.Mana, cardData.Type, cardData.Image);
     }
 
-    public void OnPointerEnter(PointerEventData eventData)
+    public void SetHoverJuiceEnabled(bool enabled)
     {
-        if (!Interactions.Instance.PlayerCanHover()) return;
-
-        Vector3 pos = new(transform.position.x, cardHoverYOffset, 0);
-        CardViewHoverSystem.Instance.Show(Card, pos);
-        wrapper.SetActive(false);
+        enableHoverJuice = enabled;
     }
 
-    public void OnPointerDown(PointerEventData eventData)
+    public void SetCombatInteractionsEnabled(bool enabled)
     {
-        if (!Interactions.Instance.PlayerCanInteract()) return;
-        if (isFeebleBlocked) return;
+        enableCombatInteractions = enabled;
+    }
+
+    public void SetCombatHoverPreviewEnabled(bool enabled)
+    {
+        enableCombatHoverPreview = enabled;
+    }
+
+    public virtual void ClearCardVisuals()
+    {
+        ApplyText(titleText, "Empty");
+        ApplyText(descriptionText, string.Empty);
+        ApplyText(manaText, string.Empty);
+        ApplyText(typeText, string.Empty);
+
+        SetImage(null);
+    }
+
+    public virtual void OnPointerEnter(PointerEventData eventData)
+    {
+        if (enableCombatHoverPreview && Card != null && CanCombatHover())
+        {
+            Vector3 pos = new(transform.position.x, cardHoverYOffset, 0);
+            CardViewHoverSystem.Instance.Show(Card, pos);
+            if (worldWrapper != null) worldWrapper.SetActive(false);
+        }
+
+        PlayHoverJuice(baseHoverScale * hoverScale, hoverEase, bringToFrontOnHover);
+    }
+
+    public virtual void OnPointerExit(PointerEventData eventData)
+    {
+        if (enableCombatHoverPreview && Card != null && CanCombatHover())
+        {
+            CardViewHoverSystem.Instance.Hide();
+            if (worldWrapper != null) worldWrapper.SetActive(true);
+        }
+
+        PlayHoverJuice(baseHoverScale, Ease.OutQuad, false);
+    }
+
+    public virtual void OnPointerDown(PointerEventData eventData)
+    {
+        PlayHoverJuice(baseHoverScale * pressedScale, Ease.OutQuad, false);
+
+        if (!CanStartCombatInteraction()) return;
 
         if (Card.ManualTargetEffect != null)
         {
@@ -79,7 +240,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         else
         {
             Interactions.Instance.PlayerIsDragging = true;
-            wrapper.SetActive(true);
+            if (worldWrapper != null) worldWrapper.SetActive(true);
             CardViewHoverSystem.Instance.Hide();
             dragStartPosition = transform.position;
             dragStartRotation = transform.rotation;
@@ -88,10 +249,11 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         }
     }
 
-    public void OnPointerUp(PointerEventData eventData)
+    public virtual void OnPointerUp(PointerEventData eventData)
     {
-        if (!Interactions.Instance.PlayerCanInteract()) return;
-        if (isFeebleBlocked) return;
+        PlayHoverJuice(baseHoverScale * hoverScale, hoverEase, false);
+
+        if (!CanStartCombatInteraction()) return;
 
         if (Card.ManualTargetEffect != null)
         {
@@ -111,14 +273,86 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         }
     }
 
-    public void OnDrag(PointerEventData eventData)
+    public virtual void OnDrag(PointerEventData eventData)
     {
-        if (!Interactions.Instance.PlayerCanInteract()) return;
-        if (isFeebleBlocked) return;
+        if (!CanStartCombatInteraction()) return;
         if (Card.ManualTargetEffect != null) return;
 
         transform.position = MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue);
         ManualTargetingSystem.Instance.UpdateAutoTargeting(transform.position);
+    }
+
+    protected void CacheReferences()
+    {
+        if (hoverTarget == null) hoverTarget = transform;
+
+        TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+        if (titleText == null && texts.Length > 0) titleText = texts[0];
+        if (typeText == null && texts.Length > 3) typeText = texts[1];
+        if (descriptionText == null && texts.Length > 1) descriptionText = texts[2];
+        if (manaText == null && texts.Length > 2) manaText = texts[3];
+
+        if (cardImage == null)
+        {
+            Image[] images = GetComponentsInChildren<Image>(true);
+
+            foreach (Image image in images)
+            {
+                if (image.gameObject != gameObject && image.name == "Image")
+                {
+                    cardImage = image;
+                    break;
+                }
+            }
+        }
+
+        if (cardSpriteRenderer == null)
+        {
+            cardSpriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
+        }
+    }
+
+    private void ApplyVisuals(string cardTitle, string cardDescription, int cardMana, CardType cardType, Sprite cardSprite)
+    {
+        ApplyText(titleText, cardTitle);
+        ApplyText(descriptionText, cardDescription);
+        ApplyText(manaText, cardMana.ToString());
+        ApplyText(typeText, cardType.ToString());
+        SetImage(cardSprite);
+    }
+
+    private void SetImage(Sprite sprite)
+    {
+        if (cardImage != null)
+        {
+            cardImage.sprite = sprite;
+            cardImage.enabled = sprite != null;
+        }
+
+        if (cardSpriteRenderer != null)
+        {
+            cardSpriteRenderer.sprite = sprite;
+            cardSpriteRenderer.color = sprite != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+        }
+    }
+
+    private void RefreshCombatTint()
+    {
+        if (!enableFeebleTint || Card == null || cardSpriteRenderer == null) return;
+
+        isFeebleBlocked = Card.Type == CardType.Attack && HeroSystem.Instance != null && HeroSystem.Instance.HeroView.HealthPenalty > 0;
+        cardSpriteRenderer.color = isFeebleBlocked ? new Color(0.4f, 0.4f, 0.4f, 1f) : Color.white;
+    }
+
+    private bool CanCombatHover()
+    {
+        return enableCombatInteractions && Interactions.Instance != null && Interactions.Instance.PlayerCanHover() && CardViewHoverSystem.Instance != null;
+    }
+
+    private bool CanStartCombatInteraction()
+    {
+        if (!enableCombatInteractions || Card == null || isFeebleBlocked) return false;
+        return Interactions.Instance != null && Interactions.Instance.PlayerCanInteract();
     }
 
     private bool CanPlayCard()
@@ -137,5 +371,40 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         {
             transform.SetPositionAndRotation(dragStartPosition, dragStartRotation);
         }
+    }
+
+    private void PlayHoverJuice(Vector3 targetScale, Ease ease, bool bringToFront)
+    {
+        if (!enableHoverJuice || hoverTarget == null) return;
+
+        if (bringToFront)
+        {
+            transform.SetAsLastSibling();
+        }
+
+        hoverTween?.Kill();
+        hoverTween = hoverTarget.DOScale(targetScale, tweenDuration).SetEase(ease).SetUpdate(true);
+    }
+
+    private void CacheBaseHoverScale()
+    {
+        if (hoverTarget == null) hoverTarget = transform;
+        if (hoverTarget != null && hoverTarget.localScale != Vector3.zero)
+        {
+            baseHoverScale = hoverTarget.localScale;
+        }
+    }
+
+    private void ResetHoverScale()
+    {
+        if (hoverTarget != null)
+        {
+            hoverTarget.localScale = baseHoverScale;
+        }
+    }
+
+    private static void ApplyText(TMP_Text targetText, string value)
+    {
+        if (targetText != null) targetText.text = value ?? string.Empty;
     }
 }

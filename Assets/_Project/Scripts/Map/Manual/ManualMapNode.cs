@@ -50,6 +50,13 @@ public class ManualMapNode : MonoBehaviour
     [SerializeField] private ManualMapUnlockRule unlockRule = ManualMapUnlockRule.ManualOnly;
     [SerializeField] private List<ManualMapNode> requiredCompletedNodes = new();
 
+    [Header("Auto Graph / STS Style")]
+    [Tooltip("Read-only helper values produced by ManualMapController auto setup. Useful for checking inferred layer/column in the inspector.")]
+    [SerializeField] private int layerIndex = -1;
+    [SerializeField] private int columnIndex = -1;
+    [Tooltip("Next nodes in the Slay-the-Spire style path. Auto setup fills this from scene positions; designers can still tweak it manually afterwards.")]
+    [SerializeField] private List<ManualMapNode> nextNodes = new();
+
     [Header("Click Action")]
     [SerializeField] private ManualMapNodeAction clickAction = ManualMapNodeAction.ResolveByNodeType;
     [SerializeField] private bool completeOnClick = true;
@@ -80,6 +87,10 @@ public class ManualMapNode : MonoBehaviour
     public ManualMapNodeAction ClickAction => clickAction;
     public bool CompleteOnClick => completeOnClick;
     public string SceneNameOverride => sceneNameOverride;
+    public int LayerIndex => layerIndex;
+    public int ColumnIndex => columnIndex;
+    public IReadOnlyList<ManualMapNode> NextNodes => nextNodes;
+    public IReadOnlyList<ManualMapNode> PathProgressionTargets => nextNodes.Count > 0 ? nextNodes : activateOnComplete;
     public bool IsCompleted => currentState == ManualMapNodeState.Completed;
     public bool IsDisabled => currentState == ManualMapNodeState.Disabled || currentState == ManualMapNodeState.HiddenDisabled;
     public bool CanSelect => currentState == ManualMapNodeState.Active;
@@ -180,10 +191,8 @@ public class ManualMapNode : MonoBehaviour
         SetCompleted();
         OnCompleted?.Invoke();
 
-        foreach (ManualMapNode node in activateOnComplete)
-        {
-            if (node != null && !node.IsCompleted) node.SetActive();
-        }
+        ActivateTargets(nextNodes);
+        ActivateTargets(activateOnComplete);
 
         foreach (ManualMapNode node in deactivateOnComplete)
         {
@@ -211,14 +220,24 @@ public class ManualMapNode : MonoBehaviour
         return null;
     }
 
-    public MapNode CreateRuntimeMapNode(MapEncounterPool encounterPool, int column)
+    public MapNode CreateRuntimeMapNode(MapEncounterPool encounterPool, int fallbackColumn)
     {
-        MapNode runtimeNode = new(NodeId, 0, column, nodeType, GetMapPosition())
+        MapNode runtimeNode = new(NodeId, Mathf.Max(0, layerIndex), columnIndex >= 0 ? columnIndex : fallbackColumn, nodeType, GetMapPosition())
         {
             Encounter = ResolveEncounter(encounterPool),
             IsAvailable = CanSelect,
             IsVisited = IsCompleted
         };
+
+        foreach (ManualMapNode nextNode in PathProgressionTargets)
+        {
+            if (nextNode == null) continue;
+            string nextNodeId = nextNode.NodeId;
+            if (!runtimeNode.NextNodeIds.Contains(nextNodeId))
+            {
+                runtimeNode.NextNodeIds.Add(nextNodeId);
+            }
+        }
 
         return runtimeNode;
     }
@@ -228,9 +247,61 @@ public class ManualMapNode : MonoBehaviour
         return nodeType == MapNodeType.Enemy || nodeType == MapNodeType.Elite || nodeType == MapNodeType.Boss;
     }
 
+    public Vector2 GetDesignerPosition()
+    {
+        return GetMapPosition();
+    }
+
+    public void ApplyDesignerAutoSetup(
+        string generatedId,
+        int generatedLayerIndex,
+        int generatedColumnIndex,
+        ManualMapNodeState generatedInitialState,
+        ManualMapUnlockRule generatedUnlockRule,
+        List<ManualMapNode> generatedRequiredNodes,
+        List<ManualMapNode> generatedNextNodes,
+        bool overwriteId,
+        bool clearManualOutputLists)
+    {
+        if (overwriteId || string.IsNullOrWhiteSpace(id))
+        {
+            id = generatedId;
+        }
+
+        layerIndex = generatedLayerIndex;
+        columnIndex = generatedColumnIndex;
+        initialState = generatedInitialState;
+        unlockRule = generatedUnlockRule;
+        requiredCompletedNodes = CleanNodeList(generatedRequiredNodes);
+        nextNodes = CleanNodeList(generatedNextNodes);
+
+        if (clearManualOutputLists)
+        {
+            activateOnComplete = new List<ManualMapNode>(nextNodes);
+            deactivateOnComplete.Clear();
+            hideOnComplete.Clear();
+        }
+
+        RefreshVisual();
+    }
+
+    public void SetNodeType(MapNodeType newNodeType)
+    {
+        nodeType = newNodeType;
+        RefreshVisual();
+    }
+
     private void HandleClick()
     {
         controller?.SelectNode(this);
+    }
+
+    private void ActivateTargets(List<ManualMapNode> targetNodes)
+    {
+        foreach (ManualMapNode node in targetNodes)
+        {
+            if (node != null && !node.IsCompleted) node.SetActive();
+        }
     }
 
     private bool HasAnyRequiredCompleted()
@@ -300,6 +371,22 @@ public class ManualMapNode : MonoBehaviour
         if (button == null) button = GetComponent<Button>();
         if (iconImage == null) iconImage = GetComponent<Image>();
         if (labelText == null) labelText = GetComponentInChildren<TMP_Text>(true);
+    }
+
+    private static List<ManualMapNode> CleanNodeList(IEnumerable<ManualMapNode> source)
+    {
+        List<ManualMapNode> result = new();
+        if (source == null) return result;
+
+        foreach (ManualMapNode node in source)
+        {
+            if (node != null && !result.Contains(node))
+            {
+                result.Add(node);
+            }
+        }
+
+        return result;
     }
 
     private static string GetLabel(MapNodeType type)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ public class RunDeckManager : PersistentSingleton<RunDeckManager>
 
     public IReadOnlyList<CardData> CurrentDeck => currentDeck;
     public bool HasDeck => currentDeck.Count > 0;
+    public event Action<IReadOnlyList<CardData>> DeckChanged;
 
     public void InitializeIfEmpty(IEnumerable<CardData> startingDeck)
     {
@@ -17,15 +19,18 @@ public class RunDeckManager : PersistentSingleton<RunDeckManager>
     public void ResetDeck(IEnumerable<CardData> startingDeck)
     {
         currentDeck.Clear();
-        if (startingDeck == null) return;
-
-        foreach (CardData cardData in startingDeck)
+        if (startingDeck != null)
         {
-            if (cardData != null)
+            foreach (CardData cardData in startingDeck)
             {
-                currentDeck.Add(cardData);
+                if (cardData != null)
+                {
+                    currentDeck.Add(cardData);
+                }
             }
         }
+
+        NotifyDeckChanged();
     }
 
     public List<CardData> GetDeckCopy()
@@ -42,6 +47,7 @@ public class RunDeckManager : PersistentSingleton<RunDeckManager>
         }
 
         currentDeck.Add(cardData);
+        NotifyDeckChanged();
     }
 
     public bool Contains(CardData cardData)
@@ -73,6 +79,12 @@ public class RunDeckManager : PersistentSingleton<RunDeckManager>
         if (index < 0) return false;
 
         currentDeck[index] = newCard;
+        NotifyDeckChanged();
         return true;
+    }
+
+    public void NotifyDeckChanged()
+    {
+        DeckChanged?.Invoke(CurrentDeck);
     }
 }
