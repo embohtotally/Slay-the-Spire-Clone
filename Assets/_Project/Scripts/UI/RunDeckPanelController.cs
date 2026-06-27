@@ -4,6 +4,7 @@ using NaughtyAttributes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 
 public enum RunDeckDisplayMode
 {
@@ -26,7 +27,6 @@ public class RunDeckPanelController : MonoBehaviour
     [SerializeField] private bool startClosed = true;
     [SerializeField] private bool refreshOnEnable = true;
     [SerializeField] private bool closeWithEscape = true;
-    [SerializeField] private KeyCode toggleKey = KeyCode.C;
     [SerializeField] private RunDeckDisplayMode displayMode = RunDeckDisplayMode.GroupDuplicates;
     [Tooltip("Useful when Animation Sequencer handles close animation. If false, ClosePanel only fires OnCloseRequested and leaves hiding to your animation event.")]
     [SerializeField] private bool hideRootImmediatelyOnClose = true;
@@ -54,10 +54,8 @@ public class RunDeckPanelController : MonoBehaviour
         EnsureRunDeckManagerIfWanted();
     }
 
-    private void OnEnable()
+    private void Start()
     {
-        SubscribeToDeckManager();
-
         if (startClosed)
         {
             SetPanelVisible(false);
@@ -66,6 +64,11 @@ public class RunDeckPanelController : MonoBehaviour
         {
             OpenPanel();
         }
+    }
+
+    private void OnEnable()
+    {
+        SubscribeToDeckManager();
 
         if (refreshOnEnable)
         {
@@ -76,19 +79,6 @@ public class RunDeckPanelController : MonoBehaviour
     private void OnDisable()
     {
         UnsubscribeFromDeckManager();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(toggleKey))
-        {
-            TogglePanel();
-        }
-
-        if (closeWithEscape && isOpen && Input.GetKeyDown(KeyCode.Escape))
-        {
-            ClosePanel();
-        }
     }
 
     [Button("Open Deck Panel", EButtonEnableMode.Playmode)]

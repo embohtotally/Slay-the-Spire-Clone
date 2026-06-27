@@ -1,11 +1,11 @@
-using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
-[System.Serializable]
+[Serializable]
 public class CardSystem : Singleton<CardSystem>
 {
     [SerializeField] private HandView handView;

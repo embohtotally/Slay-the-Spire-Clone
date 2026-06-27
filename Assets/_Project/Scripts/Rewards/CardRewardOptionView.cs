@@ -2,26 +2,20 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CardRewardOptionView : MonoBehaviour
+public class CardRewardOptionView : CardView
 {
-    [Header("References")]
+    [Header("Reward")]
     [SerializeField] private Button button;
-    [SerializeField] private Image cardImage;
-    [SerializeField] private TMP_Text titleText;
-    [SerializeField] private TMP_Text descriptionText;
-    [SerializeField] private TMP_Text manaText;
     [SerializeField] private TMP_Text actionText;
-
-    [Header("Labels")]
     [SerializeField] private string newCardActionLabel = "Choose Card";
     [SerializeField] private string upgradeActionLabel = "Choose Upgrade";
 
     private CardRewardController rewardController;
     private CardRewardOption option;
 
-    private void Awake()
+    protected override void Awake()
     {
-        CacheReferences();
+        base.Awake();
     }
 
     public void Setup(CardRewardController controller, CardRewardOption newOption)
@@ -39,21 +33,17 @@ public class CardRewardOptionView : MonoBehaviour
         Refresh();
     }
 
+    public override void ClearCardVisuals()
+    {
+        base.ClearCardVisuals();
+        SetActionText(string.Empty);
+        SetButtonInteractable(false);
+    }
+
     public void Clear()
     {
         option = null;
-        if (titleText != null) titleText.text = "Empty";
-        if (descriptionText != null) descriptionText.text = "No reward.";
-        if (manaText != null) manaText.text = "";
-        if (actionText != null) actionText.text = "";
-
-        if (cardImage != null)
-        {
-            cardImage.sprite = null;
-            cardImage.enabled = false;
-        }
-
-        if (button != null) button.interactable = false;
+        ClearCardVisuals();
     }
 
     public void Refresh()
@@ -65,18 +55,9 @@ public class CardRewardOptionView : MonoBehaviour
         }
 
         CardData previewCard = option.PreviewCard;
-        if (titleText != null) titleText.text = option.GetTitle();
-        if (descriptionText != null) descriptionText.text = option.GetDescription();
-        if (manaText != null) manaText.text = previewCard != null ? previewCard.Mana.ToString() : "";
-        if (actionText != null) actionText.text = option.Type == CardRewardOptionType.UpgradeCard ? upgradeActionLabel : newCardActionLabel;
-
-        if (cardImage != null)
-        {
-            cardImage.sprite = previewCard != null ? previewCard.Image : null;
-            cardImage.enabled = cardImage.sprite != null;
-        }
-
-        if (button != null) button.interactable = previewCard != null;
+        SetupCard(previewCard, option.GetTitle(), option.GetDescription());
+        SetActionText(option.Type == CardRewardOptionType.UpgradeCard ? upgradeActionLabel : newCardActionLabel);
+        SetButtonInteractable(previewCard != null);
     }
 
     private void SelectOption()
@@ -85,27 +66,13 @@ public class CardRewardOptionView : MonoBehaviour
         rewardController?.ChooseReward(option);
     }
 
-    private void CacheReferences()
+    private void SetActionText(string text)
     {
-        if (button == null) button = GetComponent<Button>();
+        if (actionText != null) actionText.text = text ?? string.Empty;
+    }
 
-        TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
-        if (titleText == null && texts.Length > 0) titleText = texts[0];
-        if (descriptionText == null && texts.Length > 1) descriptionText = texts[1];
-        if (manaText == null && texts.Length > 2) manaText = texts[2];
-        if (actionText == null && texts.Length > 3) actionText = texts[3];
-
-        if (cardImage == null)
-        {
-            Image[] images = GetComponentsInChildren<Image>(true);
-            foreach (Image image in images)
-            {
-                if (image.gameObject != gameObject)
-                {
-                    cardImage = image;
-                    break;
-                }
-            }
-        }
+    private void SetButtonInteractable(bool enable)
+    {
+        if (button != null) button.interactable = enable;
     }
 }
