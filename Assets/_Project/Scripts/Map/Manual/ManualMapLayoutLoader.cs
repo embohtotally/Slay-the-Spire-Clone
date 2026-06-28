@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Gameseed26;
 using NaughtyAttributes;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class ManualMapLayoutLoader : MonoBehaviour
 {
@@ -134,7 +134,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
 
         if (!string.IsNullOrWhiteSpace(mapSceneName))
         {
-            SceneManager.LoadScene(mapSceneName);
+            SceneLoader.LoadScene(mapSceneName);
         }
     }
 

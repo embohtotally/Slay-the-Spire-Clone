@@ -11,13 +11,11 @@ public class HeroSystem : Singleton<HeroSystem>
     private void OnEnable()
     {
         ActionSystem.AttachPerformer<AddStressGA>(AddStressPerformer);
-        ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
     }
 
     private void OnDisable()
     {
         ActionSystem.DetachPerformer<AddStressGA>();
-        ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
     }
 
     public void Setup(List<HeroData> heroTeam)
@@ -34,11 +32,4 @@ public class HeroSystem : Singleton<HeroSystem>
         yield return null;
     }
 
-    private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
-    {
-        if (HeroView != null)
-        {
-            HeroView.ClearStressedState();
-        }
-    }
 }

@@ -38,6 +38,14 @@ public class RunDeckManager : PersistentSingleton<RunDeckManager>
         return new List<CardData>(currentDeck);
     }
 
+    public void ClearDeck()
+    {
+        if (currentDeck.Count == 0) return;
+
+        currentDeck.Clear();
+        NotifyDeckChanged();
+    }
+
     public void AddCard(CardData cardData)
     {
         if (cardData == null)

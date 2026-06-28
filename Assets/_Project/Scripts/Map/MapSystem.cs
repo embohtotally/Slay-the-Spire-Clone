@@ -1,5 +1,5 @@
+using Gameseed26;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MapSystem : MonoBehaviour
 {
@@ -63,7 +63,7 @@ public class MapSystem : MonoBehaviour
                 Debug.LogWarning($"Map node {node.Id} ({node.Type}) has no EncounterData. Combat will use MatchSetupSystem fallback enemies.");
             }
 
-            SceneManager.LoadScene(combatSceneName);
+            SceneLoader.LoadScene(combatSceneName);
             return;
         }
 

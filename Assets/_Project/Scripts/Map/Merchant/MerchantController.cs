@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using Gameseed26;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MerchantController : MonoBehaviour
 {
@@ -110,7 +110,7 @@ public class MerchantController : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(mapSceneName);
+        SceneLoader.LoadScene(mapSceneName);
     }
 
     private bool BuyNewCard(MerchantOffer offer)

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using Gameseed26;
 using NaughtyAttributes;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 #if UNITY_EDITOR
@@ -341,7 +341,7 @@ public class ManualMapController : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(sceneName);
+        SceneLoader.LoadScene(sceneName);
     }
 
     private void StartCombat(ManualMapNode node)
@@ -371,7 +371,7 @@ public class ManualMapController : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(sceneName);
+        SceneLoader.LoadScene(sceneName);
     }
 
     private void LoadNodeScene(ManualMapNode node)
@@ -383,7 +383,7 @@ public class ManualMapController : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(sceneName);
+        SceneLoader.LoadScene(sceneName);
     }
 
     private void CollectNodes()

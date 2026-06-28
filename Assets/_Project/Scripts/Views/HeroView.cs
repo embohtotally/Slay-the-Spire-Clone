@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,9 +5,10 @@ using UnityEngine.UI;
 public class HeroView : CombatantView
 {
     [SerializeField] private Slider stressSlider;
-    
+    [SerializeField] private int maxStress = 100;
+
     public int CurrentStress { get; private set; }
-    public int MaxStress { get; private set; } = 35;
+    public int MaxStress { get; private set; } = 100;
     public bool IsStressed { get; private set; } = false;
 
     private List<GameObject> heroSprites = new List<GameObject>();
@@ -36,7 +35,20 @@ public class HeroView : CombatantView
             totalHealth += hero.Health;
         }
 
-        SetupBase(totalHealth, null);
+        int setupMaxHealth = totalHealth;
+        int setupMaxStress = Mathf.Max(1, maxStress);
+        bool shouldUseRunState = RunManager.Instance != null && RunManager.Instance.HasActiveRun;
+
+        if (shouldUseRunState)
+        {
+            RunManager.Instance.InitializeHeroState(setupMaxHealth, setupMaxStress);
+            setupMaxHealth = RunManager.Instance.HeroMaxHealth;
+            setupMaxStress = RunManager.Instance.HeroMaxStress;
+        }
+
+        MaxStress = setupMaxStress;
+        SetupBase(setupMaxHealth, null);
+        ClearStats();
         
         if (spriteRenderer != null)
         {
@@ -67,12 +79,15 @@ public class HeroView : CombatantView
             heroSprites.Add(spriteObj);
         }
         
-        if (RunManager.Instance != null && RunManager.Instance.CurrentHeroHealth.HasValue)
+        if (shouldUseRunState && RunManager.Instance.HasHeroState)
         {
-            SetCurrentHealth(RunManager.Instance.CurrentHeroHealth.Value);
+            SetCurrentHealth(RunManager.Instance.HeroCurrentHealth);
+            SetCurrentStress(RunManager.Instance.HeroCurrentStress);
         }
-
-        ClearStats();
+        else
+        {
+            SetCurrentStress(0);
+        }
     }
 
     public override void ClearStats()
@@ -91,37 +106,53 @@ public class HeroView : CombatantView
 
     public override void AddStress(int amount)
     {
-        if (IsStressed) return;
+        if (amount <= 0 || IsStressed) return;
 
-        CurrentStress += amount;
+        SetCurrentStress(CurrentStress + amount);
+    }
 
-        if (CurrentStress >= MaxStress)
+    public void SetCurrentStress(int amount)
+    {
+        MaxStress = Mathf.Max(1, MaxStress);
+        CurrentStress = Mathf.Clamp(amount, 0, MaxStress);
+        IsStressed = CurrentStress >= MaxStress;
+
+        if (IsStressed)
         {
-            CurrentStress = MaxStress;
-            IsStressed = true;
-            // Breakdown: Reduce Max HP by 20% (minimum 1)
-            int penaltyAmount = Mathf.Max(1, MaxHealth / 5);
-            ApplyHealthPenalty(penaltyAmount);
+            ApplyStressPenaltyIfNeeded();
+        }
+        else if (HealthPenalty > 0)
+        {
+            HealthPenalty = 0;
+            UpdateHealthVisual();
         }
 
         UpdateStressSlider();
+    }
+
+    private void ApplyStressPenaltyIfNeeded()
+    {
+        if (HealthPenalty > 0) return;
+
+        // Breakdown: Reduce effective Max HP by 20% (minimum 1) while stress is full.
+        int penaltyAmount = Mathf.Max(1, MaxHealth / 5);
+        ApplyHealthPenalty(penaltyAmount);
     }
 
     private void UpdateStressSlider()
     {
         if (stressSlider != null)
         {
-            stressSlider.value = (float)CurrentStress / MaxStress;
+            stressSlider.value = MaxStress > 0 ? (float)CurrentStress / MaxStress : 0f;
         }
     }
 
     public void ClearStressedState()
     {
-        if (IsStressed)
-        {
-            IsStressed = false;
-            CurrentStress = 0;
-            UpdateStressSlider();
-        }
+        CurrentStress = 0;
+        IsStressed = false;
+        HealthPenalty = 0;
+        UpdateHealthVisual();
+        UpdateStressSlider();
     }
 }

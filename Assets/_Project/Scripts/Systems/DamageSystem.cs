@@ -1,7 +1,6 @@
 using System.Collections;
 using Gameseed26;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 [System.Serializable]
 public class DamageSystem : MonoBehaviour
@@ -60,7 +59,7 @@ public class DamageSystem : MonoBehaviour
                     }
 
                     yield return new WaitForSeconds(gameOverDelay);
-                    SceneManager.LoadScene(gameOverSceneName);
+                    SceneLoader.LoadScene(gameOverSceneName);
                 }
             }
         }

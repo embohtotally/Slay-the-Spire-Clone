@@ -1,8 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Gameseed26;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement;
 
 public class CardRewardController : MonoBehaviour
 {
@@ -21,16 +22,21 @@ public class CardRewardController : MonoBehaviour
     [Header("After Choice")]
     [SerializeField] private bool hideAfterChoice = true;
     [SerializeField] private bool loadSceneAfterChoice = true;
+    [SerializeField] private bool unloadAdditiveSceneAfterChoice;
     [SerializeField] private string sceneAfterChoice = "Map";
 
     [Header("Events")]
     public UnityEvent OnRewardOpened;
     public UnityEvent OnRewardChosen;
+    public UnityEvent OnRewardSkipped;
     public UnityEvent OnRewardClosed;
 
     private readonly List<CardRewardOption> activeOptions = new();
     private readonly List<CardRewardOptionView> optionViews = new();
     private bool rewardAlreadyChosen;
+    private bool rewardFinished;
+
+    public event Action<bool> RewardFinished;
 
     private void Awake()
     {
@@ -56,6 +62,14 @@ public class CardRewardController : MonoBehaviour
         }
     }
 
+    public void ConfigureForAdditiveReward(CardRewardRequest request)
+    {
+        loadSceneAfterChoice = false;
+        unloadAdditiveSceneAfterChoice = true;
+        hideAfterChoice = true;
+        OpenReward(request ?? defaultRequest);
+    }
+
     public void OpenReward()
     {
         OpenReward(defaultRequest);
@@ -70,6 +84,7 @@ public class CardRewardController : MonoBehaviour
     public void OpenReward(CardRewardRequest request)
     {
         rewardAlreadyChosen = false;
+        rewardFinished = false;
         if (rewardRoot != null) rewardRoot.SetActive(true);
 
         GenerateOptions(request ?? defaultRequest);
@@ -78,7 +93,7 @@ public class CardRewardController : MonoBehaviour
 
     public void ChooseReward(CardRewardOption option)
     {
-        if (rewardAlreadyChosen || option == null) return;
+        if (rewardAlreadyChosen || rewardFinished || option == null) return;
         EnsureRunDeckManagerExists();
 
         bool applied = option.Type switch
@@ -91,23 +106,52 @@ public class CardRewardController : MonoBehaviour
         if (!applied) return;
 
         rewardAlreadyChosen = true;
-        OnRewardChosen?.Invoke();
+        FinishReward(true);
+    }
 
-        if (hideAfterChoice)
-        {
-            CloseReward();
-        }
-
-        if (loadSceneAfterChoice && !string.IsNullOrWhiteSpace(sceneAfterChoice))
-        {
-            SceneManager.LoadScene(sceneAfterChoice);
-        }
+    public void SkipReward()
+    {
+        if (rewardFinished) return;
+        FinishReward(false);
     }
 
     public void CloseReward()
     {
         if (rewardRoot != null) rewardRoot.SetActive(false);
         OnRewardClosed?.Invoke();
+    }
+
+    private void FinishReward(bool claimed)
+    {
+        if (rewardFinished) return;
+        rewardFinished = true;
+
+        if (claimed)
+        {
+            OnRewardChosen?.Invoke();
+        }
+        else
+        {
+            OnRewardSkipped?.Invoke();
+        }
+
+        if (hideAfterChoice)
+        {
+            CloseReward();
+        }
+
+        RewardFinished?.Invoke(claimed);
+
+        if (unloadAdditiveSceneAfterChoice)
+        {
+            SceneLoader.UnloadScene(gameObject.scene.name);
+            return;
+        }
+
+        if (loadSceneAfterChoice && !string.IsNullOrWhiteSpace(sceneAfterChoice))
+        {
+            SceneLoader.LoadScene(sceneAfterChoice);
+        }
     }
 
     private void GenerateOptions(CardRewardRequest request)
@@ -138,7 +182,7 @@ public class CardRewardController : MonoBehaviour
         {
             if (candidates.Count == 0) break;
 
-            int randomIndex = Random.Range(0, candidates.Count);
+            int randomIndex = UnityEngine.Random.Range(0, candidates.Count);
             CardRewardOption option = candidates[randomIndex];
             activeOptions.Add(option);
 
@@ -178,7 +222,7 @@ public class CardRewardController : MonoBehaviour
         bool replaced = RunDeckManager.Instance.ReplaceFirst(recipe.BaseCard, recipe.UpgradedCard);
         if (!replaced)
         {
-            Debug.LogWarning($"Could not apply reward upgrade {recipe.BaseCard.Title}; base card is not in the run deck.");
+            Debug.LogWarning($"Could not apply reward upgrade {recipe.BaseCard.Title}; the base card is not in the run deck.");
             return false;
         }
 

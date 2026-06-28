@@ -1,5 +1,5 @@
+using Gameseed26;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class ManualMapRunStarter : MonoBehaviour
 {
@@ -73,7 +73,7 @@ public class ManualMapRunStarter : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(mapSceneName);
+        SceneLoader.LoadScene(mapSceneName);
     }
 
     private static void EnsureSelectionManagerExists()
