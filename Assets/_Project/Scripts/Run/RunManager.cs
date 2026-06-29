@@ -165,6 +165,38 @@ public class RunManager : PersistentSingleton<RunManager>
         return copies;
     }
 
+    public void RestorePlayerState(
+        int currentHealth,
+        int maxHealth,
+        IReadOnlyList<RunHeroStressState> restoredStressStates,
+        int goldAmount)
+    {
+        HeroMaxHealth = Mathf.Max(1, maxHealth);
+        HeroCurrentHealth = Mathf.Clamp(currentHealth, 0, HeroMaxHealth);
+        HasHeroState = true;
+
+        heroStressStates.Clear();
+        if (restoredStressStates != null)
+        {
+            foreach (RunHeroStressState stressState in restoredStressStates)
+            {
+                if (stressState != null)
+                {
+                    heroStressStates.Add(new RunHeroStressState(stressState));
+                }
+            }
+        }
+
+        if (heroStressStates.Count == 0)
+        {
+            heroStressStates.Add(new RunHeroStressState(null, HeroMaxStress > 0 ? HeroMaxStress : 100));
+        }
+
+        Gold = Mathf.Max(0, goldAmount);
+        RefreshAggregateStress();
+        NotifyRunStateChanged();
+    }
+
     public void SetHeroHealth(int amount)
     {
         if (!HasHeroState) return;

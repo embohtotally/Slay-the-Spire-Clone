@@ -7,5 +7,6 @@ public enum MapNodeType
     Shop,
     Rest,
     Treasure,
-    Boss
+    Boss,
+    Custom
 }

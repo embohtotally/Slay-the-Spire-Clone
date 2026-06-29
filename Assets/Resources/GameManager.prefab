@@ -114,6 +114,7 @@ GameObject:
   - component: {fileID: 561507566847324336}
   - component: {fileID: -2874564916961266242}
   - component: {fileID: -4834391314888949724}
+  - component: {fileID: 2493632046209958621}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -167,6 +168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9600f6d46e8de84fac38d8c584afb9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  startingGold: 0
 --- !u!114 &-2874564916961266242
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -191,3 +193,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e21d8ff72bd849d08cdf065cbd728b78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2493632046209958621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5324015632926420311}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad1c697b23ea0ae4482800d5d1030ab9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerProgressScope: 1
+  persistProgress: 1
+  highestUnlockedSaveKey: SlayClone.HighestUnlockedLevelIndex
+  highestUnlockedIndex: 0
+  currentLevelIndex: -1
+  campaignRunState:
+    <HasState>k__BackingField: 0
+    heroCurrentHealth: 0
+    heroMaxHealth: 0
+    gold: 0
+    stressStates: []
+    deck: []

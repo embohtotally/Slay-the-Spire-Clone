@@ -3,6 +3,7 @@ using System.Linq;
 using Gameseed26;
 using NaughtyAttributes;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 #if UNITY_EDITOR
@@ -45,6 +46,13 @@ public class ManualMapController : MonoBehaviour
     [Tooltip("Useful during testing. If true, inspector Initial State is applied every time this scene starts.")]
     [SerializeField] private bool forceResetStateOnStart;
 
+    [Header("Level Completion")]
+    [Tooltip("If true, a cleared terminal node completes the current LevelProgressionManager level.")]
+    [SerializeField] private bool completeCurrentLevelWhenCleared;
+    [SerializeField, ShowIf("completeCurrentLevelWhenCleared"), Scene] private string levelSelectSceneName = "Levels";
+    [SerializeField, ShowIf("completeCurrentLevelWhenCleared")] private bool returnToLevelSelectOnComplete = true;
+    [SerializeField, ShowIf("completeCurrentLevelWhenCleared")] private UnityEvent OnMapCompleted;
+
     [Header("Designer Auto Setup")]
     [Tooltip("Optional root used by the auto setup button. Leave empty to use this controller's transform.")]
     [SerializeField] private Transform autoSetupRoot;
@@ -63,7 +71,7 @@ public class ManualMapController : MonoBehaviour
     [SerializeField] private bool autoAssignEndpointTypes = true;
     [SerializeField] private bool autoSetSingleFirstLayerNodeAsStart = true;
     [SerializeField] private bool autoSetLastLayerAsBoss = true;
-    [Tooltip("When auto setup runs, replace legacy Activate/Deactivate/Hide lists with the generated Next Nodes so stale manual wiring cannot fight the auto graph.")]
+    [Tooltip("When auto setup/rebuild runs, clear legacy Activate/Deactivate/Hide lists so Next Nodes remains the single source of truth.")]
     [SerializeField] private bool autoClearLegacyOutputLists = true;
 
     [Header("Designer Auto Lines")]
@@ -73,6 +81,7 @@ public class ManualMapController : MonoBehaviour
     [SerializeField] private Color autoLineColor = new(0.32f, 0.32f, 0.38f, 0.75f);
 
     private static readonly Dictionary<string, Dictionary<string, ManualMapNodeState>> SavedStatesByMapId = new();
+    private bool mapCompletionHandled;
 
     public string MapId => mapId;
     public IReadOnlyList<ManualMapNode> Nodes => nodes;
@@ -81,6 +90,17 @@ public class ManualMapController : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(newMapId)) return;
         mapId = newMapId.Trim();
+    }
+
+    public void ConfigureLevelCompletion(bool enabled, string returnSceneName, bool autoReturn)
+    {
+        completeCurrentLevelWhenCleared = enabled;
+        if (!string.IsNullOrWhiteSpace(returnSceneName))
+        {
+            levelSelectSceneName = returnSceneName.Trim();
+        }
+
+        returnToLevelSelectOnComplete = autoReturn;
     }
 
     public static void ClearSavedState(string targetMapId)
@@ -116,9 +136,11 @@ public class ManualMapController : MonoBehaviour
             bool shouldResetRun = resetRunWhenNoSavedState && !restored;
             if (!RunManager.Instance.HasActiveRun || shouldResetRun)
             {
-                RunManager.Instance.StartNewRun(CreateRuntimeGraph());
+                StartRunFromCurrentMapGraph();
             }
         }
+
+        CheckForMapCompletion();
     }
 
     public void SelectNode(ManualMapNode node)
@@ -164,6 +186,10 @@ public class ManualMapController : MonoBehaviour
 
         RefreshAllUnlockRules();
         SaveStates();
+        if (!node.StartsCombat())
+        {
+            CheckForMapCompletion();
+        }
     }
 
     public void ResetManualMap()
@@ -175,7 +201,7 @@ public class ManualMapController : MonoBehaviour
 
         if (createRunForCombatReturn && RunManager.Instance != null)
         {
-            RunManager.Instance.StartNewRun(CreateRuntimeGraph());
+            StartRunFromCurrentMapGraph();
         }
     }
 
@@ -200,7 +226,7 @@ public class ManualMapController : MonoBehaviour
         SaveStates();
     }
 
-    [Button("Auto Setup Manual Map From Scene", EButtonEnableMode.Editor)]
+    [Button("Auto Setup From Positions", EButtonEnableMode.Editor)]
     private void AutoSetupManualMapFromScene()
     {
         CollectNodes();
@@ -264,7 +290,66 @@ public class ManualMapController : MonoBehaviour
         Gameseed26.Logger.Log($"Manual map auto setup finished: {nodes.Count} nodes, {layers.Count} layers, {outgoing.Sum(pair => pair.Value.Count)} connections.");
     }
 
-    [Button("Rebuild Auto Lines Only", EButtonEnableMode.Editor)]
+    [Button("Rebuild From Edited Next Nodes", EButtonEnableMode.Editor)]
+    private void RebuildFromEditedNextNodes()
+    {
+        CollectNodes();
+        List<AutoLayer> layers = BuildAutoLayers();
+        if (layers.Count == 0)
+        {
+            Gameseed26.Logger.LogWarning("Manual map graph rebuild found no ManualMapNode children.");
+            return;
+        }
+
+        Dictionary<ManualMapNode, List<ManualMapNode>> outgoing = CreateNodeListMap();
+        Dictionary<ManualMapNode, List<ManualMapNode>> incoming = CreateNodeListMap();
+        BuildConnectionsFromEditedNextNodes(outgoing, incoming);
+
+        for (int layerIndex = 0; layerIndex < layers.Count; layerIndex++)
+        {
+            AutoLayer layer = layers[layerIndex];
+            for (int columnIndex = 0; columnIndex < layer.Nodes.Count; columnIndex++)
+            {
+                ManualMapNode node = layer.Nodes[columnIndex];
+                RecordEditorObject(node, "Rebuild Manual Map From Next Nodes");
+
+                if (autoAssignEndpointTypes)
+                {
+                    ApplyEndpointTypeIfNeeded(node, layerIndex, layers.Count, layer.Nodes.Count);
+                }
+
+                bool isStartNode = incoming[node].Count == 0;
+                ManualMapNodeState initialState = isStartNode ? ManualMapNodeState.Active : ManualMapNodeState.Inactive;
+                ManualMapUnlockRule unlockRule = isStartNode ? ManualMapUnlockRule.AlwaysActive : ManualMapUnlockRule.AfterAnyRequiredCompleted;
+                string generatedId = GenerateNodeId(layerIndex, columnIndex, node);
+
+                node.ApplyDesignerAutoSetup(
+                    generatedId,
+                    layerIndex,
+                    columnIndex,
+                    initialState,
+                    unlockRule,
+                    incoming[node],
+                    outgoing[node],
+                    false,
+                    autoClearLegacyOutputLists);
+
+                MarkEditorObjectDirty(node);
+            }
+        }
+
+        nodes = layers.SelectMany(layer => layer.Nodes).ToList();
+        if (autoRebuildLinesAfterSetup)
+        {
+            RebuildAutoLines();
+        }
+
+        MarkEditorObjectDirty(this);
+        MarkSceneDirty();
+        Gameseed26.Logger.Log($"Manual map rebuilt from edited Next Nodes: {nodes.Count} nodes, {outgoing.Sum(pair => pair.Value.Count)} connections.");
+    }
+
+    [Button("Rebuild Lines From Next Nodes", EButtonEnableMode.Editor)]
     private void RebuildAutoLines()
     {
         CollectNodes();
@@ -354,7 +439,7 @@ public class ManualMapController : MonoBehaviour
         {
             if (createRunForCombatReturn && !RunManager.Instance.HasActiveRun)
             {
-                RunManager.Instance.StartNewRun(CreateRuntimeGraph());
+                StartRunFromCurrentMapGraph();
             }
 
             MapNode runtimeNode = node.CreateRuntimeMapNode(encounterPool, nodes.IndexOf(node));
@@ -474,6 +559,14 @@ public class ManualMapController : MonoBehaviour
         SavedStatesByMapId[mapId] = savedStates;
     }
 
+    private void StartRunFromCurrentMapGraph()
+    {
+        if (RunManager.Instance == null) return;
+
+        RunManager.Instance.StartNewRun(CreateRuntimeGraph());
+        LevelProgressionManager.Instance?.RestoreCampaignStateToActiveRun();
+    }
+
     private MapGraph CreateRuntimeGraph()
     {
         MapGraph graph = new();
@@ -497,6 +590,57 @@ public class ManualMapController : MonoBehaviour
 
             node.SetDisabled();
         }
+    }
+
+    private void CheckForMapCompletion()
+    {
+        if (!completeCurrentLevelWhenCleared || mapCompletionHandled) return;
+        if (!IsMapCleared()) return;
+
+        mapCompletionHandled = true;
+        Gameseed26.Logger.Log(this, $"Manual map '{mapId}' cleared. Completing current level.");
+        OnMapCompleted?.Invoke();
+
+        if (LevelProgressionManager.Instance != null)
+        {
+            LevelProgressionManager.Instance.CompleteCurrentLevel();
+        }
+        else
+        {
+            Gameseed26.Logger.LogWarning(this, "Manual map was cleared, but LevelProgressionManager was not found.");
+        }
+
+        if (RunManager.Instance != null)
+        {
+            RunManager.Instance.AbandonRun();
+        }
+
+        if (ManualMapRunSelection.Instance != null)
+        {
+            ManualMapRunSelection.Instance.ClearSelection();
+        }
+
+        if (returnToLevelSelectOnComplete && !string.IsNullOrWhiteSpace(levelSelectSceneName))
+        {
+            SceneLoader.LoadScene(levelSelectSceneName);
+        }
+    }
+
+    private bool IsMapCleared()
+    {
+        bool hasCompletedTerminalNode = false;
+        foreach (ManualMapNode node in nodes)
+        {
+            if (node == null) continue;
+            if (node.CanSelect) return false;
+
+            if (node.IsCompleted && node.PathProgressionTargets.Count == 0)
+            {
+                hasCompletedTerminalNode = true;
+            }
+        }
+
+        return hasCompletedTerminalNode;
     }
 
     private List<AutoLayer> BuildAutoLayers()
@@ -601,6 +745,8 @@ public class ManualMapController : MonoBehaviour
     {
         if (fromNode == null || toNode == null || fromNode == toNode) return;
 
+        if (!outgoing.ContainsKey(fromNode) || !incoming.ContainsKey(toNode)) return;
+
         if (!outgoing[fromNode].Contains(toNode))
         {
             outgoing[fromNode].Add(toNode);
@@ -609,6 +755,21 @@ public class ManualMapController : MonoBehaviour
         if (!incoming[toNode].Contains(fromNode))
         {
             incoming[toNode].Add(fromNode);
+        }
+    }
+
+    private void BuildConnectionsFromEditedNextNodes(
+        Dictionary<ManualMapNode, List<ManualMapNode>> outgoing,
+        Dictionary<ManualMapNode, List<ManualMapNode>> incoming)
+    {
+        foreach (ManualMapNode fromNode in nodes)
+        {
+            if (fromNode == null || !outgoing.ContainsKey(fromNode)) continue;
+
+            foreach (ManualMapNode toNode in fromNode.NextNodes)
+            {
+                AddAutoConnection(fromNode, toNode, outgoing, incoming);
+            }
         }
     }
 

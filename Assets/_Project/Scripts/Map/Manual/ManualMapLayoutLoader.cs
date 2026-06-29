@@ -8,46 +8,55 @@ using UnityEngine;
 public class ManualMapLayoutLoader : MonoBehaviour
 {
     [Header("Layouts")]
-    [SerializeField] private ManualMapLayoutRegistry layoutRegistry;
-    [SerializeField] private Transform mapRoot;
+    [SerializeField] private bool loadFromPool = true;
+    [SerializeField, ShowIf("loadFromPool")] private ManualMapLayoutRegistry layoutRegistry;
+    [SerializeField, ShowIf("loadFromPool")] private Transform mapRoot;
 
     [Header("Selection")]
     [Tooltip("If empty, uses the saved selection. If no saved selection exists, a random layout is chosen.")]
-    [SerializeField] private string fallbackLayoutId;
-    [SerializeField] private bool randomizeWhenNoSelection = true;
+    [SerializeField, ShowIf("loadFromPool")] private string fallbackLayoutId;
+    [SerializeField, ShowIf("loadFromPool")] private bool randomizeWhenNoSelection = true;
     [Tooltip("Useful for testing one layout in the editor. This overrides saved selection on Start.")]
-    [SerializeField] private bool forceFallbackLayoutOnStart;
+    [SerializeField, ShowIf("loadFromPool")] private bool forceFallbackLayoutOnStart;
 
     [Header("Spawn")]
-    [SerializeField] private bool clearRootBeforeSpawn = true;
-    [SerializeField] private bool stretchRectTransformToParent = true;
+    [SerializeField, ShowIf("loadFromPool")] private bool clearRootBeforeSpawn = true;
+    [SerializeField, ShowIf("loadFromPool")] private bool stretchRectTransformToParent = true;
 
     [Header("Optional Scene Flow")]
-    [SerializeField] private string mapSceneName = "Map";
+    [SerializeField, Scene] private string mapSceneName;
+
+    [Header("Level Progression")]
+    [Tooltip("If a LevelProgressionManager current level exists, use its Manual Map Layout Id instead of random/fallback selection.")]
+    [SerializeField] private bool preferCurrentLevelLayout = true;
+    [Tooltip("When the spawned map reaches its final node, unlock the next level and return to the Levels scene.")]
+    [SerializeField] private bool completeCurrentLevelWhenMapCleared = true;
+    [SerializeField, Scene] private string levelSelectSceneName = "Levels";
+    [SerializeField] private bool returnToLevelSelectOnMapComplete = true;
 
     [Header("Viewport / Zoom")]
     [Tooltip("Use scripted UI pan/zoom. Cinemachine will not affect this map because the Map scene uses a Screen Space Overlay Canvas.")]
     [SerializeField] private bool enableViewportControls = true;
     [Tooltip("The visible area. Empty = Map Root if it is a RectTransform.")]
-    [SerializeField] private RectTransform viewportRect;
+    [SerializeField, ShowIf("enableViewportControls")] private RectTransform viewportRect;
     [Tooltip("Default zoom used when focusing the currently selectable path nodes.")]
-    [Min(0.1f)] [SerializeField] private float focusedZoom = 1.2f;
+    [Min(0.1f)][SerializeField, ShowIf("enableViewportControls")] private float focusedZoom = 1.2f;
     [Tooltip("Lowest allowed zoom. This is usually the zoom-out / overview limit.")]
-    [Min(0.1f)] [SerializeField] private float minZoom = 0.45f;
+    [Min(0.1f)][SerializeField, ShowIf("enableViewportControls")] private float minZoom = 0.45f;
     [Tooltip("Highest allowed zoom for close inspection.")]
-    [Min(0.1f)] [SerializeField] private float maxZoom = 1.6f;
+    [Min(0.1f)][SerializeField, ShowIf("enableViewportControls")] private float maxZoom = 1.6f;
     [Tooltip("Extra space around focused nodes when auto-fitting a row/path.")]
-    [Min(0f)] [SerializeField] private float focusPadding = 180f;
+    [Min(0f)][SerializeField, ShowIf("enableViewportControls")] private float focusPadding = 180f;
     [Tooltip("Mouse wheel zoom amount per scroll tick.")]
-    [Min(0.01f)] [SerializeField] private float wheelZoomSpeed = 0.12f;
+    [Min(0.01f)][SerializeField, ShowIf("enableViewportControls")] private float wheelZoomSpeed = 0.12f;
     [Tooltip("Right mouse or middle mouse drag speed.")]
-    [Min(0.1f)] [SerializeField] private float dragPanSpeed = 1f;
-    [SerializeField] private float zoomSmoothSpeed = 12f;
-    [SerializeField] private float panSmoothSpeed = 12f;
-    [SerializeField] private KeyCode focusPathKey = KeyCode.F;
-    [SerializeField] private KeyCode overviewKey = KeyCode.Tab;
+    [Min(0.1f)][SerializeField, ShowIf("enableViewportControls")] private float dragPanSpeed = 1f;
+    [SerializeField, ShowIf("enableViewportControls")] private float zoomSmoothSpeed = 12f;
+    [SerializeField, ShowIf("enableViewportControls")] private float panSmoothSpeed = 12f;
+    [SerializeField, ShowIf("enableViewportControls")] private KeyCode focusPathKey = KeyCode.F;
+    [SerializeField, ShowIf("enableViewportControls")] private KeyCode overviewKey = KeyCode.Tab;
     [Tooltip("If enabled, map starts zoomed into the currently selectable nodes, then player may scroll/drag/overview.")]
-    [SerializeField] private bool focusPathOnLoad = true;
+    [SerializeField, ShowIf("enableViewportControls")] private bool focusPathOnLoad = true;
 
     private ManualMapController spawnedMap;
     private RectTransform contentRect;
@@ -67,7 +76,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
 
     private void Start()
     {
-        LoadSelectedOrFallbackLayout();
+        if (loadFromPool) LoadSelectedOrFallbackLayout();
     }
 
     private void Update()
@@ -138,6 +147,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
         }
     }
 
+    [ShowIf("enableViewportControls")]
     [Button("Focus Current Path", EButtonEnableMode.Playmode)]
     public void FocusCurrentPath()
     {
@@ -153,6 +163,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
         FocusNodes(focusNodes, focusedZoom);
     }
 
+    [ShowIf("enableViewportControls")]
     [Button("Zoom Out To Whole Map", EButtonEnableMode.Playmode)]
     public void FocusWholeMap()
     {
@@ -169,6 +180,19 @@ public class ManualMapLayoutLoader : MonoBehaviour
     private ManualMapLayoutEntry ResolveLayoutToLoad()
     {
         if (layoutRegistry == null) return null;
+
+        LevelDefinition currentLevel = GetCurrentLevel();
+        if (preferCurrentLevelLayout && currentLevel != null && currentLevel.HasManualMapLayout)
+        {
+            ManualMapLayoutEntry levelLayout = layoutRegistry.GetById(currentLevel.ManualMapLayoutId);
+            if (levelLayout != null)
+            {
+                ManualMapRunSelection.Instance.SelectLayout(levelLayout.SafeId);
+                return levelLayout;
+            }
+
+            Gameseed26.Logger.LogWarning($"Current level '{currentLevel.DisplayName}' requested missing manual map layout '{currentLevel.ManualMapLayoutId}'. Falling back to saved/fallback layout.");
+        }
 
         if (forceFallbackLayoutOnStart && !string.IsNullOrWhiteSpace(fallbackLayoutId))
         {
@@ -228,7 +252,13 @@ public class ManualMapLayoutLoader : MonoBehaviour
         }
 
         spawnedMap = Instantiate(layout.MapPrefab, mapRoot);
-        spawnedMap.SetRuntimeMapId(layout.SafeId);
+        LevelDefinition currentLevel = GetCurrentLevel();
+        string runtimeMapId = currentLevel != null ? currentLevel.GetProgressMapId() : layout.SafeId;
+        spawnedMap.SetRuntimeMapId(runtimeMapId);
+        spawnedMap.ConfigureLevelCompletion(
+            completeCurrentLevelWhenMapCleared && currentLevel != null,
+            levelSelectSceneName,
+            returnToLevelSelectOnMapComplete);
         spawnedMap.name = layout.SafeDisplayName;
 
         if (stretchRectTransformToParent && spawnedMap.transform is RectTransform rectTransform)
@@ -439,5 +469,10 @@ public class ManualMapLayoutLoader : MonoBehaviour
 
         GameObject selectionObject = new("Manual Map Run Selection");
         selectionObject.AddComponent<ManualMapRunSelection>();
+    }
+
+    private static LevelDefinition GetCurrentLevel()
+    {
+        return LevelProgressionManager.Instance != null ? LevelProgressionManager.Instance.CurrentLevel : null;
     }
 }

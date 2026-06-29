@@ -1,4 +1,6 @@
 using UnityEngine;
+using NaughtyAttributes;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -12,9 +14,13 @@ namespace Gameseed26
         [SerializeField] private GameObject _exitButton;
 
         [Header("Settings")]
-        [SerializeField] private string _gameplaySceneName = "Map";
+        [SerializeField, Scene] private string _gameplaySceneName;
         [SerializeField] private SfxID _onPlaySfx;
         [SerializeField] private MusicID _bgMusic;
+
+        [Header("Campaign Flow")]
+        [Tooltip("Enable for a New Game button. Leave off for Continue-style buttons that should keep saved level progress.")]
+        [SerializeField] private bool _beginNewCampaignOnStartGame;
 
         void Start()
         {
@@ -25,8 +31,26 @@ namespace Gameseed26
 
         public void StartGame()
         {
+            if (_beginNewCampaignOnStartGame)
+            {
+                BeginNewCampaign();
+            }
+
             SceneLoader.LoadScene(_gameplaySceneName);
 
+            Tune.StopMusicSafe();
+        }
+
+        public void StartNewCampaign()
+        {
+            BeginNewCampaign();
+            SceneLoader.LoadScene(_gameplaySceneName);
+            Tune.StopMusicSafe();
+        }
+
+        public void ContinueGame()
+        {
+            SceneLoader.LoadScene(_gameplaySceneName);
             Tune.StopMusicSafe();
         }
 
@@ -44,6 +68,11 @@ namespace Gameseed26
 #if UNITY_WEBGL && !UNITY_EDITOR
             _exitButton.SetActive(false);
 #endif
+        }
+
+        private static void BeginNewCampaign()
+        {
+            LevelProgressionManager.GetOrCreate().BeginNewCampaign();
         }
     }
 }
