@@ -1,4 +1,3 @@
-using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,7 +9,11 @@ public class CombatantDeadState : CombatantState
 
     public override void Enter()
     {
-        // Optional death visual effect
+        if (combatant.Animator != null)
+        {
+            combatant.Animator.SetTrigger("Die");
+        }
+
         onComplete?.Invoke();
     }
 }

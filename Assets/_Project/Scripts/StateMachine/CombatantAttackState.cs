@@ -1,4 +1,3 @@
-using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,30 +5,46 @@ using UnityEngine;
 
 public class CombatantAttackState : CombatantState
 {
-    private float xOffset;
-    private float moveDuration;
-    private float returnDuration;
+    private float animationDuration;
+    private float timer;
+    private bool isComplete;
 
-    public CombatantAttackState(CombatantView combatant, float xOffset, float moveDuration, float returnDuration, Action onComplete = null) 
+    public CombatantAttackState(CombatantView combatant, float animationDuration, Action onComplete = null) 
         : base(combatant, onComplete)
     {
-        this.xOffset = xOffset;
-        this.moveDuration = moveDuration;
-        this.returnDuration = returnDuration;
+        this.animationDuration = animationDuration;
     }
 
     public override void Enter()
     {
-        Vector3 startPos = combatant.transform.position;
-        Sequence attackSequence = DOTween.Sequence();
-        
-        attackSequence.Append(combatant.transform.DOMoveX(startPos.x + xOffset, moveDuration));
-        attackSequence.Append(combatant.transform.DOMoveX(startPos.x, returnDuration));
-        
-        attackSequence.OnComplete(() =>
+        timer = 0f;
+        isComplete = false;
+
+        if (combatant.Animator != null)
         {
-            onComplete?.Invoke();
-            combatant.StateMachine.ChangeState(new CombatantIdleState(combatant));
-        });
+            combatant.Animator.SetTrigger("Attack");
+        }
+        else
+        {
+            CompleteAttack();
+        }
+    }
+
+    public override void Update()
+    {
+        if (isComplete) return;
+
+        timer += Time.deltaTime;
+        if (timer >= animationDuration)
+        {
+            CompleteAttack();
+        }
+    }
+
+    private void CompleteAttack()
+    {
+        isComplete = true;
+        onComplete?.Invoke();
+        combatant.StateMachine.ChangeState(new CombatantIdleState(combatant));
     }
 }

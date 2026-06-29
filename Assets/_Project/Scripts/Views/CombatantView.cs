@@ -19,8 +19,11 @@ public class CombatantView : MonoBehaviour
 
     [Header("Others")]
     [SerializeField] protected SpriteRenderer spriteRenderer;
+    [SerializeField] private Animator animator;
     [SerializeField] private float shakeDuration;
     [SerializeField] private float shakeStrength;
+
+    public Animator Animator => animator;
 
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
