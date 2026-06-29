@@ -41,7 +41,7 @@ namespace Gameseed26.Editor
             EditorUtility.FocusProjectWindow();
             Selection.activeObject = asset;
 
-            Debug.Log($"<color=green>Success:</color> TuneClips created with {audioClips.Count} audio clips.");
+            Logger.Log($"<color=green>Success:</color> TuneClips created with {audioClips.Count} audio clips.");
         }
 
         [MenuItem("Assets/Create/Tunes/Generate TuneTrack from Selection", false, 2)]
@@ -78,7 +78,7 @@ namespace Gameseed26.Editor
             EditorUtility.FocusProjectWindow();
             Selection.activeObject = asset;
 
-            Debug.Log($"<color=green>Success:</color> TuneTrack created with {audioClips.Count} music/s.");
+            Logger.Log($"<color=green>Success:</color> TuneTrack created with {audioClips.Count} music/s.");
         }
     }
 }

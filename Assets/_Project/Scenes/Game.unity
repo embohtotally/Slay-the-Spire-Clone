@@ -1301,7 +1301,8 @@ MonoBehaviour:
   mapSceneName: Map
   returnToMapDelay: 0.75
   openRewardSceneAfterCombatWin: 1
-  rewardSceneName: CardReward
+  rewardSceneName: RunRewards
+  loadRewardSceneAdditive: 1
   OnCombatWon:
     m_PersistentCalls:
       m_Calls: []

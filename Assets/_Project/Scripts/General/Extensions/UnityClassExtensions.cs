@@ -42,7 +42,7 @@ namespace Gameseed26
         /// <summary>
         /// Remove Trigger Component to GameObject with specified Type and Action.
         /// </summary>
-        public static void UnregisterTrigger(this GameObject target, EventTriggerType eventTriggerType, UnityAction<BaseEventData> action)
+        public static void DeregisterTrigger(this GameObject target, EventTriggerType eventTriggerType, UnityAction<BaseEventData> action)
         {
             if (target == null) return;
             if (!target.TryGetComponent<EventTrigger>(out var eventTrigger)) return;

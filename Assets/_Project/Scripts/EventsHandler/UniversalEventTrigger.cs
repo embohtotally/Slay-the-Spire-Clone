@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
+using Gameseed26;
 namespace ModularEvents
 {
     // ============================================================
@@ -18,7 +19,7 @@ namespace ModularEvents
             foreach (var d in action.GetInvocationList())
             {
                 try { ((Action)d)(); }
-                catch (Exception e) { Debug.LogException(e); }
+                catch (Exception e) { Gameseed26.Logger.LogException(e); }
             }
         }
 
@@ -28,7 +29,7 @@ namespace ModularEvents
             foreach (var d in action.GetInvocationList())
             {
                 try { ((Action<T>)d)(arg); }
-                catch (Exception e) { Debug.LogException(e); }
+                catch (Exception e) { Gameseed26.Logger.LogException(e); }
             }
         }
     }
@@ -104,7 +105,7 @@ namespace ModularEvents
         public static void Broadcast(string eventName)
         {
             if (string.IsNullOrEmpty(eventName)) return;
-            if (DebugLogging) Debug.Log($"[EventBus] Broadcast: {eventName}");
+            if (DebugLogging) Gameseed26.Logger.Log($"[EventBus] Broadcast: {eventName}");
             if (parameterless.TryGetValue(eventName, out var action))
                 EventBusUtility.SafeInvoke(action);
         }
@@ -112,7 +113,7 @@ namespace ModularEvents
         public static void Broadcast(string eventName, object payload)
         {
             if (string.IsNullOrEmpty(eventName)) return;
-            if (DebugLogging) Debug.Log($"[EventBus] Broadcast: {eventName} (payload: {payload})");
+            if (DebugLogging) Gameseed26.Logger.Log($"[EventBus] Broadcast: {eventName} (payload: {payload})");
             if (withPayload.TryGetValue(eventName, out var action))
                 EventBusUtility.SafeInvoke(action, payload);
         }

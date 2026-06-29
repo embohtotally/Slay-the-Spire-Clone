@@ -1,5 +1,5 @@
+using Gameseed26;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class ManualMapRunStarter : MonoBehaviour
 {
@@ -24,14 +24,14 @@ public class ManualMapRunStarter : MonoBehaviour
         EnsureSelectionManagerExists();
         if (layoutRegistry == null)
         {
-            Debug.LogWarning("Cannot start manual map run because layout registry is missing.");
+            Gameseed26.Logger.LogWarning("Cannot start manual map run because layout registry is missing.");
             return;
         }
 
         ManualMapLayoutEntry layout = layoutRegistry.GetById(layoutId);
         if (layout == null)
         {
-            Debug.LogWarning($"Cannot start manual map run because layout '{layoutId}' was not found.");
+            Gameseed26.Logger.LogWarning($"Cannot start manual map run because layout '{layoutId}' was not found.");
             return;
         }
 
@@ -69,11 +69,11 @@ public class ManualMapRunStarter : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(mapSceneName))
         {
-            Debug.LogWarning("Cannot load map scene because map scene name is empty.");
+            Gameseed26.Logger.LogWarning("Cannot load map scene because map scene name is empty.");
             return;
         }
 
-        SceneManager.LoadScene(mapSceneName);
+        SceneLoader.LoadScene(mapSceneName);
     }
 
     private static void EnsureSelectionManagerExists()

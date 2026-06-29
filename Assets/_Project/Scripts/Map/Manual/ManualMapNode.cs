@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NaughtyAttributes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -34,48 +35,89 @@ public enum ManualMapUnlockRule
 public class ManualMapNode : MonoBehaviour
 {
     [Header("References")]
+    [BoxGroup("References")]
     [SerializeField] private Button button;
+    [BoxGroup("References")]
     [SerializeField] private Image iconImage;
+    [BoxGroup("References")]
     [SerializeField] private TMP_Text labelText;
 
     [Header("Node Data")]
+    [BoxGroup("Node Data")]
     [Tooltip("Optional unique id. Leave empty to use this GameObject name.")]
     [SerializeField] private string id;
+    [BoxGroup("Node Data")]
     [SerializeField] private MapNodeType nodeType = MapNodeType.Enemy;
+    [BoxGroup("Node Data")]
     [SerializeField] private EncounterData encounter;
+    [BoxGroup("Node Data")]
     [SerializeField] private bool useEncounterPoolWhenEmpty = true;
 
-    [Header("State")]
-    [SerializeField] private ManualMapNodeState initialState = ManualMapNodeState.Inactive;
-    [SerializeField] private ManualMapUnlockRule unlockRule = ManualMapUnlockRule.ManualOnly;
-    [SerializeField] private List<ManualMapNode> requiredCompletedNodes = new();
-
-    [Header("Auto Graph / STS Style")]
-    [Tooltip("Read-only helper values produced by ManualMapController auto setup. Useful for checking inferred layer/column in the inspector.")]
-    [SerializeField] private int layerIndex = -1;
-    [SerializeField] private int columnIndex = -1;
-    [Tooltip("Next nodes in the Slay-the-Spire style path. Auto setup fills this from scene positions; designers can still tweak it manually afterwards.")]
+    [Header("Path Graph")]
+    [BoxGroup("Path Graph")]
+    [ReorderableList]
+    [Tooltip("Main authoring field. Edit this list to decide where the player can go next; use ManualMapController > Rebuild From Next Nodes to regenerate dependencies and lines.")]
     [SerializeField] private List<ManualMapNode> nextNodes = new();
 
+    [Header("Generated From Graph")]
+    [BoxGroup("Generated From Graph")]
+    [ReadOnly]
+    [SerializeField] private ManualMapNodeState initialState = ManualMapNodeState.Inactive;
+    [BoxGroup("Generated From Graph")]
+    [ReadOnly]
+    [SerializeField] private ManualMapUnlockRule unlockRule = ManualMapUnlockRule.ManualOnly;
+    [BoxGroup("Generated From Graph")]
+    [ReadOnly]
+    [ReorderableList]
+    [SerializeField] private List<ManualMapNode> requiredCompletedNodes = new();
+    [BoxGroup("Generated From Graph")]
+    [ReadOnly]
+    [Tooltip("Read-only helper values produced by ManualMapController setup/rebuild. Useful for checking inferred layer/column in the inspector.")]
+    [SerializeField] private int layerIndex = -1;
+    [BoxGroup("Generated From Graph")]
+    [ReadOnly]
+    [SerializeField] private int columnIndex = -1;
+
     [Header("Click Action")]
+    [BoxGroup("Click Action")]
     [SerializeField] private ManualMapNodeAction clickAction = ManualMapNodeAction.ResolveByNodeType;
+    [BoxGroup("Click Action")]
     [SerializeField] private bool completeOnClick = true;
+    [BoxGroup("Click Action")]
     [Tooltip("Optional override. Empty = use ManualMapController default combat scene.")]
     [SerializeField] private string sceneNameOverride;
 
-    [Header("After Completed")]
+    [Header("Advanced / Legacy Overrides")]
+    [BoxGroup("Advanced / Legacy Overrides")]
+    [Tooltip("Off by default. Turn on only for special-case nodes that need extra manual activate/deactivate/hide behavior beyond Next Nodes.")]
+    [SerializeField] private bool useManualOutputOverrides;
+    [BoxGroup("Advanced / Legacy Overrides")]
+    [ShowIf("useManualOutputOverrides")]
+    [ReorderableList]
     [SerializeField] private List<ManualMapNode> activateOnComplete = new();
+    [BoxGroup("Advanced / Legacy Overrides")]
+    [ShowIf("useManualOutputOverrides")]
+    [ReorderableList]
     [SerializeField] private List<ManualMapNode> deactivateOnComplete = new();
+    [BoxGroup("Advanced / Legacy Overrides")]
+    [ShowIf("useManualOutputOverrides")]
+    [ReorderableList]
     [SerializeField] private List<ManualMapNode> hideOnComplete = new();
 
     [Header("Visuals")]
+    [BoxGroup("Visuals")]
     [SerializeField] private Color activeColor = new(1f, 0.9f, 0.25f, 1f);
+    [BoxGroup("Visuals")]
     [SerializeField] private Color inactiveColor = new(0.35f, 0.35f, 0.4f, 1f);
+    [BoxGroup("Visuals")]
     [SerializeField] private Color completedColor = new(0.25f, 0.95f, 0.45f, 1f);
+    [BoxGroup("Visuals")]
     [SerializeField] private Color hiddenColor = new(0f, 0f, 0f, 0f);
 
     [Header("Events")]
+    [BoxGroup("Events")]
     public UnityEvent OnSelected;
+    [BoxGroup("Events")]
     public UnityEvent OnCompleted;
 
     private ManualMapController controller;
@@ -91,6 +133,7 @@ public class ManualMapNode : MonoBehaviour
     public int ColumnIndex => columnIndex;
     public IReadOnlyList<ManualMapNode> NextNodes => nextNodes;
     public IReadOnlyList<ManualMapNode> PathProgressionTargets => nextNodes.Count > 0 ? nextNodes : activateOnComplete;
+    public bool UsesManualOutputOverrides => useManualOutputOverrides;
     public bool IsCompleted => currentState == ManualMapNodeState.Completed;
     public bool IsDisabled => currentState == ManualMapNodeState.Disabled || currentState == ManualMapNodeState.HiddenDisabled;
     public bool CanSelect => currentState == ManualMapNodeState.Active;
@@ -103,7 +146,7 @@ public class ManualMapNode : MonoBehaviour
     private void OnValidate()
     {
         CacheReferences();
-        if (!Application.isPlaying && labelText != null)
+        if (!Application.isPlaying && labelText != null && nodeType != MapNodeType.Custom)
         {
             labelText.text = GetLabel(nodeType);
         }
@@ -118,6 +161,37 @@ public class ManualMapNode : MonoBehaviour
         {
             button.onClick.RemoveListener(HandleClick);
             button.onClick.AddListener(HandleClick);
+        }
+    }
+
+    public void ConfigureButtonForDirectClick(UnityAction action)
+    {
+        CacheReferences();
+        controller = null;
+        if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
+        if (action != null)
+        {
+            button.onClick.AddListener(action);
+        }
+    }
+
+    public void SetInteractable(bool interactable)
+    {
+        CacheReferences();
+        if (button != null)
+        {
+            button.interactable = interactable;
+        }
+    }
+
+    public void SetLabel(string label)
+    {
+        CacheReferences();
+        if (labelText != null)
+        {
+            labelText.text = label;
         }
     }
 
@@ -192,6 +266,10 @@ public class ManualMapNode : MonoBehaviour
         OnCompleted?.Invoke();
 
         ActivateTargets(nextNodes);
+
+        bool applyLegacyOutputs = useManualOutputOverrides || nextNodes.Count == 0;
+        if (!applyLegacyOutputs) return;
+
         ActivateTargets(activateOnComplete);
 
         foreach (ManualMapNode node in deactivateOnComplete)
@@ -277,7 +355,8 @@ public class ManualMapNode : MonoBehaviour
 
         if (clearManualOutputLists)
         {
-            activateOnComplete = new List<ManualMapNode>(nextNodes);
+            useManualOutputOverrides = false;
+            activateOnComplete.Clear();
             deactivateOnComplete.Clear();
             hideOnComplete.Clear();
         }
@@ -349,7 +428,7 @@ public class ManualMapNode : MonoBehaviour
             button.interactable = currentState == ManualMapNodeState.Active;
         }
 
-        if (labelText != null)
+        if (labelText != null && nodeType != MapNodeType.Custom)
         {
             labelText.text = GetLabel(nodeType);
         }

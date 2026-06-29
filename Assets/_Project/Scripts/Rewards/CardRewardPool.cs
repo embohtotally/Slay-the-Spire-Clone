@@ -59,8 +59,8 @@ public class CardRewardOption
 public class CardRewardRequest
 {
     [Min(1)] public int OptionCount = 3;
-    public bool IncludeNewCards;
-    public bool IncludeUpgrades = true;
+    public bool IncludeNewCards = true;
+    public bool IncludeUpgrades;
     public bool OnlyOfferNewCardsNotInDeck = true;
     public bool AllowDuplicateOptions;
 }

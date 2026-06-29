@@ -16,7 +16,7 @@ namespace Gameseed26
             {
                 if (Instance == null)
                 {
-                    Debug.LogWarning("Tune is not ready yet. Make sure the Tune prefab exists in the first loaded scene.");
+                    Logger.LogWarning("Tune is not ready yet. Make sure the Tune prefab exists in the first loaded scene.");
                     return null;
                 }
 

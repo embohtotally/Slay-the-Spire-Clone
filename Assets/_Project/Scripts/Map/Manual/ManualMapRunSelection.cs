@@ -1,5 +1,6 @@
 using UnityEngine;
 
+using Gameseed26;
 public class ManualMapRunSelection : PersistentSingleton<ManualMapRunSelection>
 {
     public string SelectedLayoutId { get; private set; }
@@ -9,7 +10,7 @@ public class ManualMapRunSelection : PersistentSingleton<ManualMapRunSelection>
     {
         if (string.IsNullOrWhiteSpace(layoutId))
         {
-            Debug.LogWarning("Tried to select an empty manual map layout id.");
+            Gameseed26.Logger.LogWarning("Tried to select an empty manual map layout id.");
             return;
         }
 
@@ -20,14 +21,14 @@ public class ManualMapRunSelection : PersistentSingleton<ManualMapRunSelection>
     {
         if (registry == null)
         {
-            Debug.LogWarning("Cannot randomize manual map layout because registry is missing.");
+            Gameseed26.Logger.LogWarning("Cannot randomize manual map layout because registry is missing.");
             return null;
         }
 
         ManualMapLayoutEntry layout = registry.GetRandomLayout();
         if (layout == null)
         {
-            Debug.LogWarning("Cannot randomize manual map layout because registry has no available layouts.");
+            Gameseed26.Logger.LogWarning("Cannot randomize manual map layout because registry has no available layouts.");
             return null;
         }
 

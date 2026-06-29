@@ -15,6 +15,21 @@ MonoBehaviour:
   layouts:
   - Id: loneliness
     DisplayName: Loneliness
-    MapPrefab: {fileID: 3972274632981022932, guid: bb318327b744adc4fb61e38249ea3cf9, type: 3}
+    MapPrefab: {fileID: 3184735106509882512, guid: 3f6d7d951e784564ebc48f875368ed9e, type: 3}
+    RandomWeight: 0
+    Enabled: 1
+  - Id: fear
+    DisplayName: Fear
+    MapPrefab: {fileID: 3793250687200881547, guid: 65388388574b9fb4db7839e8280e062e, type: 3}
+    RandomWeight: 0
+    Enabled: 1
+  - Id: anxiety
+    DisplayName: Anxiety
+    MapPrefab: {fileID: 5908473382998314647, guid: 175889afda1342546b6be23488ebd8d1, type: 3}
+    RandomWeight: 0
+    Enabled: 1
+  - Id: anger
+    DisplayName: Anger
+    MapPrefab: {fileID: 462714897820518785, guid: 01c186a1707a60d41892271bfdd0d5d2, type: 3}
     RandomWeight: 0
     Enabled: 1

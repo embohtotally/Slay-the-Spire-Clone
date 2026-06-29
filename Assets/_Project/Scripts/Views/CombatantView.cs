@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+using Gameseed26;
 public class CombatantView : MonoBehaviour
 {
     [Header("Health Visual")]
@@ -41,6 +42,8 @@ public class CombatantView : MonoBehaviour
 
     public StateMachine StateMachine { get; private set; }
 
+    public event Action StatusEffectsChanged;
+
     protected void SetupBase(int maxHealth, Sprite image)
     {
         MaxHealth = CurrentHealth = maxHealth;
@@ -66,6 +69,7 @@ public class CombatantView : MonoBehaviour
         TauntDuration = 0;
         HealthPenalty = 0;
         UpdateHealthVisual();
+        NotifyStatusEffectsChanged();
     }
 
     private void Update()
@@ -138,6 +142,7 @@ public class CombatantView : MonoBehaviour
     public void ApplyStun(int duration)
     {
         StunDuration += duration;
+        NotifyStatusEffectsChanged();
     }
 
     public void DecreaseStun()
@@ -145,6 +150,7 @@ public class CombatantView : MonoBehaviour
         if (StunDuration > 0)
         {
             StunDuration--;
+            NotifyStatusEffectsChanged();
         }
     }
 
@@ -163,6 +169,7 @@ public class CombatantView : MonoBehaviour
     public void ApplyTaunt(int duration)
     {
         TauntDuration += duration;
+        NotifyStatusEffectsChanged();
     }
 
     public void DecreaseTaunt()
@@ -170,10 +177,16 @@ public class CombatantView : MonoBehaviour
         if (TauntDuration > 0)
         {
             TauntDuration--;
+            NotifyStatusEffectsChanged();
         }
     }
 
     public virtual void AddStress(int amount) { }
+
+    protected void NotifyStatusEffectsChanged()
+    {
+        StatusEffectsChanged?.Invoke();
+    }
 
     protected virtual void SetupHealthVisual()
     {
@@ -215,7 +228,7 @@ public class CombatantView : MonoBehaviour
         {
             if (healthSlider == null || blockedSlider == null || shieldSlider == null)
             {
-                Debug.LogError($"[{name}] Any slider is not assigned or null!", this);
+                Gameseed26.Logger.LogError(this, $"[{name}] Any slider is not assigned or null!");
                 return true;
             }
         }
@@ -223,7 +236,7 @@ public class CombatantView : MonoBehaviour
         {
             if (healthText == null)
             {
-                Debug.LogError($"[{name}] Any slider is not assigned or null!", this);
+                Gameseed26.Logger.LogError(this, $"[{name}] Any slider is not assigned or null!");
                 return true;
             }
         }

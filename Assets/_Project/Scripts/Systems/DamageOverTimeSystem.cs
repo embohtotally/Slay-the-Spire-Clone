@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +7,10 @@ using UnityEngine;
 public class DamageOverTimeSystem : Singleton<DamageOverTimeSystem>
 {
     private List<DamageOverTimeData> activeDoTs = new();
+
+    public event Action StatusEffectsChanged;
+
+    public IReadOnlyList<DamageOverTimeData> ActiveDoTs => activeDoTs;
 
     private void OnEnable()
     {
@@ -28,6 +33,7 @@ public class DamageOverTimeSystem : Singleton<DamageOverTimeSystem>
             DamageOverTimeData dot = new DamageOverTimeData(target, applyDoTGA.DamagePerTurn, applyDoTGA.Duration, applyDoTGA.Caster);
             activeDoTs.Add(dot);
         }
+        NotifyStatusEffectsChanged();
         yield return null;
     }
 
@@ -56,5 +62,31 @@ public class DamageOverTimeSystem : Singleton<DamageOverTimeSystem>
         {
             activeDoTs.Remove(dot);
         }
+
+        if (expiredDoTs.Count > 0)
+        {
+            NotifyStatusEffectsChanged();
+        }
+    }
+
+    public List<DamageOverTimeData> GetDoTsFor(CombatantView target)
+    {
+        List<DamageOverTimeData> results = new();
+        if (target == null) return results;
+
+        foreach (DamageOverTimeData dot in activeDoTs)
+        {
+            if (dot.Target == target && dot.RemainingTurns > 0)
+            {
+                results.Add(dot);
+            }
+        }
+
+        return results;
+    }
+
+    private void NotifyStatusEffectsChanged()
+    {
+        StatusEffectsChanged?.Invoke();
     }
 }
