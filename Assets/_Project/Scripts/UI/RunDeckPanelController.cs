@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
+using Gameseed26;
 public enum RunDeckDisplayMode
 {
     ShowEveryCopy,
@@ -220,7 +221,7 @@ public class RunDeckPanelController : MonoBehaviour
         {
             if (targetCount > 0)
             {
-                Debug.LogWarning("RunDeckPanelController needs a RunDeckCardView prefab to show the run deck.");
+                Gameseed26.Logger.LogWarning("RunDeckPanelController needs a RunDeckCardView prefab to show the run deck.");
             }
             return;
         }

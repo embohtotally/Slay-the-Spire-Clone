@@ -29,7 +29,7 @@ public class RunProgressSystem : MonoBehaviour
     {
         if (RunManager.Instance == null || !RunManager.Instance.HasActiveRun)
         {
-            Debug.Log("Combat won. No active run exists, so staying in combat scene for direct-scene testing.");
+            Gameseed26.Logger.Log("Combat won. No active run exists, so staying in combat scene for direct-scene testing.");
             yield break;
         }
 
@@ -40,7 +40,7 @@ public class RunProgressSystem : MonoBehaviour
 
         if (openRewardSceneAfterCombatWin && !string.IsNullOrWhiteSpace(rewardSceneName))
         {
-            Debug.Log($"Combat won. Opening reward scene: {rewardSceneName}.");
+            Gameseed26.Logger.Log($"Combat won. Opening reward scene: {rewardSceneName}.");
             if (loadRewardSceneAdditive)
             {
                 SceneLoader.LoadSceneAdditive(rewardSceneName);
@@ -53,7 +53,7 @@ public class RunProgressSystem : MonoBehaviour
             yield break;
         }
 
-        Debug.Log("Combat won. Returning to map.");
+        Gameseed26.Logger.Log("Combat won. Returning to map.");
         SceneLoader.LoadScene(mapSceneName);
     }
 }

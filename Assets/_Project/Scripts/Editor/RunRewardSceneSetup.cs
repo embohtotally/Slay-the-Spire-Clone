@@ -9,6 +9,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+using Gameseed26;
 public static class RunRewardSceneSetup
 {
     private const string RunRewardsScenePath = "Assets/_Project/Scenes/RunRewards.unity";
@@ -24,7 +25,7 @@ public static class RunRewardSceneSetup
         EnsureSceneInBuildSettings(RunRewardsScenePath);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("Run reward scene setup finished.");
+        Gameseed26.Logger.Log("Run reward scene setup finished.");
     }
 
     private static void CreateRunRewardsScene()
@@ -91,7 +92,7 @@ public static class RunRewardSceneSetup
         CardRewardController controller = Object.FindFirstObjectByType<CardRewardController>(FindObjectsInactive.Include);
         if (controller == null)
         {
-            Debug.LogWarning("CardReward scene has no CardRewardController; skip button was not added.");
+            Gameseed26.Logger.LogWarning("CardReward scene has no CardRewardController; skip button was not added.");
             return;
         }
 
@@ -118,7 +119,7 @@ public static class RunRewardSceneSetup
         RunProgressSystem runProgress = Object.FindFirstObjectByType<RunProgressSystem>(FindObjectsInactive.Include);
         if (runProgress == null)
         {
-            Debug.LogWarning("Game scene has no RunProgressSystem; reward scene was not wired.");
+            Gameseed26.Logger.LogWarning("Game scene has no RunProgressSystem; reward scene was not wired.");
             return;
         }
 

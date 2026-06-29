@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using Gameseed26;
 [DisallowMultipleComponent]
 public class RunPlayerStateInitializer : MonoBehaviour
 {
@@ -9,7 +10,6 @@ public class RunPlayerStateInitializer : MonoBehaviour
     [SerializeField] private int maxStress = 100;
     [SerializeField] private bool initializeOnStart = true;
     [SerializeField] private bool onlyWhenActiveRun = true;
-    [SerializeField] private bool createRunManagerIfMissing = true;
 
     private IEnumerator Start()
     {
@@ -24,15 +24,10 @@ public class RunPlayerStateInitializer : MonoBehaviour
     public void InitializeRunPlayerState()
     {
         RunManager runManager = RunManager.Instance;
-        if (runManager == null && createRunManagerIfMissing)
-        {
-            GameObject runManagerObject = new("Run Manager");
-            runManager = runManagerObject.AddComponent<RunManager>();
-        }
 
         if (runManager == null)
         {
-            Debug.LogWarning("RunPlayerStateInitializer could not find a RunManager.", this);
+            Gameseed26.Logger.LogWarning(this, "RunPlayerStateInitializer could not find a RunManager.");
             return;
         }
 
@@ -44,11 +39,11 @@ public class RunPlayerStateInitializer : MonoBehaviour
         int totalHealth = GetTotalHeroHealth();
         if (totalHealth <= 0)
         {
-            Debug.LogWarning("RunPlayerStateInitializer needs at least one HeroData with Health above 0.", this);
+            Gameseed26.Logger.LogWarning(this, "RunPlayerStateInitializer needs at least one HeroData with Health above 0.");
             return;
         }
 
-        runManager.InitializeHeroState(totalHealth, maxStress);
+        runManager.InitializeHeroState(heroTeam, maxStress);
     }
 
     private int GetTotalHeroHealth()

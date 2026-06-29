@@ -96,7 +96,6 @@ public class ManualMapController : MonoBehaviour
 
     private void Awake()
     {
-        EnsureRunManagerExists();
         CollectNodes();
         InitializeNodes();
     }
@@ -208,7 +207,7 @@ public class ManualMapController : MonoBehaviour
         List<AutoLayer> layers = BuildAutoLayers();
         if (layers.Count == 0)
         {
-            Debug.LogWarning("Manual map auto setup found no ManualMapNode children.");
+            Gameseed26.Logger.LogWarning("Manual map auto setup found no ManualMapNode children.");
             return;
         }
 
@@ -262,7 +261,7 @@ public class ManualMapController : MonoBehaviour
 
         MarkEditorObjectDirty(this);
         MarkSceneDirty();
-        Debug.Log($"Manual map auto setup finished: {nodes.Count} nodes, {layers.Count} layers, {outgoing.Sum(pair => pair.Value.Count)} connections.");
+        Gameseed26.Logger.Log($"Manual map auto setup finished: {nodes.Count} nodes, {layers.Count} layers, {outgoing.Sum(pair => pair.Value.Count)} connections.");
     }
 
     [Button("Rebuild Auto Lines Only", EButtonEnableMode.Editor)]
@@ -289,7 +288,7 @@ public class ManualMapController : MonoBehaviour
 
         MarkEditorObjectDirty(lineParent.gameObject);
         MarkSceneDirty();
-        Debug.Log($"Manual map auto lines rebuilt: {lineCount} lines.");
+        Gameseed26.Logger.Log($"Manual map auto lines rebuilt: {lineCount} lines.");
     }
 
     [Button("Clear Auto Lines", EButtonEnableMode.Editor)]
@@ -308,7 +307,7 @@ public class ManualMapController : MonoBehaviour
     {
         CollectNodes();
         MarkEditorObjectDirty(this);
-        Debug.Log($"ManualMapController collected {nodes.Count} nodes.");
+        Gameseed26.Logger.Log($"ManualMapController collected {nodes.Count} nodes.");
     }
 
     private void ResolveByNodeType(ManualMapNode node)
@@ -325,7 +324,7 @@ public class ManualMapController : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Manual map node '{node.NodeId}' resolved as {node.NodeType}. Add UnityEvents to open a shop, rest screen, reward, or custom UI.");
+        Gameseed26.Logger.Log($"Manual map node '{node.NodeId}' resolved as {node.NodeType}. Add UnityEvents to open a shop, rest screen, reward, or custom UI.");
         if (RunManager.Instance != null)
         {
             RunManager.Instance.ClearSelectedEncounter();
@@ -337,7 +336,7 @@ public class ManualMapController : MonoBehaviour
         string sceneName = string.IsNullOrWhiteSpace(node.SceneNameOverride) ? defaultMerchantSceneName : node.SceneNameOverride;
         if (string.IsNullOrWhiteSpace(sceneName))
         {
-            Debug.Log($"Manual map shop node '{node.NodeId}' selected. No merchant scene is set, so only node events were invoked.");
+            Gameseed26.Logger.Log($"Manual map shop node '{node.NodeId}' selected. No merchant scene is set, so only node events were invoked.");
             return;
         }
 
@@ -346,7 +345,10 @@ public class ManualMapController : MonoBehaviour
 
     private void StartCombat(ManualMapNode node)
     {
-        EnsureRunManagerExists();
+        if (RunManager.Instance == null)
+        {
+            Gameseed26.Logger.LogWarning("ManualMapController could not find RunManager. Keep persistent run systems on Resources/GameManager.");
+        }
 
         if (RunManager.Instance != null)
         {
@@ -361,13 +363,13 @@ public class ManualMapController : MonoBehaviour
 
         if (node.ResolveEncounter(encounterPool) == null)
         {
-            Debug.LogWarning($"Manual map node '{node.NodeId}' ({node.NodeType}) has no EncounterData. Combat will use MatchSetupSystem fallback enemies.");
+            Gameseed26.Logger.LogWarning($"Manual map node '{node.NodeId}' ({node.NodeType}) has no EncounterData. Combat will use MatchSetupSystem fallback enemies.");
         }
 
         string sceneName = string.IsNullOrWhiteSpace(node.SceneNameOverride) ? defaultCombatSceneName : node.SceneNameOverride;
         if (string.IsNullOrWhiteSpace(sceneName))
         {
-            Debug.LogWarning($"Manual map node '{node.NodeId}' tried to start combat, but no combat scene name is set.");
+            Gameseed26.Logger.LogWarning($"Manual map node '{node.NodeId}' tried to start combat, but no combat scene name is set.");
             return;
         }
 
@@ -379,7 +381,7 @@ public class ManualMapController : MonoBehaviour
         string sceneName = string.IsNullOrWhiteSpace(node.SceneNameOverride) ? defaultCombatSceneName : node.SceneNameOverride;
         if (string.IsNullOrWhiteSpace(sceneName))
         {
-            Debug.LogWarning($"Manual map node '{node.NodeId}' tried to load a scene, but no scene name is set.");
+            Gameseed26.Logger.LogWarning($"Manual map node '{node.NodeId}' tried to load a scene, but no scene name is set.");
             return;
         }
 
@@ -761,14 +763,6 @@ public class ManualMapController : MonoBehaviour
             DestroyImmediate(target);
 #endif
         }
-    }
-
-    private static void EnsureRunManagerExists()
-    {
-        if (RunManager.Instance != null) return;
-
-        GameObject runManagerObject = new("Run Manager");
-        runManagerObject.AddComponent<RunManager>();
     }
 
     private sealed class AutoLayer

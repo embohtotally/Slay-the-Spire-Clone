@@ -85,7 +85,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
         ManualMapLayoutEntry layout = ResolveLayoutToLoad();
         if (layout == null)
         {
-            Debug.LogWarning("ManualMapLayoutLoader could not load a layout. Assign a registry with at least one valid ManualMapController prefab.");
+            Gameseed26.Logger.LogWarning("ManualMapLayoutLoader could not load a layout. Assign a registry with at least one valid ManualMapController prefab.");
             return;
         }
 
@@ -96,14 +96,14 @@ public class ManualMapLayoutLoader : MonoBehaviour
     {
         if (layoutRegistry == null)
         {
-            Debug.LogWarning("Cannot select manual map layout because registry is missing.");
+            Gameseed26.Logger.LogWarning("Cannot select manual map layout because registry is missing.");
             return;
         }
 
         ManualMapLayoutEntry layout = layoutRegistry.GetById(layoutId);
         if (layout == null)
         {
-            Debug.LogWarning($"Manual map layout '{layoutId}' was not found in the registry.");
+            Gameseed26.Logger.LogWarning($"Manual map layout '{layoutId}' was not found in the registry.");
             return;
         }
 
@@ -179,7 +179,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
                 return forcedLayout;
             }
 
-            Debug.LogWarning($"Forced manual map layout '{fallbackLayoutId}' was not found. Falling back to saved/random layout.");
+            Gameseed26.Logger.LogWarning($"Forced manual map layout '{fallbackLayoutId}' was not found. Falling back to saved/random layout.");
         }
 
         if (ManualMapRunSelection.Instance.HasSelectedLayout)
@@ -190,7 +190,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
                 return savedLayout;
             }
 
-            Debug.LogWarning($"Saved manual map layout '{ManualMapRunSelection.Instance.SelectedLayoutId}' was not found. Choosing a fallback layout.");
+            Gameseed26.Logger.LogWarning($"Saved manual map layout '{ManualMapRunSelection.Instance.SelectedLayoutId}' was not found. Choosing a fallback layout.");
             ManualMapRunSelection.Instance.ClearSelection();
         }
 

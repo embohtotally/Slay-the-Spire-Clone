@@ -1,10 +1,9 @@
 using UnityEngine;
 
+using Gameseed26;
 [DisallowMultipleComponent]
 public class RunStateActions : MonoBehaviour
 {
-    [SerializeField] private bool createRunManagerIfMissing;
-
     public void HealHero(int amount)
     {
         if (TryGetRunManager(out RunManager runManager))
@@ -121,22 +120,17 @@ public class RunStateActions : MonoBehaviour
     {
         if (TryGetRunManager(out RunManager runManager) && !runManager.SpendGold(amount))
         {
-            Debug.Log($"Not enough gold. Need {amount}, have {runManager.Gold}.");
+            Gameseed26.Logger.Log($"Not enough gold. Need {amount}, have {runManager.Gold}.");
         }
     }
 
     private bool TryGetRunManager(out RunManager runManager)
     {
         runManager = RunManager.Instance;
-        if (runManager == null && createRunManagerIfMissing)
-        {
-            GameObject runManagerObject = new("Run Manager");
-            runManager = runManagerObject.AddComponent<RunManager>();
-        }
 
         if (runManager != null) return true;
 
-        Debug.LogWarning("RunStateActions could not find a RunManager.", this);
+        Gameseed26.Logger.LogWarning(this, "RunStateActions could not find a RunManager.");
         return false;
     }
 }

@@ -161,7 +161,7 @@ public class CardRewardController : MonoBehaviour
 
         if (rewardPool == null)
         {
-            Debug.LogWarning("CardRewardController needs a CardRewardPool.");
+            Gameseed26.Logger.LogWarning("CardRewardController needs a CardRewardPool.");
             ClearOptionViews();
             return;
         }
@@ -170,7 +170,7 @@ public class CardRewardController : MonoBehaviour
         List<CardRewardOption> candidates = rewardPool.BuildCandidateRewards(RunDeckManager.Instance, safeRequest);
         if (candidates.Count == 0)
         {
-            Debug.LogWarning("Card reward has no valid options. Add reward cards or upgrade recipes to the CardRewardPool.");
+            Gameseed26.Logger.LogWarning("Card reward has no valid options. Add reward cards or upgrade recipes to the CardRewardPool.");
             ClearOptionViews();
             return;
         }
@@ -210,7 +210,7 @@ public class CardRewardController : MonoBehaviour
         if (option.Card == null) return false;
 
         RunDeckManager.Instance.AddCard(option.Card);
-        Debug.Log($"Reward chosen: added {option.Card.Title}");
+        Gameseed26.Logger.Log($"Reward chosen: added {option.Card.Title}");
         return true;
     }
 
@@ -222,11 +222,11 @@ public class CardRewardController : MonoBehaviour
         bool replaced = RunDeckManager.Instance.ReplaceFirst(recipe.BaseCard, recipe.UpgradedCard);
         if (!replaced)
         {
-            Debug.LogWarning($"Could not apply reward upgrade {recipe.BaseCard.Title}; the base card is not in the run deck.");
+            Gameseed26.Logger.LogWarning($"Could not apply reward upgrade {recipe.BaseCard.Title}; the base card is not in the run deck.");
             return false;
         }
 
-        Debug.Log($"Reward chosen: upgraded {recipe.BaseCard.Title} -> {recipe.UpgradedCard.Title}");
+        Gameseed26.Logger.Log($"Reward chosen: upgraded {recipe.BaseCard.Title} -> {recipe.UpgradedCard.Title}");
         return true;
     }
 

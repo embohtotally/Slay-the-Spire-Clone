@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Gameseed26
 {
-    public class SceneHandler : Singleton<SceneHandler>
+    public class SceneHandler : MonoBehaviour
     {
         [SerializeField] private AnimationSequencerController _sequencer;
 

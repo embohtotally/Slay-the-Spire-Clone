@@ -41,7 +41,7 @@ public class MerchantController : MonoBehaviour
 
         if (merchantPool == null)
         {
-            Debug.LogWarning("MerchantController needs a MerchantCardPool.");
+            Gameseed26.Logger.LogWarning("MerchantController needs a MerchantCardPool.");
             ClearSlots();
             return;
         }
@@ -49,7 +49,7 @@ public class MerchantController : MonoBehaviour
         List<MerchantOffer> candidates = merchantPool.BuildCandidateOffers(RunDeckManager.Instance, includeNewCards, includeUpgrades);
         if (candidates.Count == 0)
         {
-            Debug.LogWarning("Merchant has no valid offers. Add cards/upgrades to MerchantCardPool or make sure RunDeckManager has a deck.");
+            Gameseed26.Logger.LogWarning("Merchant has no valid offers. Add cards/upgrades to MerchantCardPool or make sure RunDeckManager has a deck.");
             ClearSlots();
             return;
         }
@@ -106,7 +106,7 @@ public class MerchantController : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(mapSceneName))
         {
-            Debug.LogWarning("MerchantController has no map scene name.");
+            Gameseed26.Logger.LogWarning("MerchantController has no map scene name.");
             return;
         }
 
@@ -118,7 +118,7 @@ public class MerchantController : MonoBehaviour
         if (offer.Card == null) return false;
 
         RunDeckManager.Instance.AddCard(offer.Card);
-        Debug.Log($"Bought card: {offer.Card.Title}");
+        Gameseed26.Logger.Log($"Bought card: {offer.Card.Title}");
         return true;
     }
 
@@ -130,11 +130,11 @@ public class MerchantController : MonoBehaviour
         bool replaced = RunDeckManager.Instance.ReplaceFirst(recipe.BaseCard, recipe.UpgradedCard);
         if (!replaced)
         {
-            Debug.LogWarning($"Could not upgrade {recipe.BaseCard.Title}; the base card is not in the current run deck.");
+            Gameseed26.Logger.LogWarning($"Could not upgrade {recipe.BaseCard.Title}; the base card is not in the current run deck.");
             return false;
         }
 
-        Debug.Log($"Upgraded card: {recipe.BaseCard.Title} -> {recipe.UpgradedCard.Title}");
+        Gameseed26.Logger.Log($"Upgraded card: {recipe.BaseCard.Title} -> {recipe.UpgradedCard.Title}");
         return true;
     }
 

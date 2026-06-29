@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +7,10 @@ using UnityEngine;
 public class BuffSystem : Singleton<BuffSystem>
 {
     private List<BuffData> activeBuffs = new();
+
+    public event Action StatusEffectsChanged;
+
+    public IReadOnlyList<BuffData> ActiveBuffs => activeBuffs;
 
     private void OnEnable()
     {
@@ -28,6 +33,7 @@ public class BuffSystem : Singleton<BuffSystem>
             BuffData buff = new BuffData(target, applyBuffGA.BuffType, applyBuffGA.Value, applyBuffGA.Duration, applyBuffGA.Caster);
             activeBuffs.Add(buff);
         }
+        NotifyStatusEffectsChanged();
         yield return null;
     }
 
@@ -96,5 +102,31 @@ public class BuffSystem : Singleton<BuffSystem>
         {
             activeBuffs.Remove(buff);
         }
+
+        if (expiredBuffs.Count > 0)
+        {
+            NotifyStatusEffectsChanged();
+        }
+    }
+
+    public List<BuffData> GetBuffsFor(CombatantView target)
+    {
+        List<BuffData> results = new();
+        if (target == null) return results;
+
+        foreach (BuffData buff in activeBuffs)
+        {
+            if (buff.Target == target && buff.RemainingTurns > 0)
+            {
+                results.Add(buff);
+            }
+        }
+
+        return results;
+    }
+
+    private void NotifyStatusEffectsChanged()
+    {
+        StatusEffectsChanged?.Invoke();
     }
 }

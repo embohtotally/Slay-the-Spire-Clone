@@ -46,7 +46,7 @@ namespace Gameseed26.Editor
 
             if (guids.Length == 0)
             {
-                UnityEngine.Debug.LogWarning($"There is no {typeof(T).Name} in the Project");
+                Logger.LogWarning($"There is no {typeof(T).Name} in the Project");
                 return;
             }
 
@@ -57,7 +57,7 @@ namespace Gameseed26.Editor
                 if (asset != null) target.Add(asset);
             }
 
-            UnityEngine.Debug.Log($"There is {target.Count} of {typeof(T).Name} in the Project");
+            Logger.Log($"There is {target.Count} of {typeof(T).Name} in the Project");
             EditorUtility.SetDirty(ctx);
         }
 
@@ -122,7 +122,7 @@ namespace Gameseed26.Editor
             string finalPath = Path.Combine(targetDirectory, "AudioEnums.cs");
             File.WriteAllText(finalPath, sb.ToString());
             AssetDatabase.Refresh(); // Refresh Assets
-            UnityEngine.Debug.Log("Generated Audio Enums at: " + finalPath);
+            Logger.Log("Generated Audio Enums at: " + finalPath);
         }
     }
 }

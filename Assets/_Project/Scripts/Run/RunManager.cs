@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class RunManager : PersistentSingleton<RunManager>
 {
     [Header("Run Defaults")]
     [SerializeField] private int startingGold;
+
+    private readonly List<RunHeroStressState> heroStressStates = new();
 
     public MapGraph CurrentMap { get; private set; }
     public string CurrentMapNodeId { get; private set; }
@@ -16,6 +19,7 @@ public class RunManager : PersistentSingleton<RunManager>
     public int HeroMaxHealth { get; private set; }
     public int HeroCurrentStress { get; private set; }
     public int HeroMaxStress { get; private set; }
+    public IReadOnlyList<RunHeroStressState> HeroStressStates => heroStressStates;
     public int Gold { get; private set; }
 
     public event Action RunStateChanged;
@@ -95,8 +99,35 @@ public class RunManager : PersistentSingleton<RunManager>
         HasHeroState = true;
         HeroMaxHealth = maxHealth;
         HeroCurrentHealth = maxHealth;
-        HeroMaxStress = maxStress;
-        HeroCurrentStress = 0;
+        heroStressStates.Clear();
+        heroStressStates.Add(new RunHeroStressState(null, maxStress));
+        RefreshAggregateStress();
+        NotifyRunStateChanged();
+    }
+
+    public void InitializeHeroState(IReadOnlyList<HeroData> heroTeam, int maxStress)
+    {
+        int maxHealth = GetTotalHeroHealth(heroTeam);
+        if (maxHealth <= 0) return;
+
+        if (HasHeroState)
+        {
+            int validHeroCount = CountValidHeroes(heroTeam);
+            if (heroStressStates.Count == Mathf.Max(1, validHeroCount)) return;
+
+            RebuildHeroStressStates(heroTeam, maxStress, HeroCurrentStress);
+            HeroMaxHealth = Mathf.Max(1, maxHealth);
+            HeroCurrentHealth = Mathf.Clamp(HeroCurrentHealth, 0, HeroMaxHealth);
+            RefreshAggregateStress();
+            NotifyRunStateChanged();
+            return;
+        }
+
+        HasHeroState = true;
+        HeroMaxHealth = maxHealth;
+        HeroCurrentHealth = maxHealth;
+        RebuildHeroStressStates(heroTeam, maxStress, 0);
+        RefreshAggregateStress();
         NotifyRunStateChanged();
     }
 
@@ -104,12 +135,34 @@ public class RunManager : PersistentSingleton<RunManager>
     {
         if (heroView == null) return;
 
-        InitializeHeroState(heroView.MaxHealth, heroView.MaxStress);
+        InitializeHeroState(heroView.HeroTeam, heroView.MaxStress);
         HeroMaxHealth = Mathf.Max(1, heroView.MaxHealth);
         HeroCurrentHealth = Mathf.Clamp(heroView.CurrentHealth, 0, HeroMaxHealth);
-        HeroMaxStress = Mathf.Max(1, heroView.MaxStress);
-        HeroCurrentStress = Mathf.Clamp(heroView.CurrentStress, 0, HeroMaxStress);
+
+        heroStressStates.Clear();
+        foreach (RunHeroStressState stressState in heroView.GetStressStateCopies())
+        {
+            heroStressStates.Add(stressState);
+        }
+
+        if (heroStressStates.Count == 0)
+        {
+            heroStressStates.Add(new RunHeroStressState(null, Mathf.Max(1, heroView.MaxStress), heroView.CurrentStress));
+        }
+
+        RefreshAggregateStress();
         NotifyRunStateChanged();
+    }
+
+    public List<RunHeroStressState> GetHeroStressStateCopies()
+    {
+        List<RunHeroStressState> copies = new();
+        foreach (RunHeroStressState stressState in heroStressStates)
+        {
+            copies.Add(new RunHeroStressState(stressState));
+        }
+
+        return copies;
     }
 
     public void SetHeroHealth(int amount)
@@ -158,34 +211,82 @@ public class RunManager : PersistentSingleton<RunManager>
     {
         if (!HasHeroState) return;
 
-        HeroCurrentStress = Mathf.Clamp(amount, 0, HeroMaxStress);
+        foreach (RunHeroStressState stressState in heroStressStates)
+        {
+            stressState.SetStress(amount);
+        }
+
+        RefreshAggregateStress();
+        NotifyRunStateChanged();
+    }
+
+    public void SetHeroStress(int heroIndex, int amount)
+    {
+        if (!HasHeroState || heroIndex < 0 || heroIndex >= heroStressStates.Count) return;
+
+        heroStressStates[heroIndex].SetStress(amount);
+        RefreshAggregateStress();
         NotifyRunStateChanged();
     }
 
     public void AddStress(int amount)
     {
         if (!HasHeroState || amount <= 0) return;
-        SetStress(HeroCurrentStress + amount);
+
+        foreach (RunHeroStressState stressState in heroStressStates)
+        {
+            stressState.AddStress(amount);
+        }
+
+        RefreshAggregateStress();
+        NotifyRunStateChanged();
+    }
+
+    public void AddStressToHero(int heroIndex, int amount)
+    {
+        if (!HasHeroState || heroIndex < 0 || heroIndex >= heroStressStates.Count || amount <= 0) return;
+
+        heroStressStates[heroIndex].AddStress(amount);
+        RefreshAggregateStress();
+        NotifyRunStateChanged();
     }
 
     public void ReduceStress(int amount)
     {
         if (!HasHeroState || amount <= 0) return;
-        SetStress(HeroCurrentStress - amount);
+
+        foreach (RunHeroStressState stressState in heroStressStates)
+        {
+            stressState.ReduceStress(amount);
+        }
+
+        RefreshAggregateStress();
+        NotifyRunStateChanged();
     }
 
     public void ClearStress()
     {
         if (!HasHeroState) return;
-        SetStress(0);
+
+        foreach (RunHeroStressState stressState in heroStressStates)
+        {
+            stressState.ClearStress();
+        }
+
+        RefreshAggregateStress();
+        NotifyRunStateChanged();
     }
 
     public void ChangeMaxStress(int amount)
     {
         if (!HasHeroState || amount == 0) return;
 
-        HeroMaxStress = Mathf.Max(1, HeroMaxStress + amount);
-        HeroCurrentStress = Mathf.Clamp(HeroCurrentStress, 0, HeroMaxStress);
+        foreach (RunHeroStressState stressState in heroStressStates)
+        {
+            stressState.ChangeMaxStress(amount);
+        }
+
+        RefreshAggregateStress();
         NotifyRunStateChanged();
     }
 
@@ -233,6 +334,65 @@ public class RunManager : PersistentSingleton<RunManager>
         HeroMaxHealth = 0;
         HeroCurrentStress = 0;
         HeroMaxStress = 0;
+        heroStressStates.Clear();
+    }
+
+    private static int GetTotalHeroHealth(IReadOnlyList<HeroData> heroTeam)
+    {
+        int totalHealth = 0;
+        if (heroTeam == null) return totalHealth;
+
+        foreach (HeroData heroData in heroTeam)
+        {
+            if (heroData != null) totalHealth += heroData.Health;
+        }
+
+        return totalHealth;
+    }
+
+    private static int CountValidHeroes(IReadOnlyList<HeroData> heroTeam)
+    {
+        int count = 0;
+        if (heroTeam == null) return count;
+
+        foreach (HeroData heroData in heroTeam)
+        {
+            if (heroData != null) count++;
+        }
+
+        return count;
+    }
+
+    private void RebuildHeroStressStates(IReadOnlyList<HeroData> heroTeam, int maxStress, int currentStress)
+    {
+        heroStressStates.Clear();
+
+        if (heroTeam != null)
+        {
+            foreach (HeroData heroData in heroTeam)
+            {
+                if (heroData == null) continue;
+                heroStressStates.Add(new RunHeroStressState(heroData, maxStress, currentStress));
+            }
+        }
+
+        if (heroStressStates.Count == 0)
+        {
+            heroStressStates.Add(new RunHeroStressState(null, maxStress, currentStress));
+        }
+    }
+
+    private void RefreshAggregateStress()
+    {
+        HeroCurrentStress = 0;
+        HeroMaxStress = 0;
+
+        foreach (RunHeroStressState stressState in heroStressStates)
+        {
+            if (stressState == null) continue;
+            HeroCurrentStress = Mathf.Max(HeroCurrentStress, stressState.CurrentStress);
+            HeroMaxStress = Mathf.Max(HeroMaxStress, stressState.MaxStress);
+        }
     }
 
     private void NotifyRunStateChanged()

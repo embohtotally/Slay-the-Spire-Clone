@@ -9,7 +9,6 @@ public class RunStatusUI : MonoBehaviour
     [Header("Root")]
     [SerializeField] private GameObject root;
     [SerializeField] private bool hideWhenNoRunState = true;
-    [SerializeField] private bool createRunManagerIfMissing;
 
     [Header("Health")]
     [SerializeField] private TMP_Text healthText;
@@ -31,11 +30,6 @@ public class RunStatusUI : MonoBehaviour
 
     private RunManager subscribedRunManager;
     private RunDeckManager subscribedDeckManager;
-
-    private void Awake()
-    {
-        EnsureRunManagerIfWanted();
-    }
 
     private void OnEnable()
     {
@@ -146,13 +140,5 @@ public class RunStatusUI : MonoBehaviour
     private static void SetSlider(Slider target, float value)
     {
         if (target != null) target.value = Mathf.Clamp01(value);
-    }
-
-    private void EnsureRunManagerIfWanted()
-    {
-        if (!createRunManagerIfMissing || RunManager.Instance != null) return;
-
-        GameObject runManagerObject = new("Run Manager");
-        runManagerObject.AddComponent<RunManager>();
     }
 }

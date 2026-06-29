@@ -141,22 +141,22 @@ public class RunRewardController : MonoBehaviour
         switch (reward.Type)
         {
             case RunRewardType.Gold:
-                EnsureRunManagerExists();
-                RunManager.Instance.AddGold(reward.Amount);
+                if (!TryGetRunManager(out RunManager goldRunManager)) return;
+                goldRunManager.AddGold(reward.Amount);
                 MarkRewardClaimed(rewardIndex);
                 break;
 
             case RunRewardType.Heal:
-                EnsureRunManagerExists();
-                if (reward.Amount > 0) RunManager.Instance.HealHero(reward.Amount);
-                else RunManager.Instance.HealHeroToFull();
+                if (!TryGetRunManager(out RunManager healRunManager)) return;
+                if (reward.Amount > 0) healRunManager.HealHero(reward.Amount);
+                else healRunManager.HealHeroToFull();
                 MarkRewardClaimed(rewardIndex);
                 break;
 
             case RunRewardType.ReduceStress:
-                EnsureRunManagerExists();
-                if (reward.Amount > 0) RunManager.Instance.ReduceStress(reward.Amount);
-                else RunManager.Instance.ClearStress();
+                if (!TryGetRunManager(out RunManager stressRunManager)) return;
+                if (reward.Amount > 0) stressRunManager.ReduceStress(reward.Amount);
+                else stressRunManager.ClearStress();
                 MarkRewardClaimed(rewardIndex);
                 break;
 
@@ -197,7 +197,7 @@ public class RunRewardController : MonoBehaviour
         CardRewardController cardRewardController = FindCardRewardController(cardRewardSceneName);
         if (cardRewardController == null)
         {
-            Debug.LogWarning($"Could not find a CardRewardController in additive scene '{cardRewardSceneName}'.");
+            Gameseed26.Logger.LogWarning($"Could not find a CardRewardController in additive scene '{cardRewardSceneName}'.");
             isOpeningCardReward = false;
             yield break;
         }
@@ -291,11 +291,12 @@ public class RunRewardController : MonoBehaviour
         }
     }
 
-    private static void EnsureRunManagerExists()
+    private static bool TryGetRunManager(out RunManager runManager)
     {
-        if (RunManager.Instance != null) return;
+        runManager = RunManager.Instance;
+        if (runManager != null) return true;
 
-        GameObject runManagerObject = new("Run Manager");
-        runManagerObject.AddComponent<RunManager>();
+        Gameseed26.Logger.LogWarning("RunRewardController could not find RunManager. Keep persistent run systems on Resources/GameManager.");
+        return false;
     }
 }

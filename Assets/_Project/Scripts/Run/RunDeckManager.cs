@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+using Gameseed26;
 public class RunDeckManager : PersistentSingleton<RunDeckManager>
 {
     private readonly List<CardData> currentDeck = new();
@@ -50,7 +51,7 @@ public class RunDeckManager : PersistentSingleton<RunDeckManager>
     {
         if (cardData == null)
         {
-            Debug.LogWarning("Tried to add a null card to the run deck.");
+            Gameseed26.Logger.LogWarning("Tried to add a null card to the run deck.");
             return;
         }
 

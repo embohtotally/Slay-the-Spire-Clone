@@ -19,9 +19,9 @@ namespace Gameseed26.Editor
                 PrefabUtility.SaveAsPrefabAsset(go, FULL_PATH, out bool success);
 
                 if (success)
-                    Debug.Log($"<color=green>Success:</color> Prefab saved at {FULL_PATH}\nDon't move or change the name!!");
+                    Logger.Log($"<color=green>Success:</color> Prefab saved at {FULL_PATH}\nDon't move or change the name!!");
                 else
-                    Debug.LogError("Failed to save prefab.");
+                    Logger.LogError("Failed to save prefab.");
             }
             finally
             {

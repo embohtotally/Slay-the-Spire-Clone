@@ -2,13 +2,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+using Gameseed26;
 public static class ProceduralMapGenerator
 {
     public static MapGraph Generate(MapGeneratorConfig config, MapEncounterPool encounterPool)
     {
         if (config == null)
         {
-            Debug.LogWarning("MapGeneratorConfig is missing. Using default generated settings.");
+            Gameseed26.Logger.LogWarning("MapGeneratorConfig is missing. Using default generated settings.");
             config = ScriptableObject.CreateInstance<MapGeneratorConfig>();
         }
 

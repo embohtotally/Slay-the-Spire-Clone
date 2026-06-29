@@ -10,16 +10,11 @@ public class MapSystem : MonoBehaviour
 
     private MapGraph graph;
 
-    private void Awake()
-    {
-        EnsureRunManagerExists();
-    }
-
     private void Start()
     {
         if (RunManager.Instance == null)
         {
-            Debug.LogError("MapSystem could not create or find RunManager.");
+            Gameseed26.Logger.LogError("MapSystem could not find RunManager. Keep persistent run systems on Resources/GameManager.");
             return;
         }
 
@@ -60,22 +55,15 @@ public class MapSystem : MonoBehaviour
         {
             if (node.Encounter == null)
             {
-                Debug.LogWarning($"Map node {node.Id} ({node.Type}) has no EncounterData. Combat will use MatchSetupSystem fallback enemies.");
+                Gameseed26.Logger.LogWarning($"Map node {node.Id} ({node.Type}) has no EncounterData. Combat will use MatchSetupSystem fallback enemies.");
             }
 
             SceneLoader.LoadScene(combatSceneName);
             return;
         }
 
-        Debug.Log($"Resolved non-combat map node: {node.Type}. Placeholder reward/event screen not implemented yet; path advanced on map.");
+        Gameseed26.Logger.Log($"Resolved non-combat map node: {node.Type}. Placeholder reward/event screen not implemented yet; path advanced on map.");
         RunManager.Instance.ClearSelectedEncounter();
     }
 
-    private static void EnsureRunManagerExists()
-    {
-        if (RunManager.Instance != null) return;
-
-        GameObject runManagerObject = new("Run Manager");
-        runManagerObject.AddComponent<RunManager>();
-    }
 }
