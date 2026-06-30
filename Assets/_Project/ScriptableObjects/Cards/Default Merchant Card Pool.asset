@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c009a32c723482bb828324d59a770ba, type: 3}
   m_Name: Default Merchant Card Pool
   m_EditorClassIdentifier: 
+  defaultNewCardPrice: 75
+  defaultUpgradePrice: 100
+  cardPriceOverrides: []
   cardsForSale:
   - {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
   - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}

@@ -13,6 +13,11 @@ MonoBehaviour:
   m_Name: Manual Map Layout Registry
   m_EditorClassIdentifier: 
   layouts:
+  - Id: flowTest
+    DisplayName: Flow Test
+    MapPrefab: {fileID: 2850600031230460478, guid: 46a13a9adfd95e8418bc9a6ff78ee3f5, type: 3}
+    RandomWeight: 0
+    Enabled: 1
   - Id: loneliness
     DisplayName: Loneliness
     MapPrefab: {fileID: 3184735106509882512, guid: 3f6d7d951e784564ebc48f875368ed9e, type: 3}

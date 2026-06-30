@@ -487,6 +487,8 @@ MonoBehaviour:
   levelNodes: []
   overwriteNodeLabels: 0
   lockedSuffix: ' (Locked)'
+  debug: 1
+  mapLayoutId: flowTest
   OnRefreshed:
     m_PersistentCalls:
       m_Calls: []

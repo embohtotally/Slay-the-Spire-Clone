@@ -26,15 +26,18 @@ public class LevelProgressionManager : PersistentSingleton<LevelProgressionManag
     [SerializeField] private string highestUnlockedSaveKey = "SlayClone.HighestUnlockedLevelIndex";
 
     [BoxGroup("Debug")]
-    [ReadOnly] [SerializeField] private int highestUnlockedIndex;
+    [ReadOnly][SerializeField] private int highestUnlockedIndex;
 
     [BoxGroup("Debug")]
-    [ReadOnly] [SerializeField] private int currentLevelIndex = NoLevelIndex;
+    [ReadOnly][SerializeField] private int currentLevelIndex = NoLevelIndex;
 
     [BoxGroup("Debug")]
-    [ReadOnly] [SerializeField] private CampaignRunState campaignRunState = new();
+    [ReadOnly][SerializeField] private CampaignRunState campaignRunState = new();
 
     private readonly List<LevelDefinition> levels = new();
+
+    private bool isDebug;
+    private string manualDebugLayoutId;
 
     public event Action ProgressChanged;
 
@@ -68,6 +71,12 @@ public class LevelProgressionManager : PersistentSingleton<LevelProgressionManag
         LoadProgress();
         currentLevelIndex = NoLevelIndex;
         ProgressChanged?.Invoke();
+    }
+
+    public void SetDebug(bool debug, string layoutId)
+    {
+        isDebug = debug;
+        manualDebugLayoutId = layoutId;
     }
 
     public bool IsUnlocked(LevelDefinition level)
@@ -233,7 +242,14 @@ public class LevelProgressionManager : PersistentSingleton<LevelProgressionManag
             ManualMapRunSelection.Instance.ClearSelection();
             if (level.HasManualMapLayout)
             {
-                ManualMapRunSelection.Instance.SelectLayout(level.ManualMapLayoutId);
+                if (isDebug)
+                {
+                    ManualMapRunSelection.Instance.SelectLayout(manualDebugLayoutId);
+                }
+                else
+                {
+                    ManualMapRunSelection.Instance.SelectLayout(level.ManualMapLayoutId);
+                }
             }
         }
 

@@ -31,6 +31,11 @@ public class ManualLevelSelectController : MonoBehaviour
     [BoxGroup("Labels")]
     [SerializeField] private string lockedSuffix = " (Locked)";
 
+    [BoxGroup("Debug")]
+    [SerializeField] private bool debug;
+    [BoxGroup("Debug")]
+    [SerializeField] private string mapLayoutId = "flowTest";
+
     [BoxGroup("Events")]
     public UnityEvent OnRefreshed;
 
@@ -40,6 +45,7 @@ public class ManualLevelSelectController : MonoBehaviour
     {
         progressionManager = LevelProgressionManager.GetOrCreate();
         progressionManager.ConfigureLevels(levels);
+        progressionManager.SetDebug(debug, mapLayoutId);
         progressionManager.ProgressChanged += Refresh;
     }
 

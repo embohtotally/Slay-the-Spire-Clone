@@ -22,6 +22,7 @@ public class MerchantController : MonoBehaviour
 
     private readonly List<MerchantOffer> activeOffers = new();
     private readonly List<MerchantOfferSlotView> slots = new();
+    private RunManager subscribedRunManager;
 
     private void Awake()
     {
@@ -29,8 +30,19 @@ public class MerchantController : MonoBehaviour
         CollectSlots();
     }
 
+    private void OnEnable()
+    {
+        SubscribeToRunStateChanges();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeFromRunStateChanges();
+    }
+
     private void Start()
     {
+        SubscribeToRunStateChanges();
         GenerateOffers();
     }
 
@@ -71,23 +83,21 @@ public class MerchantController : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < slots.Count; i++)
-        {
-            if (i < activeOffers.Count)
-            {
-                slots[i].Setup(this, activeOffers[i]);
-            }
-            else
-            {
-                slots[i].Clear();
-            }
-        }
+        RefreshSlotAssignments();
     }
 
     public void BuyOffer(MerchantOffer offer, MerchantOfferSlotView slotView)
     {
         if (offer == null || offer.IsSold) return;
         EnsureRunDeckManagerExists();
+
+        if (!CanAfford(offer))
+        {
+            int currentGold = RunManager.Instance != null ? RunManager.Instance.Gold : 0;
+            Gameseed26.Logger.Log($"Not enough gold for merchant offer '{offer.GetTitle()}'. Need {offer.Price}, have {currentGold}.");
+            slotView?.Refresh();
+            return;
+        }
 
         bool success = offer.Type switch
         {
@@ -98,8 +108,21 @@ public class MerchantController : MonoBehaviour
 
         if (!success) return;
 
+        if (!SpendOfferPrice(offer))
+        {
+            Gameseed26.Logger.LogWarning($"Merchant offer '{offer.GetTitle()}' was applied but gold could not be spent. Check RunManager setup.");
+            return;
+        }
+
         offer.MarkSold();
-        slotView?.Refresh();
+        RefreshSlots();
+    }
+
+    public bool CanAfford(MerchantOffer offer)
+    {
+        if (offer == null) return false;
+        if (offer.Price <= 0) return true;
+        return RunManager.Instance != null && RunManager.Instance.Gold >= offer.Price;
     }
 
     public void ReturnToMap()
@@ -118,7 +141,7 @@ public class MerchantController : MonoBehaviour
         if (offer.Card == null) return false;
 
         RunDeckManager.Instance.AddCard(offer.Card);
-        Gameseed26.Logger.Log($"Bought card: {offer.Card.Title}");
+        Gameseed26.Logger.Log($"Bought card: {offer.Card.Title} for {offer.Price} gold.");
         return true;
     }
 
@@ -134,7 +157,7 @@ public class MerchantController : MonoBehaviour
             return false;
         }
 
-        Gameseed26.Logger.Log($"Upgraded card: {recipe.BaseCard.Title} -> {recipe.UpgradedCard.Title}");
+        Gameseed26.Logger.Log($"Upgraded card: {recipe.BaseCard.Title} -> {recipe.UpgradedCard.Title} for {offer.Price} gold.");
         return true;
     }
 
@@ -163,6 +186,21 @@ public class MerchantController : MonoBehaviour
         }
     }
 
+    private void RefreshSlotAssignments()
+    {
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (i < activeOffers.Count)
+            {
+                slots[i].Setup(this, activeOffers[i]);
+            }
+            else
+            {
+                slots[i].Clear();
+            }
+        }
+    }
+
     private void ClearSlots()
     {
         foreach (MerchantOfferSlotView slot in slots)
@@ -172,6 +210,40 @@ public class MerchantController : MonoBehaviour
                 slot.Clear();
             }
         }
+    }
+
+    private bool SpendOfferPrice(MerchantOffer offer)
+    {
+        if (offer == null || offer.Price <= 0) return true;
+        return RunManager.Instance != null && RunManager.Instance.SpendGold(offer.Price);
+    }
+
+    private void RefreshSlots()
+    {
+        foreach (MerchantOfferSlotView slot in slots)
+        {
+            if (slot != null)
+            {
+                slot.Refresh();
+            }
+        }
+    }
+
+    private void SubscribeToRunStateChanges()
+    {
+        if (RunManager.Instance == null || subscribedRunManager == RunManager.Instance) return;
+
+        UnsubscribeFromRunStateChanges();
+        subscribedRunManager = RunManager.Instance;
+        subscribedRunManager.RunStateChanged += RefreshSlots;
+    }
+
+    private void UnsubscribeFromRunStateChanges()
+    {
+        if (subscribedRunManager == null) return;
+
+        subscribedRunManager.RunStateChanged -= RefreshSlots;
+        subscribedRunManager = null;
     }
 
     private static void EnsureRunDeckManagerExists()
