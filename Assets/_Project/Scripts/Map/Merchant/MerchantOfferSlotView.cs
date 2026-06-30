@@ -10,6 +10,8 @@ public class MerchantOfferSlotView : CardView
     [SerializeField] private string newCardActionLabel = "Take Card";
     [SerializeField] private string upgradeActionLabel = "Upgrade";
     [SerializeField] private string soldLabel = "Sold";
+    [SerializeField] private string notEnoughGoldLabel = "Not Enough Gold";
+    [SerializeField] private string goldSuffix = "g";
 
     private MerchantController merchantController;
     private MerchantOffer offer;
@@ -56,9 +58,10 @@ public class MerchantOfferSlotView : CardView
         }
 
         CardData previewCard = offer.PreviewCard;
-        bool canBuy = !offer.IsSold && previewCard != null;
+        bool canAfford = merchantController == null || merchantController.CanAfford(offer);
+        bool canBuy = !offer.IsSold && previewCard != null && canAfford;
         SetupCard(previewCard, offer.GetTitle(), offer.GetDescription());
-        SetActionText(offer.IsSold ? soldLabel : offer.Type == MerchantOfferType.UpgradeCard ? upgradeActionLabel : newCardActionLabel);
+        SetActionText(GetActionLabel(canAfford));
         SetButtonInteractable(canBuy);
     }
 
@@ -76,5 +79,15 @@ public class MerchantOfferSlotView : CardView
     private void SetButtonInteractable(bool enable)
     {
         if (button != null) button.interactable = enable;
+    }
+
+    private string GetActionLabel(bool canAfford)
+    {
+        if (offer == null) return string.Empty;
+        if (offer.IsSold) return soldLabel;
+        if (!canAfford) return notEnoughGoldLabel;
+
+        string actionLabel = offer.Type == MerchantOfferType.UpgradeCard ? upgradeActionLabel : newCardActionLabel;
+        return $"{actionLabel} - {offer.Price}{goldSuffix}";
     }
 }

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Gameseed26;
+using NaughtyAttributes;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -23,15 +25,39 @@ public class CombatantStatusEffectsUI : MonoBehaviour
         public bool IsDebuff;
     }
 
+    [Header("Target")]
     [SerializeField] private CombatantView target;
+    [SerializeField] private bool autoFindTargetInParent = true;
+
+    [Header("UI References")]
+    [Tooltip("Parent used for spawned status icons. Empty = this transform.")]
     [SerializeField] private Transform container;
     [SerializeField] private StatusEffectIconView iconPrefab;
-    [SerializeField] private bool autoFindTargetInParent = true;
+    [SerializeField] private bool hideContainerWhenEmpty = true;
+    [SerializeField] private bool warnIfMissingReferences = true;
+
+    [Header("Displayed Statuses")]
+    [SerializeField] private bool showStun = true;
+    [SerializeField] private bool showTaunt = true;
+    [SerializeField] private bool showShieldAsStatus;
+    [SerializeField] private bool showBuffs = true;
+    [SerializeField] private bool showDamageOverTime = true;
+
+    [Header("Optional Icons")]
+    [SerializeField] private Sprite stunIcon;
+    [SerializeField] private Sprite tauntIcon;
+    [SerializeField] private Sprite shieldIcon;
+    [SerializeField] private Sprite dotIcon;
     [SerializeField] private List<StatusIconOverride> iconOverrides = new();
 
     private readonly List<StatusEffectIconView> iconViews = new();
     private BuffSystem subscribedBuffSystem;
     private DamageOverTimeSystem subscribedDotSystem;
+    private bool warnedMissingTarget;
+    private bool warnedMissingContainer;
+    private bool warnedMissingPrefab;
+
+    private Transform Container => container != null ? container : transform;
 
     private void Awake()
     {
@@ -64,24 +90,58 @@ public class CombatantStatusEffectsUI : MonoBehaviour
     public void SetTarget(CombatantView newTarget)
     {
         if (target == newTarget) return;
-        if (isActiveAndEnabled && target != null) target.StatusEffectsChanged -= Refresh;
+
+        if (isActiveAndEnabled && target != null)
+        {
+            target.StatusEffectsChanged -= Refresh;
+        }
+
         target = newTarget;
-        if (isActiveAndEnabled && target != null) target.StatusEffectsChanged += Refresh;
+        warnedMissingTarget = false;
+
+        if (isActiveAndEnabled && target != null)
+        {
+            target.StatusEffectsChanged += Refresh;
+        }
+
         Refresh();
     }
 
+    [Button("Auto Find Target In Parent", EButtonEnableMode.Always)]
+    public void AutoFindTargetInParent()
+    {
+        target = GetComponentInParent<CombatantView>();
+        warnedMissingTarget = false;
+        Refresh();
+    }
+
+    [Button("Refresh Status UI", EButtonEnableMode.Always)]
     public void Refresh()
     {
-        if (target == null || container == null || iconPrefab == null) return;
+        EnsureTargetReference();
+
+        if (!ValidateReferences())
+        {
+            ClearIconViews();
+            SetContainerVisible(false);
+            return;
+        }
 
         List<StatusEffectDisplayData> statusEffects = BuildStatusList();
+        SetContainerVisible(!hideContainerWhenEmpty || statusEffects.Count > 0);
         EnsureIconCount(statusEffects.Count);
 
         for (int i = 0; i < iconViews.Count; i++)
         {
             bool hasStatus = i < statusEffects.Count;
-            iconViews[i].gameObject.SetActive(hasStatus);
-            if (hasStatus) iconViews[i].Bind(statusEffects[i]);
+            if (hasStatus)
+            {
+                iconViews[i].Bind(statusEffects[i]);
+            }
+            else
+            {
+                iconViews[i].Clear();
+            }
         }
     }
 
@@ -89,17 +149,22 @@ public class CombatantStatusEffectsUI : MonoBehaviour
     {
         Dictionary<string, StatusAccumulator> groupedStatuses = new(StringComparer.OrdinalIgnoreCase);
 
-        if (target.IsStunned)
+        if (showStun && target.IsStunned)
         {
             AddStatus(groupedStatuses, "stun", "Stun", 1, target.StunDuration, true);
         }
 
-        if (target.IsTaunted)
+        if (showTaunt && target.IsTaunted)
         {
             AddStatus(groupedStatuses, "taunt", "Taunt", 1, target.TauntDuration, false);
         }
 
-        if (BuffSystem.Instance != null)
+        if (showShieldAsStatus && target.CurrentShield > 0)
+        {
+            AddStatus(groupedStatuses, "shield", "Shield", target.CurrentShield, 0, false);
+        }
+
+        if (showBuffs && BuffSystem.Instance != null)
         {
             foreach (BuffData buff in BuffSystem.Instance.GetBuffsFor(target))
             {
@@ -109,7 +174,7 @@ public class CombatantStatusEffectsUI : MonoBehaviour
             }
         }
 
-        if (DamageOverTimeSystem.Instance != null)
+        if (showDamageOverTime && DamageOverTimeSystem.Instance != null)
         {
             foreach (DamageOverTimeData dot in DamageOverTimeSystem.Instance.GetDoTsFor(target))
             {
@@ -155,6 +220,11 @@ public class CombatantStatusEffectsUI : MonoBehaviour
 
     private Sprite GetIcon(string id)
     {
+        if (string.Equals(id, "stun", StringComparison.OrdinalIgnoreCase)) return stunIcon;
+        if (string.Equals(id, "taunt", StringComparison.OrdinalIgnoreCase)) return tauntIcon;
+        if (string.Equals(id, "shield", StringComparison.OrdinalIgnoreCase)) return shieldIcon;
+        if (string.Equals(id, "dot", StringComparison.OrdinalIgnoreCase)) return dotIcon;
+
         foreach (StatusIconOverride iconOverride in iconOverrides)
         {
             if (string.Equals(iconOverride.Id, id, StringComparison.OrdinalIgnoreCase))
@@ -177,13 +247,68 @@ public class CombatantStatusEffectsUI : MonoBehaviour
         target = GetComponentInParent<CombatantView>();
     }
 
+    private bool ValidateReferences()
+    {
+        bool valid = true;
+
+        if (target == null)
+        {
+            WarnOnce(ref warnedMissingTarget, "CombatantStatusEffectsUI has no target. Assign Target or place it under a CombatantView.");
+            valid = false;
+        }
+
+        if (Container == null)
+        {
+            WarnOnce(ref warnedMissingContainer, "CombatantStatusEffectsUI has no container.");
+            valid = false;
+        }
+
+        if (iconPrefab == null)
+        {
+            WarnOnce(ref warnedMissingPrefab, "CombatantStatusEffectsUI needs an Icon Prefab with StatusEffectIconView.");
+            valid = false;
+        }
+
+        return valid;
+    }
+
+    private void WarnOnce(ref bool warnedFlag, string message)
+    {
+        if (!warnIfMissingReferences || warnedFlag) return;
+        warnedFlag = true;
+        Gameseed26.Logger.LogWarning(this, message);
+    }
+
     private void EnsureIconCount(int targetCount)
     {
         while (iconViews.Count < targetCount)
         {
-            StatusEffectIconView iconView = Instantiate(iconPrefab, container);
+            StatusEffectIconView iconView = Instantiate(iconPrefab, Container);
             iconViews.Add(iconView);
         }
+    }
+
+    private void ClearIconViews()
+    {
+        foreach (StatusEffectIconView iconView in iconViews)
+        {
+            if (iconView != null)
+            {
+                iconView.Clear();
+            }
+        }
+    }
+
+    private void SetContainerVisible(bool visible)
+    {
+        Transform targetContainer = Container;
+        if (targetContainer == null) return;
+
+        // If no separate container is assigned, do not disable this component's own GameObject.
+        // Otherwise the UI would unsubscribe while empty and could not refresh when a status appears later.
+        if (targetContainer == transform) return;
+
+        targetContainer.gameObject.SetActive(visible);
     }
 
     private void Subscribe()

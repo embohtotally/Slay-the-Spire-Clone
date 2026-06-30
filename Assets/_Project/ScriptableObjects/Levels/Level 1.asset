@@ -17,7 +17,7 @@ MonoBehaviour:
   levelNumber: 1
   description: Loneliness
   mapSceneName: Map
-  manualMapLayoutId: anger
+  manualMapLayoutId: loneliness
   manualMapProgressIdOverride: 
   clearMapProgressOnStart: 1
   abandonExistingRunOnStart: 1

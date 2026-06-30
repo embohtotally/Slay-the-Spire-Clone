@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NaughtyAttributes;
 using UnityEngine;
 
 public enum MerchantOfferType
@@ -21,25 +22,39 @@ public class CardUpgradeRecipe
     public string DisplayNameOverride;
 }
 
+[Serializable]
+public class MerchantCardPriceOverride
+{
+    [Tooltip("Card that should use a custom merchant price.")]
+    public CardData Card;
+
+    [Min(0)]
+    [Tooltip("Gold cost for this specific card.")]
+    public int Price = 75;
+}
+
 public class MerchantOffer
 {
     public MerchantOfferType Type { get; }
     public CardData Card { get; }
     public CardUpgradeRecipe UpgradeRecipe { get; }
+    public int Price { get; }
     public bool IsSold { get; private set; }
 
     public CardData PreviewCard => Type == MerchantOfferType.UpgradeCard ? UpgradeRecipe?.UpgradedCard : Card;
 
-    public MerchantOffer(CardData card)
+    public MerchantOffer(CardData card, int price)
     {
         Type = MerchantOfferType.NewCard;
         Card = card;
+        Price = Mathf.Max(0, price);
     }
 
-    public MerchantOffer(CardUpgradeRecipe upgradeRecipe)
+    public MerchantOffer(CardUpgradeRecipe upgradeRecipe, int price)
     {
         Type = MerchantOfferType.UpgradeCard;
         UpgradeRecipe = upgradeRecipe;
+        Price = Mathf.Max(0, price);
     }
 
     public string GetTitle()
@@ -77,10 +92,23 @@ public class MerchantOffer
 [CreateAssetMenu(menuName = "Data/Merchant Card Pool")]
 public class MerchantCardPool : ScriptableObject
 {
+    [Header("Pricing")]
+    [Min(0)]
+    [SerializeField] private int defaultNewCardPrice = 75;
+
+    [Min(0)]
+    [SerializeField] private int defaultUpgradePrice = 100;
+
+    [Tooltip("Optional per-card price overrides. Cards not listed here use Default New Card Price.")]
+    [ReorderableList]
+    [SerializeField] private List<MerchantCardPriceOverride> cardPriceOverrides = new();
+
     [Header("New Cards")]
+    [ReorderableList]
     [SerializeField] private List<CardData> cardsForSale = new();
 
     [Header("Upgrades")]
+    [ReorderableList]
     [SerializeField] private List<CardUpgradeRecipe> upgradeRecipes = new();
 
     public List<MerchantOffer> BuildCandidateOffers(RunDeckManager deckManager, bool includeNewCards, bool includeUpgrades)
@@ -93,7 +121,7 @@ public class MerchantCardPool : ScriptableObject
             {
                 if (card != null)
                 {
-                    candidates.Add(new MerchantOffer(card));
+                    candidates.Add(new MerchantOffer(card, GetNewCardPrice(card)));
                 }
             }
         }
@@ -105,10 +133,28 @@ public class MerchantCardPool : ScriptableObject
                 if (recipe == null || recipe.BaseCard == null || recipe.UpgradedCard == null) continue;
                 if (!deckManager.Contains(recipe.BaseCard)) continue;
 
-                candidates.Add(new MerchantOffer(recipe));
+                candidates.Add(new MerchantOffer(recipe, GetUpgradePrice()));
             }
         }
 
         return candidates;
+    }
+
+    private int GetNewCardPrice(CardData card)
+    {
+        foreach (MerchantCardPriceOverride priceOverride in cardPriceOverrides)
+        {
+            if (priceOverride != null && priceOverride.Card == card)
+            {
+                return Mathf.Max(0, priceOverride.Price);
+            }
+        }
+
+        return Mathf.Max(0, defaultNewCardPrice);
+    }
+
+    private int GetUpgradePrice()
+    {
+        return Mathf.Max(0, defaultUpgradePrice);
     }
 }
