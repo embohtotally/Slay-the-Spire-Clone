@@ -15,6 +15,8 @@ public class BuffSystem : Singleton<BuffSystem>
     private void OnEnable()
     {
         ActionSystem.AttachPerformer<ApplyBuffGA>(ApplyBuffPerformer);
+        ActionSystem.AttachPerformer<ApplyStatusGA>(ApplyStatusPerformer);
+        ActionSystem.AttachPerformer<RemoveDebuffGA>(RemoveDebuffPerformer);
         ActionSystem.SubscribeReaction<DealDamageGA>(OnDealDamagePreReaction, ReactionTiming.PRE);
         ActionSystem.SubscribeReaction<EnemyTurnGA>(OnEnemyTurnPreReaction, ReactionTiming.PRE);
     }
@@ -22,6 +24,8 @@ public class BuffSystem : Singleton<BuffSystem>
     private void OnDisable()
     {
         ActionSystem.DetachPerformer<ApplyBuffGA>();
+        ActionSystem.DetachPerformer<ApplyStatusGA>();
+        ActionSystem.DetachPerformer<RemoveDebuffGA>();
         ActionSystem.UnsubscribeReaction<DealDamageGA>(OnDealDamagePreReaction, ReactionTiming.PRE);
         ActionSystem.UnsubscribeReaction<EnemyTurnGA>(OnEnemyTurnPreReaction, ReactionTiming.PRE);
     }
@@ -35,6 +39,48 @@ public class BuffSystem : Singleton<BuffSystem>
         }
         NotifyStatusEffectsChanged();
         yield return null;
+    }
+
+    private IEnumerator ApplyStatusPerformer(ApplyStatusGA applyStatusGA)
+    {
+        BuffType mappedType = BuffType.Vulnerable;
+        if (applyStatusGA.Status == StatusType.Weakness) mappedType = BuffType.Weak;
+        else if (applyStatusGA.Status == StatusType.Poison) mappedType = BuffType.Poison;
+
+        foreach (CombatantView target in applyStatusGA.Targets)
+        {
+            BuffData buff = new BuffData(target, mappedType, applyStatusGA.Stacks, applyStatusGA.Duration, applyStatusGA.Caster);
+            activeBuffs.Add(buff);
+        }
+        NotifyStatusEffectsChanged();
+        yield return null;
+    }
+
+    private IEnumerator RemoveDebuffPerformer(RemoveDebuffGA removeDebuffGA)
+    {
+        foreach (CombatantView target in removeDebuffGA.Targets)
+        {
+            List<BuffData> targetBuffs = GetBuffsFor(target);
+            targetBuffs.Reverse();
+            int removedCount = 0;
+
+            foreach (BuffData buff in targetBuffs)
+            {
+                if (IsDebuff(buff.Type))
+                {
+                    activeBuffs.Remove(buff);
+                    removedCount++;
+                    if (removedCount >= removeDebuffGA.Count) break;
+                }
+            }
+        }
+        NotifyStatusEffectsChanged();
+        yield return null;
+    }
+
+    private bool IsDebuff(BuffType type)
+    {
+        return type == BuffType.Vulnerable || type == BuffType.Weak || type == BuffType.Poison;
     }
 
     private void OnDealDamagePreReaction(DealDamageGA dealDamageGA)

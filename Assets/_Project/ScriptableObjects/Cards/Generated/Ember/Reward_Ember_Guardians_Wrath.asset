@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
+  m_Name: Reward_Ember_Guardians_Wrath
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 0}
+  <Title>k__BackingField: Guardian's Wrath
+  <Description>k__BackingField: 18 Damage, Gain 1AP
+  <Tier>k__BackingField: Basic
+  <Mana>k__BackingField: 3
+  <Type>k__BackingField: 0
+  <TargetType>k__BackingField: 0
+  <ManualTargetEffect>k__BackingField:
+    rid: -2
+  <OtherEffects>k__BackingField:
+  - <TargetMode>k__BackingField:
+      rid: 5978927219931611263
+    <Effect>k__BackingField:
+      rid: 5978927219931611264
+  - <TargetMode>k__BackingField:
+      rid: 5978927219931611265
+    <Effect>k__BackingField:
+      rid: 5978927219931611266
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 5978927219931611263
+      type: {class: SingleEnemyTargetMode, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927219931611264
+      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damageAmount: 18
+    - rid: 5978927219931611265
+      type: {class: SelfTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927219931611266
+      type: {class: GainAPEffect, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 1

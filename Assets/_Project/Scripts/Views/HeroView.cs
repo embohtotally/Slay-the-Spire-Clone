@@ -144,6 +144,18 @@ public class HeroView : CombatantView
         RefreshStressState();
     }
 
+    public void ReduceStressToAllHeroes(int amount)
+    {
+        if (amount <= 0) return;
+
+        foreach (RunHeroStressState stressState in stressStates)
+        {
+            stressState.ReduceStress(amount);
+        }
+
+        RefreshStressState();
+    }
+
     public void SetCurrentStress(int amount)
     {
         foreach (RunHeroStressState stressState in stressStates)

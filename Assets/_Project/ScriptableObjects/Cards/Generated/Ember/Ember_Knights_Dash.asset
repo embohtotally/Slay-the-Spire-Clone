@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
+  m_Name: Ember_Knights_Dash
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 0}
+  <Title>k__BackingField: Knight's Dash
+  <Description>k__BackingField: Deal 4 Damage, Draw 1 card
+  <Tier>k__BackingField: Special
+  <Mana>k__BackingField: 1
+  <Type>k__BackingField: 2
+  <TargetType>k__BackingField: 0
+  <ManualTargetEffect>k__BackingField:
+    rid: -2
+  <OtherEffects>k__BackingField:
+  - <TargetMode>k__BackingField:
+      rid: 5978927219931611236
+    <Effect>k__BackingField:
+      rid: 5978927219931611237
+  - <TargetMode>k__BackingField:
+      rid: 5978927219931611238
+    <Effect>k__BackingField:
+      rid: 5978927219931611239
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 5978927219931611236
+      type: {class: SingleEnemyTargetMode, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927219931611237
+      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damageAmount: 4
+    - rid: 5978927219931611238
+      type: {class: SelfTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927219931611239
+      type: {class: DrawEffect, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 1

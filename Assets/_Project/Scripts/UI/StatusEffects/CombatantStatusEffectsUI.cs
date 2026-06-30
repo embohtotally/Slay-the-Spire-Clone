@@ -238,7 +238,7 @@ public class CombatantStatusEffectsUI : MonoBehaviour
 
     private static bool IsDebuff(BuffType type)
     {
-        return type == BuffType.Vulnerable || type == BuffType.Weak;
+        return type == BuffType.Vulnerable || type == BuffType.Weak || type == BuffType.Poison;
     }
 
     private void EnsureTargetReference()

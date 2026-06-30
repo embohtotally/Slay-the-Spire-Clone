@@ -24,10 +24,6 @@ public class CombatantAttackState : CombatantState
         {
             combatant.Animator.SetTrigger("Attack");
         }
-        else
-        {
-            CompleteAttack();
-        }
     }
 
     public override void Update()

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
+  m_Name: Aura_Starfall_Burst
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 0}
+  <Title>k__BackingField: Starfall Burst
+  <Description>k__BackingField: Deal 18 Damage (+12 If Fear >= 50)
+  <Tier>k__BackingField: Rare
+  <Mana>k__BackingField: 3
+  <Type>k__BackingField: 0
+  <TargetType>k__BackingField: 0
+  <ManualTargetEffect>k__BackingField:
+    rid: 5978927219931611235
+  <OtherEffects>k__BackingField: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 5978927219931611235
+      type: {class: ConditionalDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        baseDamage: 18
+        bonusDamage: 12
+        condition: 0
+        threshold: 50

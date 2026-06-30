@@ -71,7 +71,7 @@ public class EnemySystem : Singleton<EnemySystem>
         bool isAttackComplete = false;
         attacker.StateMachine.ChangeState(new CombatantAttackState(
             attacker,
-            attackMoveDuration + attackReturnDuration,
+            Mathf.Max(0.5f, attackMoveDuration + attackReturnDuration),
             () => isAttackComplete = true
         ));
 

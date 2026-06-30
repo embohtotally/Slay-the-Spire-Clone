@@ -13,26 +13,25 @@ MonoBehaviour:
   m_Name: Default Hero
   m_EditorClassIdentifier: 
   <Deck>k__BackingField:
+  - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
+  - {fileID: 11400000, guid: 0a9ddaf6d7968e240bcba775b6584084, type: 2}
+  - {fileID: 11400000, guid: f08c5962a3de27e45a157d3a564f2515, type: 2}
+  - {fileID: 11400000, guid: 1fa928edeae56014d80a09a2986dbd46, type: 2}
+  - {fileID: 11400000, guid: c59c5720ab6effc4791f86870631430f, type: 2}
+  - {fileID: 11400000, guid: 36b2eb88f8dd4c74780d6442a9e5a859, type: 2}
   - {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
-  - {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
-  - {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
-  - {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
-  - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
-  - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
-  - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
-  - {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
-  - {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
-  - {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
-  - {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
-  - {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
-  - {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
-  - {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
-  - {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
-  - {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
-  - {fileID: 11400000, guid: d5ba679f2ef5c13459e021d26a1841b4, type: 2}
-  - {fileID: 11400000, guid: d5ba679f2ef5c13459e021d26a1841b4, type: 2}
-  - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
-  - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
+  - {fileID: 11400000, guid: 83f11f76c5aa2784b9bf2f9f21289e21, type: 2}
+  - {fileID: 11400000, guid: a991e3a11c0f3024397ee32b7fe04587, type: 2}
+  - {fileID: 11400000, guid: 6e8ead7758e89c948aaa75a192112f39, type: 2}
+  - {fileID: 11400000, guid: 5a34ee9c66cf7bd459d70f4dca6ee439, type: 2}
+  - {fileID: 11400000, guid: 82d9bf796c36b974681c7e44fede0ae6, type: 2}
+  - {fileID: 11400000, guid: 97ccb007247323a43a2a5f769cb1ad9b, type: 2}
+  - {fileID: 11400000, guid: 45463b897189d844e9f88bcd62c3c130, type: 2}
+  - {fileID: 11400000, guid: 45463b897189d844e9f88bcd62c3c130, type: 2}
+  - {fileID: 11400000, guid: 40d5c49d6604f2c478e5a736e1f9973c, type: 2}
+  - {fileID: 11400000, guid: d433d206b7c35404b899dc7ace58a5d3, type: 2}
+  - {fileID: 11400000, guid: 1b49c1cf0e67a0a4e807f21eafd600bb, type: 2}
+  - {fileID: 11400000, guid: 8122809098da372478039e3584de2aeb, type: 2}
   <Image>k__BackingField: {fileID: 21300000, guid: 774e30d5116a9bb4bbf3b746beee4e3c, type: 3}
   <Health>k__BackingField: 44
   <StartingPerks>k__BackingField: []

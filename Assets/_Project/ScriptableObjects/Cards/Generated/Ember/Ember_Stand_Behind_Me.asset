@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
+  m_Name: Ember_Stand_Behind_Me
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 0}
+  <Title>k__BackingField: Stand Behind Me
+  <Description>k__BackingField: Gain 8 Shield, Reduce Fear 5
+  <Tier>k__BackingField: Special
+  <Mana>k__BackingField: 1
+  <Type>k__BackingField: 1
+  <TargetType>k__BackingField: 1
+  <ManualTargetEffect>k__BackingField:
+    rid: -2
+  <OtherEffects>k__BackingField:
+  - <TargetMode>k__BackingField:
+      rid: 5978927219931611221
+    <Effect>k__BackingField:
+      rid: 5978927219931611222
+  - <TargetMode>k__BackingField:
+      rid: 5978927219931611223
+    <Effect>k__BackingField:
+      rid: 5978927219931611224
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 5978927219931611221
+      type: {class: SelfTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927219931611222
+      type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
+      data:
+        shieldAmount: 8
+    - rid: 5978927219931611223
+      type: {class: SelfTM, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 5978927219931611224
+      type: {class: ReduceFearEffect, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 5

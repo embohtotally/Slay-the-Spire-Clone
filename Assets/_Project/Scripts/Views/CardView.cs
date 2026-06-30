@@ -98,6 +98,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     private bool isFeebleBlocked;
     private Vector3 baseHoverScale = Vector3.one;
     private Tween hoverTween;
+    private int currentDisplayedMana = -1;
 
     protected virtual void Awake()
     {
@@ -133,12 +134,14 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     protected virtual void Update()
     {
         RefreshCombatTint();
+        RefreshManaCost();
     }
 
     public void Setup(Card card)
     {
         Card = card;
         CardData = null;
+        currentDisplayedMana = -1;
 
         if (card == null)
         {
@@ -153,6 +156,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         Card = null;
         CardData = cardData;
+        currentDisplayedMana = -1;
 
         if (cardData == null)
         {
@@ -167,6 +171,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         Card = null;
         CardData = cardData;
+        currentDisplayedMana = -1;
 
         if (cardData == null)
         {
@@ -344,6 +349,28 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         cardSpriteRenderer.color = isFeebleBlocked ? new Color(0.4f, 0.4f, 0.4f, 1f) : Color.white;
     }
 
+    private void RefreshManaCost()
+    {
+        if (manaText == null) return;
+
+        string title = Card != null ? Card.Title : (CardData != null ? CardData.Title : null);
+        if (title == null) return;
+
+        int baseMana = Card != null ? Card.Mana : CardData.Mana;
+        int currentMana = baseMana;
+
+        if (RunManager.Instance != null && RunManager.Instance.CardCostModifiers.TryGetValue(title, out int modifier))
+        {
+            currentMana = Mathf.Max(0, baseMana - modifier);
+        }
+
+        if (currentDisplayedMana != currentMana)
+        {
+            currentDisplayedMana = currentMana;
+            manaText.text = currentMana.ToString();
+        }
+    }
+
     private bool CanCombatHover()
     {
         return enableCombatInteractions && Interactions.Instance != null && Interactions.Instance.PlayerCanHover() && CardViewHoverSystem.Instance != null;
@@ -357,7 +384,12 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     private bool CanPlayCard()
     {
-        return ManaSystem.Instance.HasEnoughMana(Card.Mana) && Physics.Raycast(transform.position, Vector3.forward, out _, mouseUpRaycastDistance, dropAreaLayer);
+        int cost = Card.Mana;
+        if (RunManager.Instance != null && RunManager.Instance.CardCostModifiers.TryGetValue(Card.Title, out int modifier))
+        {
+            cost = Mathf.Max(0, cost - modifier);
+        }
+        return ManaSystem.Instance.HasEnoughMana(cost) && Physics.Raycast(transform.position, Vector3.forward, out _, mouseUpRaycastDistance, dropAreaLayer);
     }
 
     private void PlayCardOrResetPosition()

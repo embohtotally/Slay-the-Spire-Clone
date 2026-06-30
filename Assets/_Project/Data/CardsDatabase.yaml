@@ -1,0 +1,426 @@
+- id: "Aura_Magic_Bolt"
+  title: "Magic Bolt"
+  tier: Basic
+  mana_cost: 1
+  card_type: Attack
+  target_type: Enemy
+  description: "Deal 6 Damage For 1 Enemy"
+  manual_effect:
+    type: Damage
+    amount: 6
+
+- id: "Aura_Comforting_Words"
+  title: "Comforting Words"
+  tier: Basic
+  mana_cost: 1
+  card_type: Power
+  target_type: Hero
+  description: "Heal 6 HP + Reduce Fear 2"
+  auto_effects:
+    - type: Heal
+      amount: 6
+      target: Self
+    - type: ReduceFear
+      amount: 2
+      target: Self
+
+- id: "Aura_Lantern_of_Hope"
+  title: "Lantern of Hope"
+  tier: Special
+  mana_cost: 2
+  card_type: Power
+  target_type: Hero
+  description: "Reduce Fear 10, Draw 1"
+  auto_effects:
+    - type: ReduceFear
+      amount: 10
+      target: Self
+    - type: Draw
+      amount: 1
+      target: Self
+
+- id: "Aura_Memory_Echo"
+  title: "Memory Echo"
+  tier: Special
+  mana_cost: 2
+  card_type: Power
+  target_type: Hero
+  description: "Draw 2, Reduce Fear 5"
+  auto_effects:
+    - type: Draw
+      amount: 2
+      target: Self
+    - type: ReduceFear
+      amount: 5
+      target: Self
+
+- id: "Aura_Starfall_Burst"
+  title: "Starfall Burst"
+  tier: Rare
+  mana_cost: 3
+  card_type: Attack
+  target_type: Enemy
+  description: "Deal 18 Damage (+12 If Fear >= 50)"
+  manual_effect:
+    type: ConditionalDamage
+    base_amount: 18
+    bonus_amount: 12
+    condition: CasterFearAtLeast
+    threshold: 50
+
+- id: "Ember_Rabbit_Slash_1"
+  title: "Rabbit Slash"
+  tier: Basic
+  mana_cost: 1
+  card_type: Attack
+  target_type: Enemy
+  description: "Deal 6 Damage For 1 Enemy"
+  manual_effect:
+    type: Damage
+    amount: 6
+
+- id: "Ember_Rabbit_Slash_2"
+  title: "Rabbit Slash"
+  tier: Basic
+  mana_cost: 1
+  card_type: Attack
+  target_type: Enemy
+  description: "Deal 6 Damage For 1 Enemy"
+  manual_effect:
+    type: Damage
+    amount: 6
+
+- id: "Ember_Rabbit_Slash_Plus"
+  title: "Rabbit Slash+"
+  tier: Basic
+  mana_cost: 2
+  card_type: Attack
+  target_type: Enemy
+  description: "Deal 10 Damage For All Enemy"
+  auto_effects:
+    - type: Damage
+      amount: 10
+      target: AllEnemies
+
+- id: "Ember_Guard_Stance_Plus"
+  title: "Guard Stance+"
+  tier: Basic
+  mana_cost: 2
+  card_type: Buff
+  target_type: Hero
+  description: "Gain 12 Shield, Gain 1 AP"
+  auto_effects:
+    - type: Shield
+      amount: 12
+      target: Self
+    - type: GainAP
+      amount: 1
+      target: Self
+
+- id: "Ember_Guard_Stance_Draw"
+  title: "Guard Stance"
+  tier: Basic
+  mana_cost: 1
+  card_type: Buff
+  target_type: Hero
+  description: "Gain 6 Shield, Draw 1 card"
+  auto_effects:
+    - type: Shield
+      amount: 6
+      target: Self
+    - type: Draw
+      amount: 1
+      target: Self
+
+- id: "Ember_Guardian_Leap"
+  title: "Guardian Leap"
+  tier: Special
+  mana_cost: 2
+  card_type: Buff
+  target_type: Hero
+  description: "Gain 12 Shield, Redirect Damage"
+  auto_effects:
+    - type: Shield
+      amount: 12
+      target: Self
+    - type: RedirectDamage
+      duration: 1
+      target: Self
+
+- id: "Ember_Knights_Dash"
+  title: "Knight's Dash"
+  tier: Special
+  mana_cost: 1
+  card_type: Power
+  target_type: Enemy
+  description: "Deal 4 Damage, Draw 1 card"
+  auto_effects:
+    - type: Damage
+      amount: 4
+      target: SingleEnemy
+    - type: Draw
+      amount: 1
+      target: Self
+
+- id: "Ember_Stand_Behind_Me"
+  title: "Stand Behind Me"
+  tier: Special
+  mana_cost: 1
+  card_type: Buff
+  target_type: Hero
+  description: "Gain 8 Shield, Reduce Fear 5"
+  auto_effects:
+    - type: Shield
+      amount: 8
+      target: Self
+    - type: ReduceFear
+      amount: 5
+      target: Self
+
+- id: "Ember_Guard_Stance_Heal"
+  title: "Guard Stance"
+  tier: Basic
+  mana_cost: 1
+  card_type: Power
+  target_type: Hero
+  description: "Gain 6 Healing"
+  auto_effects:
+    - type: Heal
+      amount: 6
+      target: Self
+
+- id: "Ember_Last_Lantern"
+  title: "Last Lantern"
+  tier: Rare
+  mana_cost: 3
+  card_type: Power
+  target_type: Hero
+  description: "Gain Aura's Fear, Receive heal 18"
+  auto_effects:
+    - type: CopyFear
+      source_ally: "Aura"
+      target: Self
+    - type: Heal
+      amount: 18
+      target: Self
+
+- id: "Reward_Aura_Magic_Missile"
+  title: "Magic Missile"
+  tier: Basic
+  mana_cost: 1
+  card_type: Attack
+  target_type: Enemy
+  description: "Deal 6 Damage"
+  manual_effect:
+    type: Damage
+    amount: 6
+
+- id: "Reward_Aura_Arcane_Burst"
+  title: "Arcane Burst"
+  tier: Basic
+  mana_cost: 2
+  card_type: Attack
+  target_type: Enemy
+  description: "Deal 12 Damage For 1 Enemy"
+  manual_effect:
+    type: Damage
+    amount: 12
+
+- id: "Reward_Aura_Star_Shower"
+  title: "Star Shower"
+  tier: Special
+  mana_cost: 2
+  card_type: Attack
+  target_type: Enemy
+  description: "Deal 10 Damage For All Enemy"
+  auto_effects:
+    - type: Damage
+      amount: 10
+      target: AllEnemies
+
+- id: "Reward_Aura_Magic_Barrier"
+  title: "Magic Barrier"
+  tier: Special
+  mana_cost: 1
+  card_type: Buff
+  target_type: Hero
+  description: "Gain 6 Shield"
+  auto_effects:
+    - type: Shield
+      amount: 6
+      target: Self
+
+- id: "Reward_Aura_Guardian_Sigil"
+  title: "Guardian Sigil"
+  tier: Rare
+  mana_cost: 2
+  card_type: Buff
+  target_type: Hero
+  description: "Gain 12 Shield, Remove 1 Debuff"
+  auto_effects:
+    - type: Shield
+      amount: 12
+      target: Self
+    - type: RemoveDebuff
+      count: 1
+      target: Self
+
+- id: "Reward_Aura_Spell_Echo"
+  title: "Spell Echo"
+  tier: Basic
+  mana_cost: 2
+  card_type: Power
+  target_type: Enemy
+  description: "Apply Vulnerable to enemies"
+  auto_effects:
+    - type: ApplyStatus
+      status: Vulnerable
+      stacks: 1
+      duration: 2
+      target: AllEnemies
+
+- id: "Reward_Aura_Mana_Bloom"
+  title: "Mana Bloom"
+  tier: Special
+  mana_cost: 3
+  card_type: Power
+  target_type: Hero
+  description: "Heal 6, Gain 1 AP, stacks everytime you activate mana bloom"
+  auto_effects:
+    - type: ScalingEffect
+      base_effect:
+        type: Heal
+        amount: 6
+      scaling_effect:
+        type: GainAP
+        amount: 1
+      step: 1
+      counter_key: "ManaBloomUses"
+      target: Self
+
+- id: "Reward_Aura_Mystic_Ward"
+  title: "Mystic Ward"
+  tier: Special
+  mana_cost: 2
+  card_type: Buff
+  target_type: Hero
+  description: "Gain 6 Shield"
+  auto_effects:
+    - type: Shield
+      amount: 6
+      target: Self
+
+- id: "Reward_Aura_Blessing_Circle"
+  title: "Blessing Circle"
+  tier: Special
+  mana_cost: 2
+  card_type: Buff
+  target_type: Hero
+  description: "Gain 6 Shield, Gain 6 Heal"
+  auto_effects:
+    - type: Shield
+      amount: 6
+      target: Self
+    - type: Heal
+      amount: 6
+      target: Self
+
+- id: "Reward_Aura_Celestial_Nova"
+  title: "Celestial Nova"
+  tier: Rare
+  mana_cost: 0
+  card_type: Attack
+  target_type: Enemy
+  description: "18 Damage (X cost)"
+  manual_effect:
+    type: Damage
+    amount: 18
+
+- id: "Reward_Ember_Knight_Strike"
+  title: "Knight Strike"
+  tier: Basic
+  mana_cost: 1
+  card_type: Attack
+  target_type: Enemy
+  description: "Deal 6 Damage"
+  manual_effect:
+    type: Damage
+    amount: 6
+
+- id: "Reward_Ember_Rabbit_Rush"
+  title: "Rabbit Rush"
+  tier: Basic
+  mana_cost: 3
+  card_type: Power
+  target_type: Enemy
+  description: "Deal 4 Damage, Draw 2 card"
+  auto_effects:
+    - type: Damage
+      amount: 4
+      target: SingleEnemy
+    - type: Draw
+      amount: 2
+      target: Self
+
+- id: "Reward_Ember_Knights_Resolve"
+  title: "Knight's Resolve"
+  tier: Basic
+  mana_cost: 2
+  card_type: Buff
+  target_type: Hero
+  description: "Gain 8 Shield, Search 1 Card"
+  auto_effects:
+    - type: Shield
+      amount: 8
+      target: Self
+    - type: Draw
+      amount: 1
+      target: Self
+
+- id: "Reward_Ember_Guardians_Wrath"
+  title: "Guardian's Wrath"
+  tier: Basic
+  mana_cost: 3
+  card_type: Attack
+  target_type: Enemy
+  description: "18 Damage, Gain 1AP"
+  auto_effects:
+    - type: Damage
+      amount: 18
+      target: SingleEnemy
+    - type: GainAP
+      amount: 1
+      target: Self
+
+- id: "Reward_Ember_Fear_Immunity"
+  title: "Fear Immunity"
+  tier: Rare
+  mana_cost: 2
+  card_type: Buff
+  target_type: Hero
+  description: "Fear Immunity 1 turn, Gain 10 Shield"
+  auto_effects:
+    - type: ApplyBuff
+      buff_type: FearImmunity
+      value: 1
+      duration: 1
+      target: Self
+    - type: Shield
+      amount: 10
+      target: Self
+
+- id: "Reward_Ember_Rabbits_Kick"
+  title: "Rabbit's Kick"
+  tier: Special
+  mana_cost: 3
+  card_type: Attack
+  target_type: Enemy
+  description: "Deals 18 Damage, Everytime you use Rabbit slash, the cost is reduced by 1"
+  auto_effects:
+    - type: Damage
+      amount: 18
+      target: SingleEnemy
+    - type: CostReduction
+      target_card_name: "Rabbit Slash"
+      reduction: 1
+      target: Self
