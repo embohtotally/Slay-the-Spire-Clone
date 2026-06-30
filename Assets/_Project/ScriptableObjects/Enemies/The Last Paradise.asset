@@ -21,10 +21,12 @@ MonoBehaviour:
         rid: 5978927130765950984
       <Effect>k__BackingField:
         rid: 5978927130765950985
+  - <IntentName>k__BackingField: The Last Paradise
+    <Effects>k__BackingField:
     - <TargetMode>k__BackingField:
-        rid: 5978927130765950990
+        rid: 5978927219931611339
       <Effect>k__BackingField:
-        rid: 5978927130765951062
+        rid: 5978927219931611340
   <AttackPattern>k__BackingField: 1
   references:
     version: 2
@@ -58,10 +60,10 @@ MonoBehaviour:
       type: {class: AddStressEffect, ns: , asm: Assembly-CSharp}
       data:
         stressAmount: 5
-    - rid: 5978927130765950990
+    - rid: 5978927219931611339
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
       data: 
-    - rid: 5978927130765951062
+    - rid: 5978927219931611340
       type: {class: ApplyBuffEffect, ns: , asm: Assembly-CSharp}
       data:
         buffType: 0
