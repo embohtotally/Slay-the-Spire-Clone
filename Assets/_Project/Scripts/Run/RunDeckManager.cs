@@ -64,6 +64,16 @@ public class RunDeckManager : PersistentSingleton<RunDeckManager>
         return cardData != null && currentDeck.Contains(cardData);
     }
 
+    public bool CanRemove(CardData cardData)
+    {
+        return Contains(cardData);
+    }
+
+    public bool HasIndex(int index)
+    {
+        return index >= 0 && index < currentDeck.Count;
+    }
+
     public int Count(CardData cardData)
     {
         if (cardData == null) return 0;
@@ -78,6 +88,40 @@ public class RunDeckManager : PersistentSingleton<RunDeckManager>
         }
 
         return count;
+    }
+
+    public bool RemoveFirst(CardData cardData)
+    {
+        if (cardData == null) return false;
+
+        int index = currentDeck.IndexOf(cardData);
+        if (index < 0) return false;
+
+        currentDeck.RemoveAt(index);
+        NotifyDeckChanged();
+        return true;
+    }
+
+    public int RemoveAll(CardData cardData)
+    {
+        if (cardData == null) return 0;
+
+        int removedCount = currentDeck.RemoveAll(card => card == cardData);
+        if (removedCount > 0)
+        {
+            NotifyDeckChanged();
+        }
+
+        return removedCount;
+    }
+
+    public bool RemoveAt(int index)
+    {
+        if (!HasIndex(index)) return false;
+
+        currentDeck.RemoveAt(index);
+        NotifyDeckChanged();
+        return true;
     }
 
     public bool ReplaceFirst(CardData oldCard, CardData newCard)

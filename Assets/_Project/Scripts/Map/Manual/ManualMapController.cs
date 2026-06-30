@@ -33,6 +33,12 @@ public class ManualMapController : MonoBehaviour
     [SerializeField] private string defaultCombatSceneName = "Game";
     [Tooltip("Optional default scene used when a Shop node resolves as merchant. Leave empty if shop uses custom UnityEvents instead.")]
     [SerializeField] private string defaultMerchantSceneName = "Merchant";
+    [Tooltip("Optional default scene used when a Rest node resolves by node type.")]
+    [SerializeField] private string defaultRestSceneName = "Rest";
+    [Tooltip("Optional default scene used when an Event node resolves by node type. Leave empty if events use UnityEvents/custom logic.")]
+    [SerializeField] private string defaultEventSceneName;
+    [Tooltip("Optional default scene used when a Treasure node resolves by node type. Leave empty if treasure uses UnityEvents/custom logic.")]
+    [SerializeField] private string defaultTreasureSceneName;
     [Tooltip("Creates a lightweight RunManager map so combat victory can return to the map scene.")]
     [SerializeField] private bool createRunForCombatReturn = true;
     [Tooltip("Reset RunManager only when there is no saved manual map state yet. Keeps combat returns from restarting the map.")]
@@ -403,26 +409,39 @@ public class ManualMapController : MonoBehaviour
             return;
         }
 
-        if (node.NodeType == MapNodeType.Shop)
+        string sceneName = GetDefaultSceneForNode(node);
+        if (!string.IsNullOrWhiteSpace(sceneName))
         {
-            OpenMerchant(node);
+            LoadNonCombatNodeScene(node, sceneName);
             return;
         }
 
-        Gameseed26.Logger.Log($"Manual map node '{node.NodeId}' resolved as {node.NodeType}. Add UnityEvents to open a shop, rest screen, reward, or custom UI.");
+        Gameseed26.Logger.Log($"Manual map node '{node.NodeId}' resolved as {node.NodeType}. No default scene is configured, so only node events were invoked.");
         if (RunManager.Instance != null)
         {
             RunManager.Instance.ClearSelectedEncounter();
         }
     }
 
-    private void OpenMerchant(ManualMapNode node)
+    private string GetDefaultSceneForNode(ManualMapNode node)
     {
-        string sceneName = string.IsNullOrWhiteSpace(node.SceneNameOverride) ? defaultMerchantSceneName : node.SceneNameOverride;
-        if (string.IsNullOrWhiteSpace(sceneName))
+        if (!string.IsNullOrWhiteSpace(node.SceneNameOverride)) return node.SceneNameOverride;
+
+        return node.NodeType switch
         {
-            Gameseed26.Logger.Log($"Manual map shop node '{node.NodeId}' selected. No merchant scene is set, so only node events were invoked.");
-            return;
+            MapNodeType.Shop => defaultMerchantSceneName,
+            MapNodeType.Rest => defaultRestSceneName,
+            MapNodeType.Event => defaultEventSceneName,
+            MapNodeType.Treasure => defaultTreasureSceneName,
+            _ => string.Empty
+        };
+    }
+
+    private void LoadNonCombatNodeScene(ManualMapNode node, string sceneName)
+    {
+        if (RunManager.Instance != null)
+        {
+            RunManager.Instance.ClearSelectedEncounter();
         }
 
         SceneLoader.LoadScene(sceneName);
@@ -463,14 +482,26 @@ public class ManualMapController : MonoBehaviour
 
     private void LoadNodeScene(ManualMapNode node)
     {
-        string sceneName = string.IsNullOrWhiteSpace(node.SceneNameOverride) ? defaultCombatSceneName : node.SceneNameOverride;
+        string sceneName = !string.IsNullOrWhiteSpace(node.SceneNameOverride)
+            ? node.SceneNameOverride
+            : GetDefaultSceneForNode(node);
+
+        if (string.IsNullOrWhiteSpace(sceneName)) sceneName = defaultCombatSceneName;
+
         if (string.IsNullOrWhiteSpace(sceneName))
         {
             Gameseed26.Logger.LogWarning($"Manual map node '{node.NodeId}' tried to load a scene, but no scene name is set.");
             return;
         }
 
-        SceneLoader.LoadScene(sceneName);
+        if (node.StartsCombat())
+        {
+            SceneLoader.LoadScene(sceneName);
+        }
+        else
+        {
+            LoadNonCombatNodeScene(node, sceneName);
+        }
     }
 
     private void CollectNodes()

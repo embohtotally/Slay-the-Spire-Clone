@@ -21,4 +21,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
   - {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
   - {fileID: 11400000, guid: d5ba679f2ef5c13459e021d26a1841b4, type: 2}
-  upgradeRecipes: []
+  upgradeRecipes:
+  - BaseCard: {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
+    UpgradedCard: {fileID: 11400000, guid: 80af5434f9a9498c908361cc60b0a981, type: 2}
+    DisplayNameOverride: 
+  - BaseCard: {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
+    UpgradedCard: {fileID: 11400000, guid: ecfa4238e68e48ce94d62e57ad308ed3, type: 2}
+    DisplayNameOverride: 
+  - BaseCard: {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
+    UpgradedCard: {fileID: 11400000, guid: 0fb0696b9b2545eba55a12d4574f5576, type: 2}
+    DisplayNameOverride: 
+  - BaseCard: {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
+    UpgradedCard: {fileID: 11400000, guid: b18249ed6e8a4566818d5283d400f467, type: 2}
+    DisplayNameOverride: 
+  - BaseCard: {fileID: 11400000, guid: d5ba679f2ef5c13459e021d26a1841b4, type: 2}
+    UpgradedCard: {fileID: 11400000, guid: a2ea6abef9814d45aea32704ad89f5e7, type: 2}
+    DisplayNameOverride: 

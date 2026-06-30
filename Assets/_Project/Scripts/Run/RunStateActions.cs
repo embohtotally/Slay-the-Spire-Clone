@@ -1,9 +1,14 @@
+using NaughtyAttributes;
 using UnityEngine;
 
 using Gameseed26;
 [DisallowMultipleComponent]
 public class RunStateActions : MonoBehaviour
 {
+    [Header("Deck Editing")]
+    [SerializeField] private bool allowDeckEditing = true;
+    [SerializeField] private bool logDeckEditFailures = true;
+
     public void HealHero(int amount)
     {
         if (TryGetRunManager(out RunManager runManager))
@@ -124,6 +129,82 @@ public class RunStateActions : MonoBehaviour
         }
     }
 
+    public void SetDeckEditingAllowed(bool allowed)
+    {
+        allowDeckEditing = allowed;
+    }
+
+    [Button("Enable Deck Editing", EButtonEnableMode.Playmode)]
+    public void EnableDeckEditing()
+    {
+        allowDeckEditing = true;
+    }
+
+    [Button("Disable Deck Editing", EButtonEnableMode.Playmode)]
+    public void DisableDeckEditing()
+    {
+        allowDeckEditing = false;
+    }
+
+    public void AddCardToDeck(CardData cardData)
+    {
+        if (!TryGetRunDeckManager(out RunDeckManager deckManager)) return;
+        if (!CanEditDeck()) return;
+
+        deckManager.AddCard(cardData);
+    }
+
+    public void RemoveFirstCardFromDeck(CardData cardData)
+    {
+        if (!TryGetRunDeckManager(out RunDeckManager deckManager)) return;
+        if (!CanEditDeck()) return;
+
+        if (!deckManager.RemoveFirst(cardData))
+        {
+            LogDeckEditFailure(cardData != null
+                ? $"Could not remove '{cardData.Title}' because it is not in the current run deck."
+                : "Could not remove card because no CardData was assigned.");
+        }
+    }
+
+    public void RemoveAllCopiesFromDeck(CardData cardData)
+    {
+        if (!TryGetRunDeckManager(out RunDeckManager deckManager)) return;
+        if (!CanEditDeck()) return;
+
+        int removedCount = deckManager.RemoveAll(cardData);
+        if (removedCount <= 0)
+        {
+            LogDeckEditFailure(cardData != null
+                ? $"Could not remove copies of '{cardData.Title}' because it is not in the current run deck."
+                : "Could not remove card copies because no CardData was assigned.");
+        }
+    }
+
+    public void ReplaceFirstCardInDeck(CardData oldCard, CardData newCard)
+    {
+        if (!TryGetRunDeckManager(out RunDeckManager deckManager)) return;
+        if (!CanEditDeck()) return;
+
+        if (!deckManager.ReplaceFirst(oldCard, newCard))
+        {
+            string oldName = oldCard != null ? oldCard.Title : "<missing old card>";
+            string newName = newCard != null ? newCard.Title : "<missing new card>";
+            LogDeckEditFailure($"Could not replace '{oldName}' with '{newName}'. Check that both cards are assigned and the old card is in the deck.");
+        }
+    }
+
+    public void RemoveCardAtDeckIndex(int index)
+    {
+        if (!TryGetRunDeckManager(out RunDeckManager deckManager)) return;
+        if (!CanEditDeck()) return;
+
+        if (!deckManager.RemoveAt(index))
+        {
+            LogDeckEditFailure($"Could not remove card at deck index {index}.");
+        }
+    }
+
     private bool TryGetRunManager(out RunManager runManager)
     {
         runManager = RunManager.Instance;
@@ -132,5 +213,29 @@ public class RunStateActions : MonoBehaviour
 
         Gameseed26.Logger.LogWarning(this, "RunStateActions could not find a RunManager.");
         return false;
+    }
+
+    private bool TryGetRunDeckManager(out RunDeckManager deckManager)
+    {
+        deckManager = RunDeckManager.Instance;
+
+        if (deckManager != null) return true;
+
+        Gameseed26.Logger.LogWarning(this, "RunStateActions could not find a RunDeckManager.");
+        return false;
+    }
+
+    private bool CanEditDeck()
+    {
+        if (allowDeckEditing) return true;
+
+        LogDeckEditFailure("Deck editing is disabled on this RunStateActions component.");
+        return false;
+    }
+
+    private void LogDeckEditFailure(string message)
+    {
+        if (!logDeckEditFailures) return;
+        Gameseed26.Logger.Log(this, message);
     }
 }

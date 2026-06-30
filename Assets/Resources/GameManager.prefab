@@ -168,7 +168,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9600f6d46e8de84fac38d8c584afb9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startingGold: 0
+  startingGold: 150
+  setOnAwake: 1
 --- !u!114 &-2874564916961266242
 MonoBehaviour:
   m_ObjectHideFlags: 0
