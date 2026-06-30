@@ -7,6 +7,7 @@ using UnityEngine;
 public class CombatantHurtState : CombatantState
 {
     private float shakeDuration;
+    private float shakeStrength;
     private float timer;
     private bool isComplete;
 
