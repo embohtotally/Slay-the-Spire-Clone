@@ -22,6 +22,9 @@ public class RunManager : PersistentSingleton<RunManager>
     public IReadOnlyList<RunHeroStressState> HeroStressStates => heroStressStates;
     public int Gold { get; private set; }
 
+    public Dictionary<string, int> Counters { get; private set; } = new();
+    public Dictionary<string, int> CardCostModifiers { get; private set; } = new();
+
     public event Action RunStateChanged;
 
     // Backward-compatible access for older scripts that only cared about current HP.
@@ -53,6 +56,8 @@ public class RunManager : PersistentSingleton<RunManager>
         SelectedEncounter = null;
         ClearHeroState();
         Gold = Mathf.Max(0, startingGold);
+        Counters.Clear();
+        CardCostModifiers.Clear();
 
         if (RunDeckManager.Instance != null)
         {
@@ -350,6 +355,8 @@ public class RunManager : PersistentSingleton<RunManager>
         SelectedEncounter = null;
         ClearHeroState();
         Gold = 0;
+        Counters.Clear();
+        CardCostModifiers.Clear();
 
         if (RunDeckManager.Instance != null)
         {

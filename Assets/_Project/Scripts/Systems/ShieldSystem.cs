@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using DG.Tweening;
 
 [System.Serializable]
 public class ShieldSystem : MonoBehaviour
@@ -23,9 +24,11 @@ public class ShieldSystem : MonoBehaviour
         foreach (CombatantView target in gainShieldGA.Targets)
         {
             target.AddShield(gainShieldGA.Amount);
+            Gameseed26.GameManager.GenerateFloatingText("+" + gainShieldGA.Amount, target.transform, 1f, 1f, "#00BFFF");
+            target.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 5, 1f);
         }
         
-        yield return null;
+        yield return new WaitForSeconds(0.4f);
     }
 
     private void EnemyTurnPreReaction(EnemyTurnGA enemyTurnGA)

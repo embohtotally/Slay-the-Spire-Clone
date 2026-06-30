@@ -4,5 +4,8 @@ public enum BuffType
     Vulnerable,
     Weak,
     Strength,
-    DamageReductionPercentage
+    DamageReductionPercentage,
+    FearImmunity,
+    Redirect,
+    Poison
 }

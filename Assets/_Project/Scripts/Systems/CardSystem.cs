@@ -26,6 +26,7 @@ public class CardSystem : Singleton<CardSystem>
         ActionSystem.AttachPerformer<DrawCardsGA>(DrawCardsPerformer);
         ActionSystem.AttachPerformer<DiscardAllCardsGA>(DiscardAllCardsPerformer);
         ActionSystem.AttachPerformer<PlayCardGA>(PlayCardPerformer);
+        ActionSystem.AttachPerformer<ApplyCostModifierGA>(ApplyCostModifierPerformer);
         ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPreReaction, ReactionTiming.PRE);
         ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
         ActionSystem.SubscribeReaction<CombatWonGA>(CombatWonReaction, ReactionTiming.POST);
@@ -36,6 +37,7 @@ public class CardSystem : Singleton<CardSystem>
         ActionSystem.DetachPerformer<DrawCardsGA>();
         ActionSystem.DetachPerformer<DiscardAllCardsGA>();
         ActionSystem.DetachPerformer<PlayCardGA>();
+        ActionSystem.DetachPerformer<ApplyCostModifierGA>();
         ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPreReaction, ReactionTiming.PRE);
         ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
         ActionSystem.UnsubscribeReaction<CombatWonGA>(CombatWonReaction, ReactionTiming.POST);
@@ -107,6 +109,19 @@ public class CardSystem : Singleton<CardSystem>
         SpendMana(playCardGA);
         DoManualTargetEffect(playCardGA);
         DoAutoTargetEffect(playCardGA);
+    }
+
+    private IEnumerator ApplyCostModifierPerformer(ApplyCostModifierGA applyCostModifierGA)
+    {
+        if (RunManager.Instance != null)
+        {
+            if (!RunManager.Instance.CardCostModifiers.ContainsKey(applyCostModifierGA.TargetCardName))
+            {
+                RunManager.Instance.CardCostModifiers[applyCostModifierGA.TargetCardName] = 0;
+            }
+            RunManager.Instance.CardCostModifiers[applyCostModifierGA.TargetCardName] += applyCostModifierGA.ReductionAmount;
+        }
+        yield return null;
     }
     #endregion
 
@@ -189,7 +204,12 @@ public class CardSystem : Singleton<CardSystem>
 
     private void SpendMana(PlayCardGA playCardGA)
     {
-        SpendManaGA spendManaGA = new(playCardGA.Card.Mana);
+        int cost = playCardGA.Card.Mana;
+        if (RunManager.Instance != null && RunManager.Instance.CardCostModifiers.TryGetValue(playCardGA.Card.Title, out int modifier))
+        {
+            cost = Mathf.Max(0, cost - modifier);
+        }
+        SpendManaGA spendManaGA = new(cost);
         ActionSystem.Instance.AddReaction(spendManaGA);
     }
 
@@ -206,7 +226,7 @@ public class CardSystem : Singleton<CardSystem>
     {
         foreach (AutoTargetEffect effectWrapper in playCardGA.Card.OtherEffects)
         {
-            List<CombatantView> targets = effectWrapper.TargetMode.GetTargets();
+            List<CombatantView> targets = effectWrapper.TargetMode.GetTargets(HeroSystem.Instance.HeroView);
             PerformEffectGA performEffectGA = new(effectWrapper.Effect, targets);
             ActionSystem.Instance.AddReaction(performEffectGA);
         }

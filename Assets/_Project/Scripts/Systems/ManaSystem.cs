@@ -23,6 +23,7 @@ public class ManaSystem : Singleton<ManaSystem>
     {
         ActionSystem.AttachPerformer<SpendManaGA>(SpendManaPerformer);
         ActionSystem.AttachPerformer<RefillManaGA>(RefillManaPerformer);
+        ActionSystem.AttachPerformer<ModifyManaGA>(ModifyManaPerformer);
 
         ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
     }
@@ -31,6 +32,7 @@ public class ManaSystem : Singleton<ManaSystem>
     {
         ActionSystem.DetachPerformer<SpendManaGA>();
         ActionSystem.DetachPerformer<RefillManaGA>();
+        ActionSystem.DetachPerformer<ModifyManaGA>();
         ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
     }
 
@@ -49,6 +51,13 @@ public class ManaSystem : Singleton<ManaSystem>
     private IEnumerator RefillManaPerformer(RefillManaGA refillManaGA)
     {
         currentMana = maxMana;
+        manaUI.UpdateManaText(currentMana);
+        yield return null;
+    }
+
+    private IEnumerator ModifyManaPerformer(ModifyManaGA modifyManaGA)
+    {
+        currentMana = Mathf.Clamp(currentMana + modifyManaGA.Amount, 0, maxMana);
         manaUI.UpdateManaText(currentMana);
         yield return null;
     }

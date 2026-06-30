@@ -23,6 +23,6 @@ public class HealSystem : MonoBehaviour
             Gameseed26.GameManager.GenerateFloatingText("+" + healGA.Amount, target.transform, 1f, 1f, "#00FF00");
         }
         
-        yield return null;
+        yield return new WaitForSeconds(0.4f);
     }
 }
