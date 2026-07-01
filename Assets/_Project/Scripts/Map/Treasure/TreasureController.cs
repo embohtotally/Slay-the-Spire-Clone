@@ -9,16 +9,16 @@ using UnityEngine.SceneManagement;
 public class TreasureController : MonoBehaviour
 {
     [Header("Scene Flow")]
-    [SerializeField] private string mapSceneName = "Map";
-    [SerializeField] private string cardRewardSceneName = "CardReward";
+    [SerializeField, Scene] private string mapSceneName = "Map";
+    [SerializeField, Scene] private string cardRewardSceneName = "CardReward";
     [SerializeField] private bool autoOpenOnStart = true;
     [SerializeField] private bool allowMultipleClaims;
     [SerializeField] private bool disableAfterClaim = true;
 
     [Header("Rewards")]
-    [Min(0)] [SerializeField] private int goldAmount = 50;
-    [Min(0)] [SerializeField] private int healAmount;
-    [Min(0)] [SerializeField] private int stressReduction;
+    [Min(0)][SerializeField] private int goldAmount = 50;
+    [Min(0)][SerializeField] private int healAmount;
+    [Min(0)][SerializeField] private int stressReduction;
     [SerializeField] private bool grantCardReward;
     [SerializeField] private CardRewardRequest cardRewardRequest = new();
 
@@ -37,9 +37,9 @@ public class TreasureController : MonoBehaviour
     public UnityEvent OnReturnToMapRequested;
 
     [Header("Debug")]
-    [ReadOnly] [SerializeField] private bool treasureOpened;
-    [ReadOnly] [SerializeField] private bool treasureClaimed;
-    [ReadOnly] [SerializeField] private bool cardRewardInProgress;
+    [ReadOnly][SerializeField] private bool treasureOpened;
+    [ReadOnly][SerializeField] private bool treasureClaimed;
+    [ReadOnly][SerializeField] private bool cardRewardInProgress;
 
     public bool CanClaim => allowMultipleClaims || !treasureClaimed;
 
