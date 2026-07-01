@@ -22,6 +22,9 @@ public class TreasureController : MonoBehaviour
     [SerializeField] private bool grantCardReward;
     [SerializeField] private CardRewardRequest cardRewardRequest = new();
 
+    [Header("Relic Reward")]
+    [SerializeField] private RelicData grantRelic;
+
     [Header("Logging")]
     [SerializeField] private bool logActionFailures = true;
 
@@ -31,6 +34,7 @@ public class TreasureController : MonoBehaviour
     public UnityEvent OnGoldClaimed;
     public UnityEvent OnHealClaimed;
     public UnityEvent OnStressReduced;
+    public UnityEvent OnRelicClaimed;
     public UnityEvent OnCardRewardStarted;
     public UnityEvent OnCardRewardFinished;
     public UnityEvent OnTreasureCompleted;
@@ -41,6 +45,7 @@ public class TreasureController : MonoBehaviour
     [ReadOnly][SerializeField] private bool treasureClaimed;
     [ReadOnly][SerializeField] private bool cardRewardInProgress;
 
+    public bool IsTreasureOpen => treasureOpened;
     public bool CanClaim => allowMultipleClaims || !treasureClaimed;
 
     private void Start()
@@ -115,6 +120,11 @@ public class TreasureController : MonoBehaviour
         grantCardReward = enabled;
     }
 
+    public void SetGrantRelic(RelicData relicData)
+    {
+        grantRelic = relicData;
+    }
+
     public void SetAllowMultipleClaims(bool enabled)
     {
         allowMultipleClaims = enabled;
@@ -158,6 +168,7 @@ public class TreasureController : MonoBehaviour
         GrantGold();
         GrantHeal();
         GrantStressReduction();
+        GrantRelic();
     }
 
     private void GrantGold()
@@ -185,6 +196,23 @@ public class TreasureController : MonoBehaviour
 
         runManager.ReduceStress(stressReduction);
         OnStressReduced?.Invoke();
+    }
+
+    private void GrantRelic()
+    {
+        if (grantRelic == null) return;
+
+        RunRelicManager relicManager = RunRelicManager.EnsureInstance();
+        if (relicManager == null)
+        {
+            LogFailure("TreasureController could not create or find a RunRelicManager.");
+            return;
+        }
+
+        if (relicManager.AddRelic(grantRelic))
+        {
+            OnRelicClaimed?.Invoke();
+        }
     }
 
     private IEnumerator OpenCardRewardAndComplete()

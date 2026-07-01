@@ -30,15 +30,15 @@ public class ManualMapController : MonoBehaviour
 
     [Header("Run / Combat")]
     [SerializeField] private MapEncounterPool encounterPool;
-    [SerializeField] private string defaultCombatSceneName = "Game";
+    [SerializeField, Scene] private string defaultCombatSceneName = "Game";
     [Tooltip("Optional default scene used when a Shop node resolves as merchant. Leave empty if shop uses custom UnityEvents instead.")]
-    [SerializeField] private string defaultMerchantSceneName = "Merchant";
+    [SerializeField, Scene] private string defaultMerchantSceneName = "Merchant";
     [Tooltip("Optional default scene used when a Rest node resolves by node type.")]
-    [SerializeField] private string defaultRestSceneName = "Rest";
+    [SerializeField, Scene] private string defaultRestSceneName = "Rest";
     [Tooltip("Optional default scene used when an Event node resolves by node type. Leave empty if events use UnityEvents/custom logic.")]
-    [SerializeField] private string defaultEventSceneName;
+    [SerializeField, Scene] private string defaultEventSceneName = "Event";
     [Tooltip("Optional default scene used when a Treasure node resolves by node type. Leave empty if treasure uses UnityEvents/custom logic.")]
-    [SerializeField] private string defaultTreasureSceneName;
+    [SerializeField, Scene] private string defaultTreasureSceneName = "Treasure";
     [Tooltip("Creates a lightweight RunManager map so combat victory can return to the map scene.")]
     [SerializeField] private bool createRunForCombatReturn = true;
     [Tooltip("Reset RunManager only when there is no saved manual map state yet. Keeps combat returns from restarting the map.")]
