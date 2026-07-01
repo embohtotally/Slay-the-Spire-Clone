@@ -764,6 +764,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   allowDeckEditing: 1
   logDeckEditFailures: 1
+  allowRelicEditing: 1
+  logRelicEditFailures: 1
 --- !u!4 &892132502
 Transform:
   m_ObjectHideFlags: 0
@@ -1835,6 +1837,85 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3258443035599768407, guid: 7e96d62e728ce8548bdbdc6ba212659f, type: 3}
   m_PrefabInstance: {fileID: 1565475562}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1764754993
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1764754995}
+  - component: {fileID: 1764754994}
+  m_Layer: 0
+  m_Name: MerchantCardRemovalController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1764754994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1764754993}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44769d35f6c52f6438f9826f97bc1bf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  baseRemovalPrice: 75
+  priceIncreasePerRemoval: 0
+  allowMultipleRemovals: 0
+  minimumDeckSizeAfterRemoval: 1
+  clearSelectionAfterRemoval: 1
+  logFailures: 1
+  selectedCard: {fileID: 0}
+  removeButton: {fileID: 0}
+  selectedCardText: {fileID: 0}
+  actionText: {fileID: 0}
+  unavailableReasonText: {fileID: 0}
+  noSelectedCardLabel: Select a card to remove.
+  selectedCardFormat: 'Selected: {0}'
+  removeActionFormat: Remove - {0}g
+  removedLabel: Removed {0}
+  notEnoughGoldFormat: Not enough gold ({0}/{1}g).
+  alreadyRemovedLabel: Card removal already used.
+  deckTooSmallLabel: Deck is too small to remove a card.
+  OnCardSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnCardRemoved:
+    m_PersistentCalls:
+      m_Calls: []
+  OnRemovalCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  OnRemovalUnavailable:
+    m_PersistentCalls:
+      m_Calls: []
+  OnStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  removalCount: 0
+  lastUnavailableReason: 
+--- !u!4 &1764754995
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1764754993}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1839201017
 GameObject:
   m_ObjectHideFlags: 0
@@ -2278,5 +2359,6 @@ SceneRoots:
   - {fileID: 1538229523}
   - {fileID: 348230525}
   - {fileID: 739981913}
+  - {fileID: 1764754995}
   - {fileID: 87101588}
   - {fileID: 892132502}
