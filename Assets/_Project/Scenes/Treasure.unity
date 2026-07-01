@@ -1004,6 +1004,7 @@ MonoBehaviour:
     IncludeUpgrades: 0
     OnlyOfferNewCardsNotInDeck: 1
     AllowDuplicateOptions: 0
+  grantRelic: {fileID: 0}
   logActionFailures: 1
   OnTreasureOpened:
     m_PersistentCalls:
@@ -1018,6 +1019,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   OnStressReduced:
+    m_PersistentCalls:
+      m_Calls: []
+  OnRelicClaimed:
     m_PersistentCalls:
       m_Calls: []
   OnCardRewardStarted:

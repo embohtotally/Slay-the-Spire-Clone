@@ -37,6 +37,11 @@ public class MatchSetupSystem : MonoBehaviour
                 }
             }
         }
+        ActionSystem.Instance.Perform(new CombatStartedGA(), DrawStartingHand);
+    }
+
+    private void DrawStartingHand()
+    {
         DrawCardsGA drawCardsGA = new(startingHandSize);
         ActionSystem.Instance.Perform(drawCardsGA);
     }

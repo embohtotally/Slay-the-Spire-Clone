@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum RelicRarity
@@ -23,4 +24,8 @@ public class RelicData : ScriptableObject
     [field: SerializeField] public bool Unique { get; private set; } = true;
     [field: Min(0)]
     [field: SerializeField] public int GoldValue { get; private set; } = 150;
+
+    [field: Header("Combat Reactions")]
+    [field: Tooltip("Optional trigger/effect rules used by RelicCombatTriggerSystem during combat.")]
+    [field: SerializeField] public List<RelicReactionDefinition> Reactions { get; private set; } = new();
 }

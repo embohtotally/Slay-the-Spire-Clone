@@ -13,8 +13,23 @@ MonoBehaviour:
   m_Name: Relic 1
   m_EditorClassIdentifier: 
   <Title>k__BackingField: Relic 1
-  <Description>k__BackingField: This is relic 1
+  <Description>k__BackingField: Draw one card on Combat Started.
   <Image>k__BackingField: {fileID: 0}
   <Rarity>k__BackingField: 0
   <Unique>k__BackingField: 1
   <GoldValue>k__BackingField: 150
+  <Reactions>k__BackingField:
+  - trigger: 0
+    timing: 1
+    casterFilter: 0
+    targetFilter: 0
+    oncePerCombat: 1
+    effect:
+      rid: 8058640710468632654
+  references:
+    version: 2
+    RefIds:
+    - rid: 8058640710468632654
+      type: {class: RelicDrawCardsReactionEffect, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 1
