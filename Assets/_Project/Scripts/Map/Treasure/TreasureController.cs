@@ -24,6 +24,15 @@ public class TreasureController : MonoBehaviour
 
     [Header("Relic Reward")]
     [SerializeField] private RelicData grantRelic;
+    [SerializeField] private bool grantRandomRelic;
+    [SerializeField] private RelicRewardPool relicRewardPool;
+    [SerializeField] private RelicRarityMask allowedRelicRarities = RelicRarityMask.All;
+
+    [Header("Potion Reward")]
+    [SerializeField] private PotionData grantPotion;
+    [SerializeField] private bool grantRandomPotion;
+    [SerializeField] private PotionRewardPool potionRewardPool;
+    [SerializeField] private PotionRarityMask allowedPotionRarities = PotionRarityMask.All;
 
     [Header("Logging")]
     [SerializeField] private bool logActionFailures = true;
@@ -35,6 +44,7 @@ public class TreasureController : MonoBehaviour
     public UnityEvent OnHealClaimed;
     public UnityEvent OnStressReduced;
     public UnityEvent OnRelicClaimed;
+    public UnityEvent OnPotionClaimed;
     public UnityEvent OnCardRewardStarted;
     public UnityEvent OnCardRewardFinished;
     public UnityEvent OnTreasureCompleted;
@@ -125,6 +135,31 @@ public class TreasureController : MonoBehaviour
         grantRelic = relicData;
     }
 
+    public void SetGrantRandomRelic(bool enabled)
+    {
+        grantRandomRelic = enabled;
+    }
+
+    public void SetRelicRewardPool(RelicRewardPool rewardPool)
+    {
+        relicRewardPool = rewardPool;
+    }
+
+    public void SetGrantPotion(PotionData potionData)
+    {
+        grantPotion = potionData;
+    }
+
+    public void SetGrantRandomPotion(bool enabled)
+    {
+        grantRandomPotion = enabled;
+    }
+
+    public void SetPotionRewardPool(PotionRewardPool rewardPool)
+    {
+        potionRewardPool = rewardPool;
+    }
+
     public void SetAllowMultipleClaims(bool enabled)
     {
         allowMultipleClaims = enabled;
@@ -169,6 +204,7 @@ public class TreasureController : MonoBehaviour
         GrantHeal();
         GrantStressReduction();
         GrantRelic();
+        GrantPotion();
     }
 
     private void GrantGold()
@@ -200,7 +236,7 @@ public class TreasureController : MonoBehaviour
 
     private void GrantRelic()
     {
-        if (grantRelic == null) return;
+        if (grantRelic == null && !grantRandomRelic) return;
 
         RunRelicManager relicManager = RunRelicManager.EnsureInstance();
         if (relicManager == null)
@@ -209,9 +245,58 @@ public class TreasureController : MonoBehaviour
             return;
         }
 
-        if (relicManager.AddRelic(grantRelic))
+        RelicData relicToGrant = grantRelic;
+        if (relicToGrant == null && grantRandomRelic)
+        {
+            if (relicRewardPool == null)
+            {
+                LogFailure("TreasureController is set to grant a random relic, but Relic Reward Pool is empty.");
+                return;
+            }
+
+            if (!relicRewardPool.TryGetRandomRelic(relicManager, out relicToGrant, allowedRelicRarities))
+            {
+                LogFailure("Relic Reward Pool has no eligible relic for this treasure.");
+                return;
+            }
+        }
+
+        if (relicToGrant != null && relicManager.AddRelic(relicToGrant))
         {
             OnRelicClaimed?.Invoke();
+        }
+    }
+
+    private void GrantPotion()
+    {
+        if (grantPotion == null && !grantRandomPotion) return;
+
+        RunPotionManager potionManager = RunPotionManager.EnsureInstance();
+        if (potionManager == null)
+        {
+            LogFailure("TreasureController could not create or find a RunPotionManager.");
+            return;
+        }
+
+        PotionData potionToGrant = grantPotion;
+        if (potionToGrant == null && grantRandomPotion)
+        {
+            if (potionRewardPool == null)
+            {
+                LogFailure("TreasureController is set to grant a random potion, but Potion Reward Pool is empty.");
+                return;
+            }
+
+            if (!potionRewardPool.TryGetRandomPotion(potionManager, out potionToGrant, allowedPotionRarities))
+            {
+                LogFailure("Potion Reward Pool has no eligible potion for this treasure.");
+                return;
+            }
+        }
+
+        if (potionToGrant != null && potionManager.AddPotion(potionToGrant))
+        {
+            OnPotionClaimed?.Invoke();
         }
     }
 

@@ -20,6 +20,7 @@ public class EventChoiceDefinition
     [Min(0)] public int GoldCost;
     public CardData RequiredCardInDeck;
     public RelicData RequiredRelic;
+    public PotionData RequiredPotion;
 
     [Header("Run State Effects")]
     public bool ReturnToMapAfterChoice = true;
@@ -38,6 +39,16 @@ public class EventChoiceDefinition
     [Header("Relic Effects")]
     public RelicData GrantRelic;
     public RelicData RemoveRelic;
+    public bool GrantRandomRelic;
+    public RelicRewardPool RelicRewardPool;
+    public RelicRarityMask AllowedRelicRarities = RelicRarityMask.All;
+
+    [Header("Potion Effects")]
+    public PotionData GrantPotion;
+    public PotionData RemovePotion;
+    public bool GrantRandomPotion;
+    public PotionRewardPool PotionRewardPool;
+    public PotionRarityMask AllowedPotionRarities = PotionRarityMask.All;
 
     [Header("Card Reward")]
     public bool OpenCardReward;
@@ -130,6 +141,12 @@ public class EventController : MonoBehaviour
             if (relicManager == null || !relicManager.Contains(choice.RequiredRelic)) return false;
         }
 
+        if (choice.RequiredPotion != null)
+        {
+            RunPotionManager potionManager = RunPotionManager.EnsureInstance();
+            if (potionManager == null || !potionManager.Contains(choice.RequiredPotion)) return false;
+        }
+
         return true;
     }
 
@@ -160,6 +177,13 @@ public class EventController : MonoBehaviour
             RunRelicManager relicManager = RunRelicManager.EnsureInstance();
             if (relicManager == null) return "RunRelicManager not found.";
             if (!relicManager.Contains(choice.RequiredRelic)) return $"Requires {choice.RequiredRelic.Title}.";
+        }
+
+        if (choice.RequiredPotion != null)
+        {
+            RunPotionManager potionManager = RunPotionManager.EnsureInstance();
+            if (potionManager == null) return "RunPotionManager not found.";
+            if (!potionManager.Contains(choice.RequiredPotion)) return $"Requires {choice.RequiredPotion.Title}.";
         }
 
         return string.Empty;
@@ -218,6 +242,7 @@ public class EventController : MonoBehaviour
         ApplyRunStateEffects(choice);
         ApplyDeckEffects(choice);
         ApplyRelicEffects(choice);
+        ApplyPotionEffects(choice);
 
         if (choice.OpenCardReward)
         {
@@ -304,7 +329,7 @@ public class EventController : MonoBehaviour
 
     private void ApplyRelicEffects(EventChoiceDefinition choice)
     {
-        bool needsRelicManager = choice.GrantRelic != null || choice.RemoveRelic != null;
+        bool needsRelicManager = choice.GrantRelic != null || choice.RemoveRelic != null || choice.GrantRandomRelic;
         if (!needsRelicManager) return;
 
         RunRelicManager relicManager = RunRelicManager.EnsureInstance();
@@ -319,9 +344,70 @@ public class EventController : MonoBehaviour
             LogFailure($"Could not grant relic '{choice.GrantRelic.Title}'. It may already be owned if it is unique.");
         }
 
+        if (choice.GrantRandomRelic)
+        {
+            if (choice.RelicRewardPool == null)
+            {
+                LogFailure("Event choice is set to grant a random relic, but Relic Reward Pool is empty.");
+            }
+            else if (choice.RelicRewardPool.TryGetRandomRelic(relicManager, out RelicData randomRelic, choice.AllowedRelicRarities))
+            {
+                if (!relicManager.AddRelic(randomRelic))
+                {
+                    LogFailure($"Could not grant random relic '{randomRelic.Title}'. It may already be owned if it is unique.");
+                }
+            }
+            else
+            {
+                LogFailure("Relic Reward Pool has no eligible relic for this event choice.");
+            }
+        }
+
         if (choice.RemoveRelic != null && !relicManager.RemoveRelic(choice.RemoveRelic))
         {
             LogFailure($"Could not remove relic '{choice.RemoveRelic.Title}' because it is not owned.");
+        }
+    }
+
+    private void ApplyPotionEffects(EventChoiceDefinition choice)
+    {
+        bool needsPotionManager = choice.GrantPotion != null || choice.RemovePotion != null || choice.GrantRandomPotion;
+        if (!needsPotionManager) return;
+
+        RunPotionManager potionManager = RunPotionManager.EnsureInstance();
+        if (potionManager == null)
+        {
+            LogFailure("Event choice needs RunPotionManager, but none was found.");
+            return;
+        }
+
+        if (choice.GrantPotion != null && !potionManager.AddPotion(choice.GrantPotion))
+        {
+            LogFailure($"Could not grant potion '{choice.GrantPotion.Title}'. Potion slots may be full or it may already be owned if it is unique.");
+        }
+
+        if (choice.GrantRandomPotion)
+        {
+            if (choice.PotionRewardPool == null)
+            {
+                LogFailure("Event choice is set to grant a random potion, but Potion Reward Pool is empty.");
+            }
+            else if (choice.PotionRewardPool.TryGetRandomPotion(potionManager, out PotionData randomPotion, choice.AllowedPotionRarities))
+            {
+                if (!potionManager.AddPotion(randomPotion))
+                {
+                    LogFailure($"Could not grant random potion '{randomPotion.Title}'. Potion slots may be full or it may already be owned if it is unique.");
+                }
+            }
+            else
+            {
+                LogFailure("Potion Reward Pool has no eligible potion for this event choice.");
+            }
+        }
+
+        if (choice.RemovePotion != null && !potionManager.RemovePotion(choice.RemovePotion))
+        {
+            LogFailure($"Could not remove potion '{choice.RemovePotion.Title}' because it is not owned.");
         }
     }
 
