@@ -1069,12 +1069,12 @@ MonoBehaviour:
   cardHoverYOffset: -2
   mousePositionZValue: -1
   mouseUpRaycastDistance: 10
-  enableHoverJuice: 0
+  enableHoverJuice: 1
   hoverTarget: {fileID: 5312964892495905666}
   hoverScale: 1.08
   pressedScale: 0.97
   tweenDuration: 0.12
-  hoverEase: 27
+  hoverEase: 28
   bringToFrontOnHover: 1
 --- !u!210 &6835362836283020546
 SortingGroup:
@@ -1135,7 +1135,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
+  m_LocalScale: {x: 0.35, y: 0.35, z: 0.35}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7258076715414124641}
