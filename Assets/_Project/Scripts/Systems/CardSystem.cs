@@ -319,7 +319,6 @@ public class CardSystem : Singleton<CardSystem>
             }
         }
 
-        return targets;
     }
     #endregion
 }
