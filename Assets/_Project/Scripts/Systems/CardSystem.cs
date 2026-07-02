@@ -118,7 +118,7 @@ public class CardSystem : Singleton<CardSystem>
             Gameseed26.Tune.SFX(playCardGA.Card.PlaySfx);
         }
 
-        SpawnCardParticles(playCardGA);
+        PlayCardVisuals(playCardGA);
 
         yield return PlayAndDiscardCard(cardView);
 
@@ -183,6 +183,7 @@ public class CardSystem : Singleton<CardSystem>
         Tween moveTween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return moveTween.WaitForCompletion();
 
+        cardView.transform.DOKill();
         Destroy(cardView.gameObject);
     }
 
@@ -193,6 +194,8 @@ public class CardSystem : Singleton<CardSystem>
         cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
         Tween tween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return tween.WaitForCompletion();
+        
+        cardView.transform.DOKill();
         Destroy(cardView.gameObject);
     }
 
@@ -258,10 +261,8 @@ public class CardSystem : Singleton<CardSystem>
         if (discardPileText != null) discardPileText.text = discardPile.Count.ToString();
     }
 
-    private void SpawnCardParticles(PlayCardGA playCardGA)
+    private void PlayCardVisuals(PlayCardGA playCardGA)
     {
-        if (playCardGA.Card.PlayParticle == null) return;
-
         HashSet<CombatantView> targets = new();
         if (playCardGA.ManualTarget != null)
         {
@@ -286,9 +287,31 @@ public class CardSystem : Singleton<CardSystem>
             }
         }
 
+        bool playParticle = playCardGA.Card.VisualType == CardVisualType.Particle || playCardGA.Card.VisualType == CardVisualType.Both;
+        bool playAnimator = playCardGA.Card.VisualType == CardVisualType.Animator || playCardGA.Card.VisualType == CardVisualType.Both;
+
+        if (playAnimator && !string.IsNullOrEmpty(playCardGA.Card.HeroAnimationTrigger))
+        {
+            if (HeroSystem.Instance.HeroView.Animator != null)
+            {
+                HeroSystem.Instance.HeroView.Animator.SetTrigger(playCardGA.Card.HeroAnimationTrigger);
+            }
+        }
+
         foreach (CombatantView target in targets)
         {
-            Instantiate(playCardGA.Card.PlayParticle, target.transform.position, Quaternion.identity);
+            if (playParticle && playCardGA.Card.PlayParticle != null)
+            {
+                Instantiate(playCardGA.Card.PlayParticle, target.transform.position, Quaternion.identity);
+            }
+
+            if (playAnimator && !string.IsNullOrEmpty(playCardGA.Card.TargetAnimationTrigger))
+            {
+                if (target.Animator != null)
+                {
+                    target.Animator.SetTrigger(playCardGA.Card.TargetAnimationTrigger);
+                }
+            }
         }
     }
     #endregion

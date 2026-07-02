@@ -15,7 +15,7 @@ MonoBehaviour:
   <Image>k__BackingField: {fileID: 0}
   <Title>k__BackingField: Spell Echo
   <Description>k__BackingField: Apply Vulnerable to enemies
-  <Tier>k__BackingField: Basic
+  <Tier>k__BackingField: 0
   <Mana>k__BackingField: 2
   <Type>k__BackingField: 2
   <TargetType>k__BackingField: 0
@@ -26,6 +26,12 @@ MonoBehaviour:
       rid: 5978927219931611294
     <Effect>k__BackingField:
       rid: 5978927219931611295
+  <HoverSfx>k__BackingField: 5
+  <PlaySfx>k__BackingField: 0
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <VisualType>k__BackingField: 0
+  <HeroAnimationTrigger>k__BackingField: 
+  <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2
     RefIds:

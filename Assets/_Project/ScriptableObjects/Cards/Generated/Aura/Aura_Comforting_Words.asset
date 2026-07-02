@@ -15,7 +15,7 @@ MonoBehaviour:
   <Image>k__BackingField: {fileID: 0}
   <Title>k__BackingField: Comforting Words
   <Description>k__BackingField: Heal 6 HP + Reduce Fear 2
-  <Tier>k__BackingField: Basic
+  <Tier>k__BackingField: 0
   <Mana>k__BackingField: 1
   <Type>k__BackingField: 2
   <TargetType>k__BackingField: 1
@@ -30,6 +30,12 @@ MonoBehaviour:
       rid: 5978927219931611288
     <Effect>k__BackingField:
       rid: 5978927219931611289
+  <HoverSfx>k__BackingField: 5
+  <PlaySfx>k__BackingField: 0
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <VisualType>k__BackingField: 0
+  <HeroAnimationTrigger>k__BackingField: 
+  <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2
     RefIds:

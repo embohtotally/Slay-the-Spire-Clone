@@ -16,7 +16,7 @@ MonoBehaviour:
   <Title>k__BackingField: Mana Bloom
   <Description>k__BackingField: Heal 6, Gain 1 AP, stacks everytime you activate
     mana bloom
-  <Tier>k__BackingField: Special
+  <Tier>k__BackingField: 0
   <Mana>k__BackingField: 3
   <Type>k__BackingField: 2
   <TargetType>k__BackingField: 1
@@ -27,6 +27,12 @@ MonoBehaviour:
       rid: 5978927219931611208
     <Effect>k__BackingField:
       rid: 5978927219931611209
+  <HoverSfx>k__BackingField: 5
+  <PlaySfx>k__BackingField: 0
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <VisualType>k__BackingField: 0
+  <HeroAnimationTrigger>k__BackingField: 
+  <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2
     RefIds:

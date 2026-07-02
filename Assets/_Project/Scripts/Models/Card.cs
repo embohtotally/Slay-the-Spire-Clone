@@ -19,6 +19,9 @@ public class Card
     public SfxID HoverSfx { get; private set; }
     public SfxID PlaySfx { get; private set; }
     public GameObject PlayParticle { get; private set; }
+    public CardVisualType VisualType { get; private set; }
+    public string HeroAnimationTrigger { get; private set; }
+    public string TargetAnimationTrigger { get; private set; }
 
     /// <summary>
     /// Initialization of a new generic Card based on its ScriptableObject
@@ -38,5 +41,8 @@ public class Card
         HoverSfx = data.HoverSfx;
         PlaySfx = data.PlaySfx;
         PlayParticle = data.PlayParticle;
+        VisualType = data.VisualType;
+        HeroAnimationTrigger = data.HeroAnimationTrigger;
+        TargetAnimationTrigger = data.TargetAnimationTrigger;
     }
 }

@@ -15,13 +15,19 @@ MonoBehaviour:
   <Image>k__BackingField: {fileID: 0}
   <Title>k__BackingField: Magic Bolt
   <Description>k__BackingField: Deal 6 Damage For 1 Enemy
-  <Tier>k__BackingField: Basic
+  <Tier>k__BackingField: 0
   <Mana>k__BackingField: 1
   <Type>k__BackingField: 0
   <TargetType>k__BackingField: 0
   <ManualTargetEffect>k__BackingField:
     rid: 5978927219931611240
   <OtherEffects>k__BackingField: []
+  <HoverSfx>k__BackingField: 5
+  <PlaySfx>k__BackingField: 0
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <VisualType>k__BackingField: 0
+  <HeroAnimationTrigger>k__BackingField: 
+  <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2
     RefIds:
