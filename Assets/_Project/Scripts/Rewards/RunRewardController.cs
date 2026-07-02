@@ -84,6 +84,13 @@ public class RunRewardController : MonoBehaviour
     public UnityEvent OnRewardsSkipped;
     public UnityEvent OnRewardsCompleted;
 
+    [Header("Audio")]
+    [SerializeField] private TuneSfxCue rewardsOpenedSfx;
+    [SerializeField] private TuneSfxCue rewardClaimedSfx;
+    [SerializeField] private TuneSfxCue rewardsSkippedSfx;
+    [SerializeField] private TuneSfxCue rewardsCompletedSfx;
+    [SerializeField] private TuneSfxCue cardRewardOpeningSfx;
+
     private readonly List<RunRewardDefinition> activeRewards = new();
     private readonly List<RunRewardOptionView> optionViews = new();
     private readonly HashSet<int> claimedRewardIndices = new();
@@ -126,6 +133,7 @@ public class RunRewardController : MonoBehaviour
         if (titleText != null) titleText.text = title;
 
         RefreshRewardViews();
+        rewardsOpenedSfx?.Play(this, transform);
         OnRewardsOpened?.Invoke();
     }
 
@@ -168,12 +176,14 @@ public class RunRewardController : MonoBehaviour
 
     public void SkipRemainingRewards()
     {
+        rewardsSkippedSfx?.Play(this, transform);
         OnRewardsSkipped?.Invoke();
         ContinueToMap();
     }
 
     public void ContinueToMap()
     {
+        rewardsCompletedSfx?.Play(this, transform);
         OnRewardsCompleted?.Invoke();
         if (!string.IsNullOrWhiteSpace(mapSceneName))
         {
@@ -184,6 +194,7 @@ public class RunRewardController : MonoBehaviour
     private IEnumerator OpenCardRewardScene(int rewardIndex, CardRewardRequest request)
     {
         isOpeningCardReward = true;
+        cardRewardOpeningSfx?.Play(this, transform);
 
         AsyncOperation loadOperation = SceneLoader.LoadSceneAdditive(cardRewardSceneName);
         if (loadOperation == null)
@@ -244,6 +255,7 @@ public class RunRewardController : MonoBehaviour
     {
         claimedRewardIndices.Add(rewardIndex);
         RefreshRewardViews();
+        rewardClaimedSfx?.Play(this, transform);
         OnRewardClaimed?.Invoke();
     }
 

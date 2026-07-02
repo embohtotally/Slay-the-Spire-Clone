@@ -43,15 +43,25 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 5978927219931611274
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611275
       type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
       data:
         shieldAmount: 12
     - rid: 5978927219931611276
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611277
       type: {class: GainAPEffect, ns: , asm: Assembly-CSharp}
       data:
         amount: 1
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 87
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 8460667080445658512, guid: a3e2c3406e02f2c4ba86cfb1604277bd, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8

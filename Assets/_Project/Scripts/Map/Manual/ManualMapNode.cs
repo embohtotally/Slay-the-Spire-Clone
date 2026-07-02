@@ -114,6 +114,19 @@ public class ManualMapNode : MonoBehaviour
     [BoxGroup("Visuals")]
     [SerializeField] private Color hiddenColor = new(0f, 0f, 0f, 0f);
 
+    [Header("Node Type Icon Setup")]
+    [BoxGroup("Node Type Icon Setup")]
+    [ReadOnly]
+    [Tooltip("True after the designer/controller applies a type icon to this node. Custom nodes are intentionally skipped so their hand-authored visuals stay untouched.")]
+    [SerializeField] private bool useNodeTypeIconVisuals;
+    [BoxGroup("Node Type Icon Setup")]
+    [Tooltip("Optional per-node sprite for quick one-off edits. For batch setup, use ManualMapController > Apply Node Type Icons To Nodes.")]
+    [SerializeField] private Sprite nodeTypeIconOverride;
+    [BoxGroup("Node Type Icon Setup")]
+    [SerializeField] private bool hideLabelWhenApplyingIcon = true;
+    [BoxGroup("Node Type Icon Setup")]
+    [SerializeField] private bool setNativeSizeWhenApplyingIcon;
+
     [Header("Events")]
     [BoxGroup("Events")]
     public UnityEvent OnSelected;
@@ -370,6 +383,45 @@ public class ManualMapNode : MonoBehaviour
         RefreshVisual();
     }
 
+    public bool ApplyNodeTypeIconVisual(Sprite icon, bool hideLabel, bool setNativeSize)
+    {
+        CacheReferences();
+
+        if (nodeType == MapNodeType.Custom || icon == null || iconImage == null)
+        {
+            return false;
+        }
+
+        iconImage.sprite = icon;
+        iconImage.enabled = true;
+        useNodeTypeIconVisuals = true;
+        hideLabelWhenApplyingIcon = hideLabel;
+        setNativeSizeWhenApplyingIcon = setNativeSize;
+
+        if (setNativeSize)
+        {
+            iconImage.SetNativeSize();
+        }
+
+        SetLabelVisible(!hideLabel);
+        RefreshVisual();
+        MarkVisualObjectsDirtyInEditor();
+        return true;
+    }
+
+    [Button("Apply Icon Override", EButtonEnableMode.Editor)]
+    private void ApplyIconOverrideButton()
+    {
+        ApplyNodeTypeIconVisual(nodeTypeIconOverride, hideLabelWhenApplyingIcon, setNativeSizeWhenApplyingIcon);
+    }
+
+    [Button("Show Label Text", EButtonEnableMode.Editor)]
+    private void ShowLabelTextButton()
+    {
+        SetLabelVisible(true);
+        MarkVisualObjectsDirtyInEditor();
+    }
+
     private void HandleClick()
     {
         controller?.SelectNode(this);
@@ -431,6 +483,10 @@ public class ManualMapNode : MonoBehaviour
         if (labelText != null && nodeType != MapNodeType.Custom)
         {
             labelText.text = GetLabel(nodeType);
+            if (useNodeTypeIconVisuals && hideLabelWhenApplyingIcon)
+            {
+                SetLabelVisible(false);
+            }
         }
 
         if (iconImage == null) return;
@@ -450,6 +506,28 @@ public class ManualMapNode : MonoBehaviour
         if (button == null) button = GetComponent<Button>();
         if (iconImage == null) iconImage = GetComponent<Image>();
         if (labelText == null) labelText = GetComponentInChildren<TMP_Text>(true);
+    }
+
+    private void SetLabelVisible(bool visible)
+    {
+        if (labelText == null) return;
+        if (labelText.gameObject.activeSelf != visible)
+        {
+            labelText.gameObject.SetActive(visible);
+        }
+    }
+
+    private void MarkVisualObjectsDirtyInEditor()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        if (iconImage != null) UnityEditor.EditorUtility.SetDirty(iconImage);
+        if (labelText != null)
+        {
+            UnityEditor.EditorUtility.SetDirty(labelText);
+            UnityEditor.EditorUtility.SetDirty(labelText.gameObject);
+        }
+#endif
     }
 
     private static List<ManualMapNode> CleanNodeList(IEnumerable<ManualMapNode> source)

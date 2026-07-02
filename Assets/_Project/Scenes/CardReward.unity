@@ -543,6 +543,26 @@ MonoBehaviour:
   OnRewardClosed:
     m_PersistentCalls:
       m_Calls: []
+  rewardOpenedSfx:
+    sfxId: 0
+    sfxName: reward_open
+    followTarget: 0
+    delay: 0
+  rewardChosenSfx:
+    sfxId: 0
+    sfxName: reward_claim
+    followTarget: 0
+    delay: 0
+  rewardSkippedSfx:
+    sfxId: 0
+    sfxName: reward_skip
+    followTarget: 0
+    delay: 0
+  rewardClosedSfx:
+    sfxId: 0
+    sfxName: ui_panel_close
+    followTarget: 0
+    delay: 0
 --- !u!4 &545677368
 Transform:
   m_ObjectHideFlags: 0
@@ -1352,3 +1372,61 @@ SceneRoots:
   - {fileID: 215312206}
   - {fileID: 774652962}
   - {fileID: 545677368}
+--- !u!1 &8421803607745117
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7142646882957851}
+  - component: {fileID: 8694138743152208}
+  m_Layer: 0
+  m_Name: Scene Audio Player
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7142646882957851
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8421803607745117}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8694138743152208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8421803607745117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49ac9c59f34d1134aab7849c8ca2eb5b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  music:
+    musicId: 0
+    musicName: RewardMusic
+    playMode: 1
+    fadeDuration: 1
+    variation: 0
+  playMusicOn: 2
+  stopMusicOnDisable: 0
+  sceneEnterSfx:
+    sfxId: 0
+    sfxName: scene_enter
+    followTarget: 0
+    delay: 0
+  playSfxOn: 2

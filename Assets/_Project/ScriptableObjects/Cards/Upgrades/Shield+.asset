@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Shield+
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   <Image>k__BackingField: {fileID: 21300096, guid: 7ab74e659e1f0a34d9cfec21c478fc12, type: 3}
   <Title>k__BackingField: Shield+
   <Description>k__BackingField: Gain 18 shield.
@@ -31,11 +31,21 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
-      data: 
+      data:
     - rid: 510000000000000041
       type: {class: HeroTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 510000000000000042
       type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
       data:
         shieldAmount: 18
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 78
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 8460667080445658512, guid: a3e2c3406e02f2c4ba86cfb1604277bd, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8
