@@ -477,6 +477,13 @@ public class ManualMapController : MonoBehaviour
             return;
         }
 
+        if (PlayerPrefs.GetInt("HasPlayedCardTutorial", 0) == 0)
+        {
+            PlayerPrefs.SetInt("HasPlayedCardTutorial", 1);
+            PlayerPrefs.Save();
+            sceneName = "GameTutorial";
+        }
+
         SceneLoader.LoadScene(sceneName);
     }
 
