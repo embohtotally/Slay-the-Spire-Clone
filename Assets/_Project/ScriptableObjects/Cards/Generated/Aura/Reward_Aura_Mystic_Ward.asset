@@ -11,11 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Reward_Aura_Mystic_Ward
-  m_EditorClassIdentifier:
-  <Image>k__BackingField: {fileID: 0}
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 21300006, guid: 7ab74e659e1f0a34d9cfec21c478fc12, type: 3}
   <Title>k__BackingField: Mystic Ward
   <Description>k__BackingField: Gain 6 Shield
-  <Tier>k__BackingField: Special
+  <Tier>k__BackingField: 0
   <Mana>k__BackingField: 2
   <Type>k__BackingField: 1
   <TargetType>k__BackingField: 1
@@ -26,6 +26,12 @@ MonoBehaviour:
       rid: 5978927219931611229
     <Effect>k__BackingField:
       rid: 5978927219931611230
+  <HoverSfx>k__BackingField: 5
+  <PlaySfx>k__BackingField: 0
+  <PlayParticle>k__BackingField: {fileID: 580271456718116260, guid: b349075d12b902c4e9769dddde7b337a, type: 3}
+  <VisualType>k__BackingField: 0
+  <HeroAnimationTrigger>k__BackingField: 
+  <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2
     RefIds:

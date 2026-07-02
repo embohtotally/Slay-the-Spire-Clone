@@ -68,7 +68,7 @@ public class HeroView : CombatantView
 
         if (spriteRenderer != null)
         {
-            spriteRenderer.enabled = false;
+            //spriteRenderer.enabled = false;
         }
 
         foreach (GameObject obj in heroSprites)

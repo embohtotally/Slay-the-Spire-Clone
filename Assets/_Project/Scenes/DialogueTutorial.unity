@@ -156,49 +156,49 @@ MonoBehaviour:
   dialogueLines:
   - speakerName: Ember
     dialogueText: Hey, Aira! Wake up!
-    speakerImageA: {fileID: 21300006, guid: 7ab74e659e1f0a34d9cfec21c478fc12, type: 3}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: We have to go!
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Aira
     dialogueText: Huh...?
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Aira
     dialogueText: Who are you
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Aira
     dialogueText: Where am I?
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Aira
     dialogueText: Where am I?
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: Wait... don't tell me...
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: You don't remember me?
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
@@ -216,31 +216,31 @@ MonoBehaviour:
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: It's okay.
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: My name is Ember.
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: We've been traveling together for a long time.
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: And you're Aira...
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: ...the strongest mage I know.
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
@@ -252,13 +252,13 @@ MonoBehaviour:
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: Haha, don't worry.
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: Maybe it'll all come back to you.
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
@@ -266,13 +266,13 @@ MonoBehaviour:
     dialogueText: 'For now...
 
 '
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: Come with me.
-    speakerImageA: {fileID: 0}
+    speakerImageA: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
@@ -2281,7 +2281,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -539, y: 119}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 100, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2111866338
 CanvasRenderer:
@@ -2493,7 +2493,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -539, y: 119}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 100, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2139801681
 CanvasRenderer:

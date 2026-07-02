@@ -20,6 +20,9 @@ public class Card
     public SfxID PlaySfx { get; private set; }
     public GameObject PlayParticle { get; private set; }
     public VfxCue PlayVfx { get; private set; }
+    public CardVisualType VisualType { get; private set; }
+    public string HeroAnimationTrigger { get; private set; }
+    public string TargetAnimationTrigger { get; private set; }
 
     /// <summary>
     /// Initialization of a new generic Card based on its ScriptableObject
@@ -40,5 +43,8 @@ public class Card
         PlaySfx = data.PlaySfx;
         PlayParticle = data.PlayParticle;
         PlayVfx = data.PlayVfx;
+        VisualType = data.VisualType;
+        HeroAnimationTrigger = data.HeroAnimationTrigger;
+        TargetAnimationTrigger = data.TargetAnimationTrigger;
     }
 }
