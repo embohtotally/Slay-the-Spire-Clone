@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Reward_Aura_Blessing_Circle
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   <Image>k__BackingField: {fileID: 0}
   <Title>k__BackingField: Blessing Circle
   <Description>k__BackingField: Gain 6 Shield, Gain 6 Heal
@@ -37,15 +37,25 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 5978927219931611282
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611283
       type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
       data:
         shieldAmount: 6
     - rid: 5978927219931611284
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611285
       type: {class: HealEffect, ns: , asm: Assembly-CSharp}
       data:
         healAmount: 6
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 76
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 985132354702716236, guid: bbf9e36a48d6c5648a13889afab076fd, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8

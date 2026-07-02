@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Aura_Starfall_Burst
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   <Image>k__BackingField: {fileID: 0}
   <Title>k__BackingField: Starfall Burst
   <Description>k__BackingField: Deal 18 Damage (+12 If Fear >= 50)
@@ -32,3 +32,13 @@ MonoBehaviour:
         bonusDamage: 12
         condition: 0
         threshold: 50
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 76
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 2708598583165999485, guid: 6398d43fe79ea0140913dc5530c646af, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8

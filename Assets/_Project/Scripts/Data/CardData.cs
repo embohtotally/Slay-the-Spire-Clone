@@ -38,5 +38,8 @@ public class CardData : ScriptableObject
     [field: SerializeField] public List<AutoTargetEffect> OtherEffects { get; private set; }
     [field: SerializeField] public SfxID HoverSfx { get; private set; } = SfxID.hover;
     [field: SerializeField] public SfxID PlaySfx { get; private set; } = SfxID.None;
+
+    [Header("VFX")]
     [field: SerializeField] public GameObject PlayParticle { get; private set; }
+    [field: SerializeField] public VfxCue PlayVfx { get; private set; } = new();
 }

@@ -175,8 +175,6 @@ public class CardSystem : Singleton<CardSystem>
         discardPile.Add(cardView.Card);
         UpdatePileTexts();
 
-        playCardLiftSfx?.Play(this, cardView.transform);
-
         cardView.transform.DOMove(new Vector3(0, 0, -1f), doTweenMoveDuration);
         cardView.transform.DORotate(Vector3.zero, doTweenMoveDuration);
         Tween scaleTween = cardView.transform.DOScale(Vector3.one * 1.5f, doTweenScaleDuration);
@@ -184,7 +182,6 @@ public class CardSystem : Singleton<CardSystem>
 
         yield return new WaitForSeconds(0.2f);
 
-        playCardDiscardSfx?.Play(this, cardView.transform);
         cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
         Tween moveTween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return moveTween.WaitForCompletion();
@@ -198,7 +195,6 @@ public class CardSystem : Singleton<CardSystem>
 
         discardPile.Add(cardView.Card);
         UpdatePileTexts();
-        discardCardSfx?.Play(this, cardView.transform);
         cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
         Tween tween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return tween.WaitForCompletion();
@@ -212,7 +208,6 @@ public class CardSystem : Singleton<CardSystem>
         if (drawCardSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(drawCardSfx);
         CardView cardView = CardViewCreator.Instance.CreateCardView(card, drawPilePoint.position, drawPilePoint.rotation);
         hand.Add(card);
-        drawCardSfx?.Play(this, cardView != null ? cardView.transform : drawPilePoint);
         yield return handView.AddCard(cardView);
     }
 
@@ -230,7 +225,6 @@ public class CardSystem : Singleton<CardSystem>
         drawPile.AddRange(discardPile);
         discardPile.Clear();
         UpdatePileTexts();
-        reshuffleDiscardIntoDrawSfx?.Play(this, drawPilePoint);
     }
 
     private void SpendMana(PlayCardGA playCardGA)
@@ -271,8 +265,24 @@ public class CardSystem : Singleton<CardSystem>
 
     private void SpawnCardParticles(PlayCardGA playCardGA)
     {
+        HashSet<CombatantView> targets = GetCardVfxTargets(playCardGA);
+
+        if (playCardGA.Card.PlayVfx != null && playCardGA.Card.PlayVfx.HasPrefab)
+        {
+            playCardGA.Card.PlayVfx.Play(targets);
+            return;
+        }
+
         if (playCardGA.Card.PlayParticle == null) return;
 
+        foreach (CombatantView target in targets)
+        {
+            Instantiate(playCardGA.Card.PlayParticle, target.transform.position, Quaternion.identity);
+        }
+    }
+
+    private HashSet<CombatantView> GetCardVfxTargets(PlayCardGA playCardGA)
+    {
         HashSet<CombatantView> targets = new();
         if (playCardGA.ManualTarget != null)
         {
@@ -297,10 +307,12 @@ public class CardSystem : Singleton<CardSystem>
             }
         }
 
-        foreach (CombatantView target in targets)
+        if (targets.Count == 0 && HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null)
         {
-            Instantiate(playCardGA.Card.PlayParticle, target.transform.position, Quaternion.identity);
+            targets.Add(HeroSystem.Instance.HeroView);
         }
+
+        return targets;
     }
     #endregion
 }

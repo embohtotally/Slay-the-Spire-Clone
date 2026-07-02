@@ -92,8 +92,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -269,8 +269,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -568,8 +568,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -919,8 +919,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -1050,8 +1050,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a5f2bc044ecb4e4fac387d91e43e03a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   viewMode: 1
   titleText: {fileID: 7151045923794761588}
   descriptionText: {fileID: 7075004463726517481}
@@ -1076,6 +1076,31 @@ MonoBehaviour:
   tweenDuration: 0.12
   hoverEase: 28
   bringToFrontOnHover: 1
+  hoverSfx:
+    sfxId: 0
+    sfxName: ui_hover
+    followTarget: 0
+    delay: 0
+  pickUpSfx:
+    sfxId: 0
+    sfxName: card_pickup
+    followTarget: 0
+    delay: 0
+  targetStartSfx:
+    sfxId: 0
+    sfxName: card_target_start
+    followTarget: 0
+    delay: 0
+  releaseValidSfx:
+    sfxId: 0
+    sfxName: card_release_valid
+    followTarget: 0
+    delay: 0
+  releaseInvalidSfx:
+    sfxId: 0
+    sfxName: card_release_invalid
+    followTarget: 0
+    delay: 0
 --- !u!210 &6835362836283020546
 SortingGroup:
   m_ObjectHideFlags: 0
@@ -1474,8 +1499,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!224 &5468348554535175569 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8816334190320150498, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}

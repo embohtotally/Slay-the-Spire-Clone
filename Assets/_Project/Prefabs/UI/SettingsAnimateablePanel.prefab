@@ -56,8 +56,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -148,8 +148,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_IgnoreLayout: 1
   m_MinWidth: -1
   m_MinHeight: -1
@@ -200,8 +200,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d9a6f7118f6de548ad61b16447aba3b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   _mainMixer: {fileID: 24100000, guid: dc2918a13f4532046913a785e411c04e, type: 2}
   _audioSliders:
   - Name: MasterVolume
@@ -210,7 +210,7 @@ MonoBehaviour:
     SliderRef: {fileID: 8190570872085225427}
   - Name: SFXVolume
     SliderRef: {fileID: 3495407151116830467}
-  _slidingSound: 2
+  _slidingSound: 21
   _soundDebounce: 0.1
 --- !u!1001 &3689804702959950235
 PrefabInstance:
@@ -367,8 +367,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!1001 &4226269442186085283
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -379,11 +379,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 739909334161743087, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
       propertyPath: m_fontAsset
-      value: 
+      value:
       objectReference: {fileID: 11400000, guid: 33d1c0e660fceac4bb16a1137a01eeaa, type: 2}
     - target: {fileID: 739909334161743087, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
       propertyPath: m_sharedMaterial
-      value: 
+      value:
       objectReference: {fileID: 3478443970311894465, guid: 33d1c0e660fceac4bb16a1137a01eeaa, type: 2}
     - target: {fileID: 739909334161743087, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
       propertyPath: m_hasFontAssetChanged
@@ -471,7 +471,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6109398676895006139, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
+      value:
       objectReference: {fileID: 3551412829220888667}
     - target: {fileID: 6109398676895006139, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
@@ -487,7 +487,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6694093776149922599, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
       propertyPath: onStartEvent.m_PersistentCalls.m_Calls.Array.data[3].m_Target
-      value: 
+      value:
       objectReference: {fileID: 7298725069328472229}
     - target: {fileID: 6694093776149922599, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
       propertyPath: onStartEvent.m_PersistentCalls.m_Calls.Array.data[3].m_CallState
@@ -547,8 +547,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c10d422b52559da41aa9676770a8fc65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!224 &4043992290963771042 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 196359833631804673, guid: ebe41e5dd71784944af25338a1da42cf, type: 3}
@@ -700,8 +700,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!224 &8347487542910103374 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2005856920778433269, guid: bf767442b58ee4e489745714ca93ef31, type: 3}
@@ -862,5 +862,5 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:

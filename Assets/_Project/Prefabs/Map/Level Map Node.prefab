@@ -59,8 +59,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0.9, b: 0.25, a: 1}
   m_RaycastTarget: 1
@@ -89,8 +89,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Navigation:
     m_Mode: 3
     m_WrapAround: 0
@@ -133,12 +133,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e411142afb7c422d9c2c9eca7ca7ff2e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   button: {fileID: 7741786357311251621}
   iconImage: {fileID: 3164522656973169099}
   labelText: {fileID: 6200806957299983549}
-  id: 
+  id:
   nodeType: 8
   encounter: {fileID: 0}
   useEncounterPoolWhenEmpty: 1
@@ -150,7 +150,7 @@ MonoBehaviour:
   columnIndex: -1
   clickAction: 0
   completeOnClick: 1
-  sceneNameOverride: 
+  sceneNameOverride:
   useManualOutputOverrides: 0
   activateOnComplete: []
   deactivateOnComplete: []
@@ -175,8 +175,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2c66f2e4659a9f24889eea0b649820ef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   target: {fileID: 6457362803413848811}
   selectable: {fileID: 7741786357311251621}
   tintGraphic: {fileID: 3164522656973169099}
@@ -214,17 +214,17 @@ MonoBehaviour:
       m_Calls: []
   hoverSfx:
     sfxId: 0
-    sfxName: 
+    sfxName: node_hover
     followTarget: 0
     delay: 0
   pressedSfx:
     sfxId: 0
-    sfxName: 
+    sfxName: node_press
     followTarget: 0
     delay: 0
   selectedSfx:
     sfxId: 0
-    sfxName: 
+    sfxName: node_press
     followTarget: 0
     delay: 0
 --- !u!1 &7209300812553953612
@@ -282,8 +282,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1

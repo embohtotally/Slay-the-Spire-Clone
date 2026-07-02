@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Ember_Stand_Behind_Me
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   <Image>k__BackingField: {fileID: 0}
   <Title>k__BackingField: Stand Behind Me
   <Description>k__BackingField: Gain 8 Shield, Reduce Fear 5
@@ -37,15 +37,25 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 5978927219931611221
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611222
       type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
       data:
         shieldAmount: 8
     - rid: 5978927219931611223
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611224
       type: {class: ReduceFearEffect, ns: , asm: Assembly-CSharp}
       data:
         amount: 5
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 85
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 8525990746615576120, guid: b85d21f3b8fed714bacf0c4fd50fa512, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8
