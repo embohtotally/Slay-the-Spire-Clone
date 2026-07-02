@@ -17,6 +17,12 @@ public class CardSystem : Singleton<CardSystem>
     [SerializeField] private TMP_Text drawPileText;
     [SerializeField] private TMP_Text discardPileText;
 
+    [Header("SFX")]
+    [SerializeField] private Gameseed26.SfxID playCardSfx = Gameseed26.SfxID.PlayCard;
+    [SerializeField] private Gameseed26.SfxID drawCardSfx = Gameseed26.SfxID.DrawCard;
+    [SerializeField] private Gameseed26.SfxID shuffleSfx = Gameseed26.SfxID.Shuffle;
+    [SerializeField] private Gameseed26.SfxID yourTurnSfx = Gameseed26.SfxID.YourTurn;
+
     private readonly List<Card> drawPile = new();
     private readonly List<Card> discardPile = new();
     private readonly List<Card> hand = new();
@@ -104,6 +110,16 @@ public class CardSystem : Singleton<CardSystem>
     {
         hand.Remove(playCardGA.Card);
         CardView cardView = handView.RemoveCard(playCardGA.Card);
+        
+        if (playCardSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(playCardSfx);
+
+        if (playCardGA.Card.PlaySfx != Gameseed26.SfxID.None)
+        {
+            Gameseed26.Tune.SFX(playCardGA.Card.PlaySfx);
+        }
+
+        SpawnCardParticles(playCardGA);
+
         yield return PlayAndDiscardCard(cardView);
 
         SpendMana(playCardGA);
@@ -135,6 +151,8 @@ public class CardSystem : Singleton<CardSystem>
     private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
     {
         if (HeroSystem.Instance.HeroView.IsStunned) return;
+
+        if (yourTurnSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(yourTurnSfx);
 
         DrawCardsGA drawCardsGA = new(enemyDrawCardsAmount);
         ActionSystem.Instance.AddReaction(drawCardsGA);
@@ -182,6 +200,7 @@ public class CardSystem : Singleton<CardSystem>
     {
         Card card = drawPile.Draw();
         UpdatePileTexts();
+        if (drawCardSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(drawCardSfx);
         CardView cardView = CardViewCreator.Instance.CreateCardView(card, drawPilePoint.position, drawPilePoint.rotation);
         hand.Add(card);
         yield return handView.AddCard(cardView);
@@ -189,6 +208,7 @@ public class CardSystem : Singleton<CardSystem>
 
     private void RefillDeck()
     {
+        if (shuffleSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(shuffleSfx);
         for (int i = 0; i < discardPile.Count; i++)
         {
             int randomIndex = UnityEngine.Random.Range(i, discardPile.Count);
@@ -236,6 +256,40 @@ public class CardSystem : Singleton<CardSystem>
     {
         if (drawPileText != null) drawPileText.text = drawPile.Count.ToString();
         if (discardPileText != null) discardPileText.text = discardPile.Count.ToString();
+    }
+
+    private void SpawnCardParticles(PlayCardGA playCardGA)
+    {
+        if (playCardGA.Card.PlayParticle == null) return;
+
+        HashSet<CombatantView> targets = new();
+        if (playCardGA.ManualTarget != null)
+        {
+            targets.Add(playCardGA.ManualTarget);
+        }
+
+        if (playCardGA.Card.OtherEffects != null)
+        {
+            foreach (AutoTargetEffect effectWrapper in playCardGA.Card.OtherEffects)
+            {
+                if (effectWrapper.TargetMode != null)
+                {
+                    List<CombatantView> autoTargets = effectWrapper.TargetMode.GetTargets(HeroSystem.Instance.HeroView);
+                    if (autoTargets != null)
+                    {
+                        foreach (CombatantView target in autoTargets)
+                        {
+                            if (target != null) targets.Add(target);
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach (CombatantView target in targets)
+        {
+            Instantiate(playCardGA.Card.PlayParticle, target.transform.position, Quaternion.identity);
+        }
     }
     #endregion
 }

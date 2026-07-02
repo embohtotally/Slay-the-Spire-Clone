@@ -218,6 +218,15 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
             if (worldWrapper != null) worldWrapper.SetActive(false);
         }
 
+        if (Card != null && Card.HoverSfx != Gameseed26.SfxID.None)
+        {
+            Gameseed26.Tune.SFX(Card.HoverSfx);
+        }
+        else if (CardData != null && CardData.HoverSfx != Gameseed26.SfxID.None)
+        {
+            Gameseed26.Tune.SFX(CardData.HoverSfx);
+        }
+
         PlayHoverJuice(baseHoverScale * hoverScale, hoverEase, bringToFrontOnHover);
     }
 

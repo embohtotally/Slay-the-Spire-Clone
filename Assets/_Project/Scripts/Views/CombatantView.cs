@@ -22,6 +22,9 @@ public class CombatantView : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private float shakeDuration;
     [SerializeField] private float shakeStrength;
+    [SerializeField] private Gameseed26.SfxID hitSfx = Gameseed26.SfxID.Hit;
+    [SerializeField] private Gameseed26.SfxID healSfx = Gameseed26.SfxID.Heal;
+    [SerializeField] private Gameseed26.SfxID shieldSfx = Gameseed26.SfxID.Shield;
 
     public Animator Animator => animator;
 
@@ -82,6 +85,11 @@ public class CombatantView : MonoBehaviour
 
     public virtual void Damage(int damageAmount)
     {
+        if (damageAmount > 0 && hitSfx != Gameseed26.SfxID.None)
+        {
+            Gameseed26.Tune.SFX(hitSfx);
+        }
+
         if (CurrentShield >= damageAmount)
         {
             CurrentShield -= damageAmount;
@@ -122,6 +130,11 @@ public class CombatantView : MonoBehaviour
 
     public void Heal(int healAmount)
     {
+        if (healAmount > 0 && healSfx != Gameseed26.SfxID.None)
+        {
+            Gameseed26.Tune.SFX(healSfx);
+        }
+
         CurrentHealth += healAmount;
         if (CurrentHealth > EffectiveMaxHealth)
         {
@@ -159,6 +172,11 @@ public class CombatantView : MonoBehaviour
 
     public void AddShield(int amount)
     {
+        if (amount > 0 && shieldSfx != Gameseed26.SfxID.None)
+        {
+            Gameseed26.Tune.SFX(shieldSfx);
+        }
+
         CurrentShield += amount;
         UpdateHealthVisual();
     }
@@ -212,9 +230,47 @@ public class CombatantView : MonoBehaviour
 
         if (useSlider)
         {
-            healthSlider.value = Mathf.Clamp01((float)CurrentHealth / MaxHealth);
-            blockedSlider.value = Mathf.Clamp01((float)HealthPenalty / MaxHealth);
-            shieldSlider.value = Mathf.Clamp01((float)CurrentShield / MaxHealth);
+            float targetHealth = Mathf.Clamp01((float)CurrentHealth / MaxHealth);
+            healthSlider.DOKill();
+            healthSlider.DOValue(targetHealth, 0.3f);
+
+            float targetBlocked = Mathf.Clamp01((float)HealthPenalty / MaxHealth);
+            blockedSlider.DOKill();
+            if (blockedSlider.fillRect != null)
+            {
+                if (HealthPenalty > 0)
+                {
+                    blockedSlider.fillRect.gameObject.SetActive(true);
+                    blockedSlider.DOValue(targetBlocked, 0.3f);
+                }
+                else
+                {
+                    blockedSlider.DOValue(0f, 0.3f).OnComplete(() => 
+                    {
+                        if (blockedSlider.value <= 0.001f)
+                            blockedSlider.fillRect.gameObject.SetActive(false);
+                    });
+                }
+            }
+
+            float targetShield = Mathf.Clamp01((float)CurrentShield / MaxHealth);
+            shieldSlider.DOKill();
+            if (shieldSlider.fillRect != null)
+            {
+                if (CurrentShield > 0)
+                {
+                    shieldSlider.fillRect.gameObject.SetActive(true);
+                    shieldSlider.DOValue(targetShield, 0.3f);
+                }
+                else
+                {
+                    shieldSlider.DOValue(0f, 0.3f).OnComplete(() => 
+                    {
+                        if (shieldSlider.value <= 0.001f)
+                            shieldSlider.fillRect.gameObject.SetActive(false);
+                    });
+                }
+            }
         }
         else
         {

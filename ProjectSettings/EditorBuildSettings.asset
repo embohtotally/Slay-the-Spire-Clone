@@ -44,6 +44,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Scenes/DialogueTutorial.unity
     guid: 670d9c8fe506f0748b90f10a54a8c21f
+  - enabled: 1
+    path: Assets/_Project/Scenes/GameTutorial.unity
+    guid: d4632c3bcf46c454eafd9c8dd944d1a0
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

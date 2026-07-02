@@ -13,6 +13,14 @@ namespace Gameseed26
 		confirm_2,
 		hover,
 		on_start_game,
+		DrawCard,
+		EndTurn,
+		Hit,
+		PlayCard,
+		Shuffle,
+		YourTurn,
+		Heal,
+		Shield,
 	}
 
 	public enum MusicID

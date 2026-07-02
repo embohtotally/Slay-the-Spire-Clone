@@ -154,26 +154,124 @@ MonoBehaviour:
   interactionRadius: 2
   interactIndicator: {fileID: 0}
   dialogueLines:
-  - speakerName: Nyinyir
-    dialogueText: yg nyninyir
+  - speakerName: Ember
+    dialogueText: Hey, Aira! Wake up!
     speakerImageA: {fileID: 21300006, guid: 7ab74e659e1f0a34d9cfec21c478fc12, type: 3}
     speakerImageB: {fileID: 0}
-    isSpeakerAActive: 0
+    isSpeakerAActive: 1
     disableClickToAdvance: 0
-  - speakerName: Nyinyir
-    dialogueText: dibiarin aja
-    speakerImageA: {fileID: 0}
-    speakerImageB: {fileID: 0}
-    isSpeakerAActive: 0
-    disableClickToAdvance: 0
-  - speakerName: Nyinyir
-    dialogueText: dibiarin aja
+  - speakerName: Ember
+    dialogueText: We have to go!
     speakerImageA: {fileID: 0}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
-  - speakerName: Nyinyir
-    dialogueText: dibiarin aja
+  - speakerName: Aira
+    dialogueText: Huh...?
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Aira
+    dialogueText: Who are you
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Aira
+    dialogueText: Where am I?
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Aira
+    dialogueText: Where am I?
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: Wait... don't tell me...
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: You don't remember me?
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Aira
+    dialogueText: I'm sorry...
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Aira
+    dialogueText: I don't remember anything.
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: It's okay.
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: My name is Ember.
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: We've been traveling together for a long time.
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: And you're Aira...
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: ...the strongest mage I know.
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Aira
+    dialogueText: A mage...?
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: Haha, don't worry.
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: Maybe it'll all come back to you.
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: 'For now...
+
+'
+    speakerImageA: {fileID: 0}
+    speakerImageB: {fileID: 0}
+    isSpeakerAActive: 1
+    disableClickToAdvance: 0
+  - speakerName: Ember
+    dialogueText: Come with me.
     speakerImageA: {fileID: 0}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
@@ -280,6 +378,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 343072363}
   - {fileID: 1308208144}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -288,6 +387,103 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &343072359
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 343072363}
+  - component: {fileID: 343072362}
+  - component: {fileID: 343072361}
+  - component: {fileID: 343072360}
+  m_Layer: 5
+  m_Name: Panel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &343072360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 343072359}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbc36350be58fed4f85f525130a31704, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetGraphic: {fileID: 343072361}
+  targetSprite: {fileID: 0}
+  transitionDuration: 1
+  onTurnedWhite:
+    m_PersistentCalls:
+      m_Calls: []
+  onTurnedBlack:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &343072361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 343072359}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: -1674335261, guid: b12beff3d282f6a40a9129cf78fae48d, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &343072362
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 343072359}
+  m_CullTransparentMesh: 1
+--- !u!224 &343072363
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 343072359}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 64817837}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &378420099
 GameObject:
   m_ObjectHideFlags: 0
@@ -918,21 +1114,21 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 698850427}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.6156863}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: -1674335261, guid: b12beff3d282f6a40a9129cf78fae48d, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1648,7 +1844,7 @@ GameObject:
   - component: {fileID: 1453354433}
   - component: {fileID: 1453354432}
   m_Layer: 0
-  m_Name: Event
+  m_Name: OnEvent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1688,6 +1884,23 @@ MonoBehaviour:
     onEventTriggered:
       m_PersistentCalls:
         m_Calls:
+        - m_Target: {fileID: 343072360}
+          m_TargetAssemblyTypeName: ColorTransition, Assembly-CSharp
+          m_MethodName: TransitionToWhite
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 1
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - target: {fileID: 343072359}
+    eventName: ColorTransition/onTurnedWhite
+    onEventTriggered:
+      m_PersistentCalls:
+        m_Calls:
         - m_Target: {fileID: 1128365185}
           m_TargetAssemblyTypeName: NPCInteraction, Assembly-CSharp
           m_MethodName: StartDialogue
@@ -1696,7 +1909,7 @@ MonoBehaviour:
             m_ObjectArgument: {fileID: 0}
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
             m_IntArgument: 0
-            m_FloatArgument: 0
+            m_FloatArgument: 1
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
@@ -2002,6 +2215,37 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &2010375311
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2010375312}
+  m_Layer: 0
+  m_Name: Color
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2010375312
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2010375311}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1199.0409, y: 139.32239, z: 62.043392}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2111866336
 GameObject:
   m_ObjectHideFlags: 0
@@ -2299,3 +2543,4 @@ SceneRoots:
   - {fileID: 1128365186}
   - {fileID: 657953702}
   - {fileID: 1453354433}
+  - {fileID: 2010375312}

@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21d7b07925ceb9b48875388ffb0b5c69, type: 3}
-  m_Name: qwq
+  m_Name: EndTurn
   m_EditorClassIdentifier: 
-  Clips: []
-  MixerGroup: {fileID: 0}
+  Clips:
+  - {fileID: 8300000, guid: 5b137eab07bbeb148b2a9531f1d2a0c0, type: 3}
+  MixerGroup: {fileID: 514884215846408687, guid: dc2918a13f4532046913a785e411c04e, type: 2}
   UseRandomVolume: 0
   Volume: 1
   RandomVolumeRange: {x: -0.2, y: 0.2}

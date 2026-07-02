@@ -51,6 +51,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 22533359fe337d9499064194b77f2710, type: 2}
   - {fileID: 11400000, guid: 8d49d041a6c3847428eb827d95d0a672, type: 2}
   - {fileID: 11400000, guid: eddb5b8175c4f154a9f766631b918049, type: 2}
+  - {fileID: 11400000, guid: 2d303f99ef19eb542bb7c36da4a51ba4, type: 2}
+  - {fileID: 11400000, guid: ca2c9fe6e29ee7f4e808eee4895a2329, type: 2}
+  - {fileID: 11400000, guid: 200aacf9123d31b438c14de80538b1bd, type: 2}
+  - {fileID: 11400000, guid: 55d4d81f25ac2854c851da28bf03afda, type: 2}
+  - {fileID: 11400000, guid: 717d42dc6c887d842b5dd35b2143654f, type: 2}
+  - {fileID: 11400000, guid: 8a5d2057c054a27429907b65e619132f, type: 2}
+  - {fileID: 11400000, guid: 33046d66853e3074b80788845dc3ebfb, type: 2}
+  - {fileID: 11400000, guid: 5dff261f7a7c6c942964591ded0fc381, type: 2}
   Musics:
   - {fileID: 11400000, guid: d16ccb05b38755a45894920a4c0e1b0d, type: 2}
   _poolSize: 10

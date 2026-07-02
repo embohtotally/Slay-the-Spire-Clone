@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Gameseed26;
 
 public class Card
 {
@@ -15,6 +16,9 @@ public class Card
     public List<AutoTargetEffect> OtherEffects { get; private set; }
     public Sprite Image { get; private set; }
     public int Mana { get; private set; }
+    public SfxID HoverSfx { get; private set; }
+    public SfxID PlaySfx { get; private set; }
+    public GameObject PlayParticle { get; private set; }
 
     /// <summary>
     /// Initialization of a new generic Card based on its ScriptableObject
@@ -31,5 +35,8 @@ public class Card
         ManualTargetEffect = data.ManualTargetEffect;
         TargetType = data.TargetType;
         OtherEffects = data.OtherEffects;
+        HoverSfx = data.HoverSfx;
+        PlaySfx = data.PlaySfx;
+        PlayParticle = data.PlayParticle;
     }
 }
