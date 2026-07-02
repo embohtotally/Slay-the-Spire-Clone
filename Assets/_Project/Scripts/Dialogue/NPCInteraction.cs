@@ -17,6 +17,7 @@ public struct NPCDialogueLine
     public Sprite speakerImageA;
     public Sprite speakerImageB;
     public bool isSpeakerAActive;
+    public bool disableClickToAdvance;
 }
 
 public class NPCInteraction : MonoBehaviour
@@ -28,11 +29,18 @@ public class NPCInteraction : MonoBehaviour
     [Header("Dialogue Settings")]
     [SerializeField] private List<NPCDialogueLine> dialogueLines;
     [SerializeField] private GameObject dialogueUI;
-    [SerializeField] private TextMeshProUGUI speakerText;
-    [SerializeField] private TextMeshProUGUI dialogueText;
     [SerializeField] private Image speakerImageA;
     [SerializeField] private Image speakerImageB;
     [SerializeField] private GameObject skipButton;
+
+    [Header("Speaker B Dialogue Box")]
+    [SerializeField] private GameObject dialogueUIB;
+
+    // Auto-resolved from children named "Name" and "Dialogue Lines"
+    private TextMeshProUGUI speakerText;
+    private TextMeshProUGUI dialogueText;
+    private TextMeshProUGUI speakerTextB;
+    private TextMeshProUGUI dialogueTextB;
 
     [Header("Skip Dialogue")]
     [SerializeField] private GameObject skipPanel;
@@ -70,14 +78,18 @@ public class NPCInteraction : MonoBehaviour
     // [Header("Reference")]
     // [SerializeField] GameManager gameManager;
 
+    public bool IsDialogueActive => isDialogueActive;
+
     private bool isPlayerInRange = false;
     private bool isPatrolling = false;
     private bool isTyping = false;
+    private bool currentLineAllowsClickToAdvance = true;
     private bool isSkipPanelOpen = false;
     private bool isDialogueActive = false;
     private bool hasTriggered = false;
 
     private string currentFullLine = "";
+    private TextMeshProUGUI _activeDialogueText;
     private Coroutine typingCoroutine;
     private Coroutine autoStartCoroutine;
     private Queue<NPCDialogueLine> dialogueQueue;
@@ -100,6 +112,16 @@ public class NPCInteraction : MonoBehaviour
         // gameManager = FindFirstObjectByType<GameManager>();
         dialogueQueue = new Queue<NPCDialogueLine>();
         dialogueUI.SetActive(false);
+        if (dialogueUIB != null) dialogueUIB.SetActive(false);
+
+        // Auto-find text components from named children
+        speakerText  = dialogueUI.transform.Find("Name")?.GetComponent<TextMeshProUGUI>();
+        dialogueText = dialogueUI.transform.Find("Dialogue Lines")?.GetComponent<TextMeshProUGUI>();
+        if (dialogueUIB != null)
+        {
+            speakerTextB  = dialogueUIB.transform.Find("Name")?.GetComponent<TextMeshProUGUI>();
+            dialogueTextB = dialogueUIB.transform.Find("Dialogue Lines")?.GetComponent<TextMeshProUGUI>();
+        }
 
         if (interactIndicator != null)
             interactIndicator.SetActive(false);
@@ -152,20 +174,20 @@ public class NPCInteraction : MonoBehaviour
         // Advance Dialogue
         if (isDialogueActive)
         {
-            bool advancePressed = (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
+            bool advancePressed = (currentLineAllowsClickToAdvance && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
                                   (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.fKey.wasPressedThisFrame));
             if (advancePressed)
             {
                 if (isTyping)
                 {
                     if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-                    dialogueText.text = currentFullLine;
+                    _activeDialogueText.text = currentFullLine;
                     isTyping = false;
                     typingCoroutine = null;
                 }
                 else
                 {
-                    // AudioManager.instance?.PlaySFX(dialogueAdvanceSFX);
+                    AudioManager.instance?.PlaySFX(dialogueAdvanceSFX);
                     DisplayNextSentence();
                 }
             }
@@ -244,8 +266,19 @@ public class NPCInteraction : MonoBehaviour
         }
 
         var currentLine = dialogueQueue.Dequeue();
+        currentLineAllowsClickToAdvance = !currentLine.disableClickToAdvance;
 
-        speakerText.text = currentLine.speakerName;
+        bool speakerAActive = currentLine.isSpeakerAActive;
+
+        // Show the correct dialogue box
+        dialogueUI.SetActive(speakerAActive);
+        if (dialogueUIB != null) dialogueUIB.SetActive(!speakerAActive);
+
+        // Route name + body text to the active box
+        TextMeshProUGUI activeSpeakerLabel = (speakerAActive || speakerTextB == null) ? speakerText : speakerTextB;
+        _activeDialogueText = (speakerAActive || dialogueTextB == null) ? dialogueText : dialogueTextB;
+
+        activeSpeakerLabel.text = currentLine.speakerName;
         currentFullLine = currentLine.dialogueText;
 
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
@@ -312,11 +345,14 @@ public class NPCInteraction : MonoBehaviour
 
         isDialogueActive = false;
         dialogueUI.SetActive(false);
+        if (dialogueUIB != null) dialogueUIB.SetActive(false);
         if (skipButton != null) skipButton.SetActive(false);
         if (blurPanel != null) blurPanel.SetActive(false);
 
         speakerText.text = "";
         dialogueText.text = "";
+        if (speakerTextB != null) speakerTextB.text = "";
+        if (dialogueTextB != null) dialogueTextB.text = "";
 
         speakerImageA.enabled = false;
         speakerImageB.enabled = false;
@@ -342,8 +378,8 @@ public class NPCInteraction : MonoBehaviour
 
         onDialogueFinished?.Invoke();
 
-        // if (!string.IsNullOrEmpty(nextSceneName))
-        //     SceneTransitionManager.LoadScene(nextSceneName);
+        if (!string.IsNullOrEmpty(nextSceneName))
+            SceneTransitionManager.LoadScene(nextSceneName);
 
         // gameManager.GameStart();
     }
@@ -360,6 +396,20 @@ public class NPCInteraction : MonoBehaviour
 
             if (skipButton != null) skipButton.SetActive(false);
         }
+    }
+
+    public void ForceEndDialogue()
+    {
+        if (!isDialogueActive) return;
+
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+            typingCoroutine = null;
+        }
+
+        dialogueQueue.Clear();
+        EndDialogue();
     }
 
     public void ConfirmSkip()
@@ -412,11 +462,11 @@ public class NPCInteraction : MonoBehaviour
     private IEnumerator TypeSentence(string sentence)
     {
         isTyping = true;
-        dialogueText.text = "";
+        _activeDialogueText.text = "";
 
         foreach (char letter in sentence.ToCharArray())
         {
-            dialogueText.text += letter;
+            _activeDialogueText.text += letter;
             yield return new WaitForSecondsRealtime(typingSpeed);
         }
 
