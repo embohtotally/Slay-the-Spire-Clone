@@ -199,7 +199,7 @@ public class CardSystem : Singleton<CardSystem>
         cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
         Tween tween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return tween.WaitForCompletion();
-        
+
         cardView.transform.DOKill();
         Destroy(cardView.gameObject);
     }
@@ -337,6 +337,7 @@ public class CardSystem : Singleton<CardSystem>
             }
         }
 
+        return targets;
     }
     #endregion
 }
