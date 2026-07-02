@@ -312,7 +312,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
             foreach (Image image in images)
             {
-                if (image.gameObject != gameObject && image.name == "Image")
+                if (image.gameObject != gameObject && image.name == "Card Sprite")
                 {
                     cardImage = image;
                     break;

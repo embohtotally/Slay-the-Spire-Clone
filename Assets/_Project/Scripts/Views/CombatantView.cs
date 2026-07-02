@@ -20,6 +20,8 @@ public class CombatantView : MonoBehaviour
     [Header("Others")]
     [SerializeField] protected SpriteRenderer spriteRenderer;
     [SerializeField] private Animator animator;
+    [SerializeField] private string hurtAnimationTrigger = "Hurt";
+    [SerializeField] private string deadAnimationTrigger = "Die";
     [SerializeField] private float shakeDuration;
     [SerializeField] private float shakeStrength;
     [SerializeField] private Gameseed26.SfxID hitSfx = Gameseed26.SfxID.Hit;
@@ -27,6 +29,9 @@ public class CombatantView : MonoBehaviour
     [SerializeField] private Gameseed26.SfxID shieldSfx = Gameseed26.SfxID.Shield;
 
     public Animator Animator => animator;
+    public string HurtAnimationTrigger => hurtAnimationTrigger;
+    public string DeadAnimationTrigger => deadAnimationTrigger;
+    public SpriteRenderer SpriteRenderer => spriteRenderer;
 
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }

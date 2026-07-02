@@ -12,16 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Reward_Ember_Knight_Strike
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 0}
+  <Image>k__BackingField: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
   <Title>k__BackingField: Knight Strike
   <Description>k__BackingField: Deal 6 Damage
-  <Tier>k__BackingField: Basic
+  <Tier>k__BackingField: 0
   <Mana>k__BackingField: 1
   <Type>k__BackingField: 0
   <TargetType>k__BackingField: 0
   <ManualTargetEffect>k__BackingField:
     rid: 5978927219931611241
   <OtherEffects>k__BackingField: []
+  <HoverSfx>k__BackingField: 5
+  <PlaySfx>k__BackingField: 0
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <VisualType>k__BackingField: 0
+  <HeroAnimationTrigger>k__BackingField: 
+  <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2
     RefIds:
