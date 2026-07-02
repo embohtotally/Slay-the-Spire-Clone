@@ -55,6 +55,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 8797899767065482254}
   animator: {fileID: 94298321845573531}
   hurtAnimationTrigger: Hurt
+  deadAnimationTrigger: Die
   shakeDuration: 0.2
   shakeStrength: 0.5
   hitSfx: 9
@@ -292,6 +293,14 @@ PrefabInstance:
     - target: {fileID: 7440783775941415568, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7968566667975123965, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.88
+      objectReference: {fileID: 0}
+    - target: {fileID: 7968566667975123965, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9086676255022467339, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
       propertyPath: m_Sprite
