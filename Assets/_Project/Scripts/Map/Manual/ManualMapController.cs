@@ -59,6 +59,17 @@ public class ManualMapController : MonoBehaviour
     [SerializeField, ShowIf("completeCurrentLevelWhenCleared")] private bool returnToLevelSelectOnComplete = true;
     [SerializeField, ShowIf("completeCurrentLevelWhenCleared")] private UnityEvent OnMapCompleted;
 
+    [Header("Audio")]
+    [SerializeField] private TuneSfxCue nodeSelectedSfx;
+    [SerializeField] private TuneSfxCue combatNodeSfx;
+    [SerializeField] private TuneSfxCue eliteNodeSfx;
+    [SerializeField] private TuneSfxCue bossNodeSfx;
+    [SerializeField] private TuneSfxCue shopNodeSfx;
+    [SerializeField] private TuneSfxCue restNodeSfx;
+    [SerializeField] private TuneSfxCue eventNodeSfx;
+    [SerializeField] private TuneSfxCue treasureNodeSfx;
+    [SerializeField] private TuneSfxCue mapCompletedSfx;
+
     [Header("Designer Auto Setup")]
     [Tooltip("Optional root used by the auto setup button. Leave empty to use this controller's transform.")]
     [SerializeField] private Transform autoSetupRoot;
@@ -85,6 +96,22 @@ public class ManualMapController : MonoBehaviour
     [SerializeField] private RectTransform autoLineParent;
     [SerializeField] private float autoLineThickness = 6f;
     [SerializeField] private Color autoLineColor = new(0.32f, 0.32f, 0.38f, 0.75f);
+
+    [Header("Node Type Icons")]
+    [Tooltip("If enabled, Auto Setup From Positions also applies icon sprites after generating node data. Keep this off on Level-select layouts; enable it only for Map layouts that should use Map node icons.")]
+    [SerializeField] private bool autoApplyNodeIconsAfterAutoSetup;
+    [SerializeField] private bool autoLoadDefaultNodeIconsWhenMissing = true;
+    [SerializeField] private bool hideNodeLabelsWhenApplyingIcons = true;
+    [SerializeField] private bool setNodeIconsNativeSize;
+    [InfoBox("Custom node type is intentionally skipped. Start/Treasure icons are optional because this project may use first-row selectable nodes and non-combat reward scenes instead of dedicated icons.")]
+    [SerializeField] private Sprite startNodeIcon;
+    [SerializeField] private Sprite enemyNodeIcon;
+    [SerializeField] private Sprite eliteNodeIcon;
+    [SerializeField] private Sprite eventNodeIcon;
+    [SerializeField] private Sprite shopNodeIcon;
+    [SerializeField] private Sprite restNodeIcon;
+    [SerializeField] private Sprite treasureNodeIcon;
+    [SerializeField] private Sprite bossNodeIcon;
 
     private static readonly Dictionary<string, Dictionary<string, ManualMapNodeState>> SavedStatesByMapId = new();
     private bool mapCompletionHandled;
@@ -153,6 +180,8 @@ public class ManualMapController : MonoBehaviour
     {
         if (node == null || !node.CanSelect) return;
 
+        nodeSelectedSfx?.Play(this, node.transform);
+        PlayNodeTypeSfx(node);
         node.OnSelected?.Invoke();
 
         if (node.CompleteOnClick)
@@ -286,6 +315,11 @@ public class ManualMapController : MonoBehaviour
         }
 
         nodes = layers.SelectMany(layer => layer.Nodes).ToList();
+        if (autoApplyNodeIconsAfterAutoSetup)
+        {
+            ApplyNodeTypeIconsToNodes(false);
+        }
+
         if (autoRebuildLinesAfterSetup)
         {
             RebuildAutoLines();
@@ -345,6 +379,11 @@ public class ManualMapController : MonoBehaviour
         }
 
         nodes = layers.SelectMany(layer => layer.Nodes).ToList();
+        if (autoApplyNodeIconsAfterAutoSetup)
+        {
+            ApplyNodeTypeIconsToNodes(false);
+        }
+
         if (autoRebuildLinesAfterSetup)
         {
             RebuildAutoLines();
@@ -399,6 +438,21 @@ public class ManualMapController : MonoBehaviour
         CollectNodes();
         MarkEditorObjectDirty(this);
         Gameseed26.Logger.Log($"ManualMapController collected {nodes.Count} nodes.");
+    }
+
+    [Button("Load Default Node Icons From Art Folder", EButtonEnableMode.Editor)]
+    private void LoadDefaultNodeIconsFromArtFolderButton()
+    {
+        LoadDefaultNodeIconsFromArtFolder();
+        MarkEditorObjectDirty(this);
+        MarkSceneDirty();
+    }
+
+    [Button("Apply Node Type Icons To Nodes", EButtonEnableMode.Editor)]
+    private void ApplyNodeTypeIconsToNodesButton()
+    {
+        CollectNodes();
+        ApplyNodeTypeIconsToNodes(true);
     }
 
     private void ResolveByNodeType(ManualMapNode node)
@@ -637,6 +691,7 @@ public class ManualMapController : MonoBehaviour
 
         mapCompletionHandled = true;
         Gameseed26.Logger.Log(this, $"Manual map '{mapId}' cleared. Completing current level.");
+        mapCompletedSfx?.Play(this, transform);
         OnMapCompleted?.Invoke();
 
         if (LevelProgressionManager.Instance != null)
@@ -679,6 +734,25 @@ public class ManualMapController : MonoBehaviour
         }
 
         return hasCompletedTerminalNode;
+    }
+
+    private void PlayNodeTypeSfx(ManualMapNode node)
+    {
+        if (node == null) return;
+
+        TuneSfxCue cue = node.NodeType switch
+        {
+            MapNodeType.Enemy => combatNodeSfx,
+            MapNodeType.Elite => eliteNodeSfx,
+            MapNodeType.Boss => bossNodeSfx,
+            MapNodeType.Shop => shopNodeSfx,
+            MapNodeType.Rest => restNodeSfx,
+            MapNodeType.Event => eventNodeSfx,
+            MapNodeType.Treasure => treasureNodeSfx,
+            _ => null
+        };
+
+        cue?.Play(this, node.transform);
     }
 
     private List<AutoLayer> BuildAutoLayers()
@@ -810,6 +884,97 @@ public class ManualMapController : MonoBehaviour
             }
         }
     }
+
+    private void ApplyNodeTypeIconsToNodes(bool logResult)
+    {
+        if (autoLoadDefaultNodeIconsWhenMissing)
+        {
+            LoadDefaultNodeIconsFromArtFolder();
+        }
+
+        int applied = 0;
+        int skippedCustom = 0;
+        int missing = 0;
+
+        foreach (ManualMapNode node in nodes)
+        {
+            if (node == null) continue;
+            if (node.NodeType == MapNodeType.Custom)
+            {
+                skippedCustom++;
+                continue;
+            }
+
+            Sprite icon = GetIconForNodeType(node.NodeType);
+            if (icon == null)
+            {
+                missing++;
+                continue;
+            }
+
+            RecordEditorObject(node, "Apply Manual Map Node Type Icon");
+            if (node.ApplyNodeTypeIconVisual(icon, hideNodeLabelsWhenApplyingIcons, setNodeIconsNativeSize))
+            {
+                applied++;
+                MarkEditorObjectDirty(node);
+                MarkEditorObjectDirty(node.gameObject);
+            }
+        }
+
+        MarkEditorObjectDirty(this);
+        MarkSceneDirty();
+
+        if (logResult)
+        {
+            Gameseed26.Logger.Log($"Manual map node icons applied: {applied} updated, {skippedCustom} custom skipped, {missing} missing icon assignments.");
+        }
+    }
+
+    private Sprite GetIconForNodeType(MapNodeType type)
+    {
+        return type switch
+        {
+            MapNodeType.Start => startNodeIcon,
+            MapNodeType.Enemy => enemyNodeIcon,
+            MapNodeType.Elite => eliteNodeIcon,
+            MapNodeType.Event => eventNodeIcon,
+            MapNodeType.Shop => shopNodeIcon,
+            MapNodeType.Rest => restNodeIcon,
+            MapNodeType.Treasure => treasureNodeIcon,
+            MapNodeType.Boss => bossNodeIcon,
+            _ => null
+        };
+    }
+
+    private void LoadDefaultNodeIconsFromArtFolder()
+    {
+#if UNITY_EDITOR
+        enemyNodeIcon = enemyNodeIcon != null ? enemyNodeIcon : LoadSpriteAsset("Assets/_Project/Art/Map/Icon/Icon_Enemy.png");
+        eliteNodeIcon = eliteNodeIcon != null ? eliteNodeIcon : LoadSpriteAsset("Assets/_Project/Art/Map/Icon/Icon_Elite Boss.png");
+        eventNodeIcon = eventNodeIcon != null ? eventNodeIcon : LoadSpriteAsset("Assets/_Project/Art/Map/Icon/Icon_Event.png");
+        shopNodeIcon = shopNodeIcon != null ? shopNodeIcon : LoadSpriteAsset("Assets/_Project/Art/Map/Icon/Icon_Merchant.png");
+        restNodeIcon = restNodeIcon != null ? restNodeIcon : LoadSpriteAsset("Assets/_Project/Art/Map/Icon/Icon_Rest.png");
+        bossNodeIcon = bossNodeIcon != null ? bossNodeIcon : LoadSpriteAsset("Assets/_Project/Art/Map/Icon/Icon_Boss.png");
+
+        if (treasureNodeIcon == null)
+        {
+            treasureNodeIcon = LoadSpriteAsset("Assets/_Project/Art/Map/Icon/Icon_Treasure.png");
+            if (treasureNodeIcon == null)
+            {
+                treasureNodeIcon = LoadSpriteAsset("Assets/_Project/Art/Map/Icon/Icon_Event2.png");
+            }
+        }
+
+        startNodeIcon = startNodeIcon != null ? startNodeIcon : LoadSpriteAsset("Assets/_Project/Art/Map/Icon/Icon_Start.png");
+#endif
+    }
+
+#if UNITY_EDITOR
+    private static Sprite LoadSpriteAsset(string assetPath)
+    {
+        return AssetDatabase.LoadAllAssetsAtPath(assetPath).OfType<Sprite>().FirstOrDefault();
+    }
+#endif
 
     private void ApplyEndpointTypeIfNeeded(ManualMapNode node, int layerIndex, int layerCount, int nodesOnLayer)
     {

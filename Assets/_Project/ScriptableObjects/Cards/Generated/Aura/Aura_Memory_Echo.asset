@@ -43,15 +43,25 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 5978927219931611278
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611279
       type: {class: DrawEffect, ns: , asm: Assembly-CSharp}
       data:
         amount: 2
     - rid: 5978927219931611280
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611281
       type: {class: ReduceFearEffect, ns: , asm: Assembly-CSharp}
       data:
         amount: 5
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 76
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 8531166019229726396, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8

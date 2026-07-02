@@ -43,15 +43,25 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 5978927219931611212
       type: {class: SingleEnemyTargetMode, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611213
       type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
       data:
         damageAmount: 4
     - rid: 5978927219931611214
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611215
       type: {class: DrawEffect, ns: , asm: Assembly-CSharp}
       data:
         amount: 2
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 93
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 3696007233179127096, guid: c248f95ffea8b8543bc7ad0fffe0216d, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8

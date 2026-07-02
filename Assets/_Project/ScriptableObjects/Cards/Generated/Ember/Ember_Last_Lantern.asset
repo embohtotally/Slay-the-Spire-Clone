@@ -43,15 +43,25 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 5978927219931611258
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611259
       type: {class: CopyFearEffect, ns: , asm: Assembly-CSharp}
       data:
         sourceAllyName: Aura
     - rid: 5978927219931611260
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611261
       type: {class: HealEffect, ns: , asm: Assembly-CSharp}
       data:
         healAmount: 18
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 88
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 985132354702716236, guid: bbf9e36a48d6c5648a13889afab076fd, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8

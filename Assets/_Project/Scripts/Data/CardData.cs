@@ -45,7 +45,10 @@ public class CardData : ScriptableObject
     [field: SerializeField] public List<AutoTargetEffect> OtherEffects { get; private set; }
     [field: SerializeField] public SfxID HoverSfx { get; private set; } = SfxID.hover;
     [field: SerializeField] public SfxID PlaySfx { get; private set; } = SfxID.None;
+
+    [Header("VFX")]
     [field: SerializeField] public GameObject PlayParticle { get; private set; }
+    [field: SerializeField] public VfxCue PlayVfx { get; private set; } = new();
     [field: SerializeField, Header("Visuals")] public CardVisualType VisualType { get; private set; } = CardVisualType.Particle;
     [field: SerializeField, Tooltip("Animation trigger name to play on the Hero")] public string HeroAnimationTrigger { get; private set; }
     [field: SerializeField, Tooltip("Animation trigger name to play on the Target(s)")] public string TargetAnimationTrigger { get; private set; }

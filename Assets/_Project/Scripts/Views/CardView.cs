@@ -90,6 +90,17 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     [ShowIf(nameof(enableHoverJuice))]
     [SerializeField] private bool bringToFrontOnHover = true;
 
+    [Foldout("Audio")]
+    [SerializeField] private TuneSfxCue hoverSfx;
+    [Foldout("Audio")]
+    [SerializeField] private TuneSfxCue pickUpSfx;
+    [Foldout("Audio")]
+    [SerializeField] private TuneSfxCue targetStartSfx;
+    [Foldout("Audio")]
+    [SerializeField] private TuneSfxCue releaseValidSfx;
+    [Foldout("Audio")]
+    [SerializeField] private TuneSfxCue releaseInvalidSfx;
+
     public Card Card { get; private set; }
     public CardData CardData { get; private set; }
 
@@ -247,8 +258,11 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
         if (!CanStartCombatInteraction()) return;
 
+        pickUpSfx?.Play(this, transform);
+
         if (Card.ManualTargetEffect != null)
         {
+            targetStartSfx?.Play(this, transform);
             ManualTargetingSystem.Instance.StartTargeting(MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue));
         }
         else
@@ -274,8 +288,13 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
             CombatantView target = ManualTargetingSystem.Instance.EndTargeting(MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue), Card.TargetType);
             if (target != null && ManaSystem.Instance.HasEnoughMana(Card.Mana))
             {
+                releaseValidSfx?.Play(this, transform);
                 PlayCardGA playCardGA = new(Card, target);
                 ActionSystem.Instance.Perform(playCardGA);
+            }
+            else
+            {
+                releaseInvalidSfx?.Play(this, transform);
             }
         }
         else
@@ -405,11 +424,13 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         if (CanPlayCard())
         {
+            releaseValidSfx?.Play(this, transform);
             PlayCardGA playCardGA = new(Card);
             ActionSystem.Instance.Perform(playCardGA);
         }
         else
         {
+            releaseInvalidSfx?.Play(this, transform);
             transform.SetPositionAndRotation(dragStartPosition, dragStartRotation);
         }
     }

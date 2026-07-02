@@ -5,6 +5,14 @@ using Gameseed26;
 using NaughtyAttributes;
 using UnityEngine;
 
+public enum ManualMapViewportBoundsMode
+{
+    None,
+    ContentRect,
+    BoundsRectOverride,
+    ManualSize
+}
+
 public class ManualMapLayoutLoader : MonoBehaviour
 {
     [Header("Layouts")]
@@ -37,8 +45,12 @@ public class ManualMapLayoutLoader : MonoBehaviour
     [Header("Viewport / Zoom")]
     [Tooltip("Use scripted UI pan/zoom. Cinemachine will not affect this map because the Map scene uses a Screen Space Overlay Canvas.")]
     [SerializeField] private bool enableViewportControls = true;
+    [Tooltip("If off, player mouse wheel/right-drag/keyboard map controls are ignored, but scripts may still call FocusNode/FocusWholeMap. Turn this off in the Levels scene so only the Level Select Controller moves the map during selection preview.")]
+    [SerializeField, ShowIf("enableViewportControls")] private bool enablePlayerViewportInput = true;
     [Tooltip("The visible area. Empty = Map Root if it is a RectTransform.")]
     [SerializeField, ShowIf("enableViewportControls")] private RectTransform viewportRect;
+    [Tooltip("Default viewport-local offset used by FocusNode. Negative X places the selected node left of center, useful when a detail panel occupies the right side.")]
+    [SerializeField, ShowIf("enableViewportControls")] private Vector2 defaultFocusOffset;
     [Tooltip("Default zoom used when focusing the currently selectable path nodes.")]
     [Min(0.1f)][SerializeField, ShowIf("enableViewportControls")] private float focusedZoom = 1.2f;
     [Tooltip("Lowest allowed zoom. This is usually the zoom-out / overview limit.")]
@@ -58,14 +70,30 @@ public class ManualMapLayoutLoader : MonoBehaviour
     [Tooltip("If enabled, map starts zoomed into the currently selectable nodes, then player may scroll/drag/overview.")]
     [SerializeField, ShowIf("enableViewportControls")] private bool focusPathOnLoad = true;
 
+    [Header("Viewport Bounds")]
+    [Tooltip("Clamp pan/zoom so the viewport does not reveal empty space outside the background/content art. Use ContentRect for most cases, BoundsRectOverride for a dedicated background RectTransform, or ManualSize for explicit art dimensions.")]
+    [SerializeField, ShowIf("enableViewportControls")] private ManualMapViewportBoundsMode boundsMode = ManualMapViewportBoundsMode.ContentRect;
+    [Tooltip("Optional bounds source. Use this when the visual background image is a different RectTransform than the node/content root.")]
+    [SerializeField, ShowIf("enableViewportControls")] private RectTransform boundsRectOverride;
+    [Tooltip("Used only when Bounds Mode = Manual Size. Should match the safe background/content size in local UI units.")]
+    [SerializeField, ShowIf("enableViewportControls")] private Vector2 manualBoundsSize = new(1920f, 1080f);
+    [Tooltip("Positive values keep the camera further away from the edges. Negative values intentionally allow a little overscroll beyond the art.")]
+    [SerializeField, ShowIf("enableViewportControls")] private Vector2 boundsInset;
+    [Tooltip("If on, zoom-out cannot go below the scale needed to cover the viewport, preventing 16:9 backgrounds from showing outside edges.")]
+    [SerializeField, ShowIf("enableViewportControls")] private bool preventZoomOutPastBounds = true;
+
     private ManualMapController spawnedMap;
     private RectTransform contentRect;
     private float targetZoom = 1f;
     private Vector2 targetAnchoredPosition;
+    private float homeZoom = 1f;
+    private Vector2 homeAnchoredPosition;
+    private bool hasHomeView;
     private Vector2 lastPointerPosition;
     private bool isDragging;
 
     public ManualMapController SpawnedMap => spawnedMap;
+    public bool PlayerViewportInputEnabled => enablePlayerViewportInput;
 
     private void Awake()
     {
@@ -76,17 +104,78 @@ public class ManualMapLayoutLoader : MonoBehaviour
 
     private void Start()
     {
-        if (loadFromPool) LoadSelectedOrFallbackLayout();
+        if (loadFromPool)
+        {
+            LoadSelectedOrFallbackLayout();
+        }
+        else
+        {
+            InitializeStaticViewportContent();
+        }
     }
 
     private void Update()
     {
         if (!enableViewportControls || contentRect == null) return;
 
-        HandleKeyboardShortcuts();
-        HandleMouseZoom();
-        HandleMouseDrag();
+        if (enablePlayerViewportInput)
+        {
+            HandleKeyboardShortcuts();
+            HandleMouseZoom();
+            HandleMouseDrag();
+        }
+        else
+        {
+            isDragging = false;
+        }
+
         SmoothMoveToTarget();
+    }
+
+    public void SetPlayerViewportInputEnabled(bool enabled)
+    {
+        enablePlayerViewportInput = enabled;
+        if (!enabled)
+        {
+            isDragging = false;
+        }
+    }
+
+    public void SetFocusPathOnLoadEnabled(bool enabled)
+    {
+        focusPathOnLoad = enabled;
+    }
+
+    public void CaptureHomeView()
+    {
+        EnsureViewportContentReady();
+        if (contentRect == null) return;
+
+        targetZoom = ClampZoom(contentRect.localScale.x);
+        targetAnchoredPosition = contentRect.anchoredPosition;
+        ConstrainTargetAnchoredPosition();
+        StoreCurrentTargetAsHome();
+    }
+
+    public void RestoreHomeView()
+    {
+        EnsureViewportContentReady();
+        if (contentRect == null) return;
+
+        if (!hasHomeView)
+        {
+            CaptureHomeView();
+        }
+
+        targetZoom = homeZoom;
+        targetAnchoredPosition = homeAnchoredPosition;
+        ConstrainTargetAnchoredPosition();
+    }
+
+    public void RestoreHomeViewImmediate()
+    {
+        RestoreHomeView();
+        ApplyViewportTargetImmediately();
     }
 
     public void LoadSelectedOrFallbackLayout()
@@ -134,6 +223,33 @@ public class ManualMapLayoutLoader : MonoBehaviour
         SelectRandomLayoutAndLoad();
     }
 
+    public void RefreshStaticViewportContent()
+    {
+        InitializeStaticViewportContent();
+    }
+
+    public void FocusNode(ManualMapNode node)
+    {
+        if (node == null) return;
+
+        EnsureViewportContentReady();
+        FocusNodes(new List<ManualMapNode> { node }, focusedZoom, defaultFocusOffset);
+    }
+
+    public void FocusNode(ManualMapNode node, Vector2 viewportOffset)
+    {
+        if (node == null) return;
+
+        EnsureViewportContentReady();
+        FocusNodes(new List<ManualMapNode> { node }, focusedZoom, viewportOffset);
+    }
+
+    public void FocusNodeImmediate(ManualMapNode node)
+    {
+        FocusNode(node);
+        ApplyViewportTargetImmediately();
+    }
+
     public void LoadMapSceneWithLayout(string layoutId)
     {
         if (!string.IsNullOrWhiteSpace(layoutId))
@@ -151,7 +267,8 @@ public class ManualMapLayoutLoader : MonoBehaviour
     [Button("Focus Current Path", EButtonEnableMode.Playmode)]
     public void FocusCurrentPath()
     {
-        if (spawnedMap == null || contentRect == null) return;
+        EnsureViewportContentReady();
+        if (contentRect == null) return;
 
         List<ManualMapNode> focusNodes = GetFocusNodes();
         if (focusNodes.Count == 0)
@@ -160,21 +277,22 @@ public class ManualMapLayoutLoader : MonoBehaviour
             return;
         }
 
-        FocusNodes(focusNodes, focusedZoom);
+        FocusNodes(focusNodes, focusedZoom, Vector2.zero);
     }
 
     [ShowIf("enableViewportControls")]
     [Button("Zoom Out To Whole Map", EButtonEnableMode.Playmode)]
     public void FocusWholeMap()
     {
-        if (spawnedMap == null || contentRect == null) return;
+        EnsureViewportContentReady();
+        if (contentRect == null) return;
 
-        List<ManualMapNode> allNodes = spawnedMap.Nodes
+        List<ManualMapNode> allNodes = GetAllViewportNodes()
             .Where(node => node != null)
             .ToList();
         if (allNodes.Count == 0) return;
 
-        FocusNodes(allNodes, maxZoom);
+        FocusNodes(allNodes, maxZoom, Vector2.zero);
     }
 
     private ManualMapLayoutEntry ResolveLayoutToLoad()
@@ -277,13 +395,69 @@ public class ManualMapLayoutLoader : MonoBehaviour
         }
 
         contentRect = spawnedMap.transform as RectTransform;
-        targetZoom = Mathf.Clamp(focusedZoom, minZoom, maxZoom);
+        targetZoom = ClampZoom(focusedZoom);
         targetAnchoredPosition = contentRect != null ? contentRect.anchoredPosition : Vector2.zero;
+        ConstrainTargetAnchoredPosition();
+        StoreCurrentTargetAsHome();
 
         if (enableViewportControls && focusPathOnLoad)
         {
             StartCoroutine(FocusPathAfterSpawn());
         }
+    }
+
+    private void InitializeStaticViewportContent()
+    {
+        contentRect = ResolveStaticContentRect();
+        if (contentRect == null) return;
+
+        targetZoom = ClampZoom(contentRect.localScale.x);
+        targetAnchoredPosition = contentRect.anchoredPosition;
+        ConstrainTargetAnchoredPosition();
+        StoreCurrentTargetAsHome();
+
+        if (enableViewportControls && focusPathOnLoad)
+        {
+            StartCoroutine(FocusPathAfterSpawn());
+        }
+    }
+
+    private void EnsureViewportContentReady()
+    {
+        if (contentRect != null) return;
+
+        if (spawnedMap != null)
+        {
+            contentRect = spawnedMap.transform as RectTransform;
+            return;
+        }
+
+        InitializeStaticViewportContent();
+    }
+
+    private RectTransform ResolveStaticContentRect()
+    {
+        RectTransform viewportAsContent = viewportRect != null && viewportRect.GetComponentInChildren<ManualMapNode>(true) != null
+            ? viewportRect
+            : null;
+        if (viewportAsContent != null) return viewportAsContent;
+
+        RectTransform mapRootRect = mapRoot as RectTransform;
+        if (mapRootRect != null && mapRootRect.GetComponentInChildren<ManualMapNode>(true) != null)
+        {
+            return mapRootRect;
+        }
+
+        if (mapRoot != null)
+        {
+            ManualMapNode childNode = mapRoot.GetComponentInChildren<ManualMapNode>(true);
+            if (childNode != null)
+            {
+                return childNode.transform.parent as RectTransform;
+            }
+        }
+
+        return mapRootRect;
     }
 
     private IEnumerator FocusPathAfterSpawn()
@@ -301,23 +475,23 @@ public class ManualMapLayoutLoader : MonoBehaviour
 
     private List<ManualMapNode> GetFocusNodes()
     {
-        if (spawnedMap == null) return new List<ManualMapNode>();
+        List<ManualMapNode> nodesToSearch = GetAllViewportNodes();
 
-        List<ManualMapNode> availableNodes = spawnedMap.Nodes
+        List<ManualMapNode> availableNodes = nodesToSearch
             .Where(node => node != null && node.CanSelect)
             .OrderBy(node => node.LayerIndex)
             .ThenBy(node => node.ColumnIndex)
             .ToList();
         if (availableNodes.Count > 0) return availableNodes;
 
-        ManualMapNode latestCompletedNode = spawnedMap.Nodes
+        ManualMapNode latestCompletedNode = nodesToSearch
             .Where(node => node != null && node.IsCompleted)
             .OrderByDescending(node => node.LayerIndex)
             .ThenBy(node => node.ColumnIndex)
             .FirstOrDefault();
         if (latestCompletedNode != null) return new List<ManualMapNode> { latestCompletedNode };
 
-        return spawnedMap.Nodes
+        return nodesToSearch
             .Where(node => node != null)
             .OrderBy(node => node.LayerIndex)
             .ThenBy(node => node.ColumnIndex)
@@ -325,15 +499,44 @@ public class ManualMapLayoutLoader : MonoBehaviour
             .ToList();
     }
 
-    private void FocusNodes(IReadOnlyList<ManualMapNode> focusNodes, float preferredZoom)
+    private List<ManualMapNode> GetAllViewportNodes()
+    {
+        if (spawnedMap != null)
+        {
+            return spawnedMap.Nodes
+                .Where(node => node != null)
+                .ToList();
+        }
+
+        if (contentRect != null)
+        {
+            return contentRect.GetComponentsInChildren<ManualMapNode>(true)
+                .Where(node => node != null)
+                .Distinct()
+                .ToList();
+        }
+
+        if (mapRoot != null)
+        {
+            return mapRoot.GetComponentsInChildren<ManualMapNode>(true)
+                .Where(node => node != null)
+                .Distinct()
+                .ToList();
+        }
+
+        return new List<ManualMapNode>();
+    }
+
+    private void FocusNodes(IReadOnlyList<ManualMapNode> focusNodes, float preferredZoom, Vector2 viewportOffset)
     {
         if (focusNodes == null || focusNodes.Count == 0 || viewportRect == null || contentRect == null) return;
 
         Bounds bounds = GetNodeBounds(focusNodes);
         Vector2 viewportSize = viewportRect.rect.size;
         float fitZoom = CalculateFitZoom(bounds, viewportSize);
-        targetZoom = Mathf.Clamp(Mathf.Min(preferredZoom, fitZoom), minZoom, maxZoom);
-        targetAnchoredPosition = -((Vector2)bounds.center * targetZoom);
+        targetZoom = ClampZoom(Mathf.Min(preferredZoom, fitZoom));
+        targetAnchoredPosition = viewportOffset - (Vector2)bounds.center * targetZoom;
+        ConstrainTargetAnchoredPosition();
     }
 
     private Bounds GetNodeBounds(IReadOnlyList<ManualMapNode> targetNodes)
@@ -380,13 +583,14 @@ public class ManualMapLayoutLoader : MonoBehaviour
         if (Mathf.Approximately(scrollDelta, 0f)) return;
 
         float oldZoom = targetZoom;
-        float newZoom = Mathf.Clamp(targetZoom + scrollDelta * wheelZoomSpeed, minZoom, maxZoom);
+        float newZoom = ClampZoom(targetZoom + scrollDelta * wheelZoomSpeed);
         if (Mathf.Approximately(oldZoom, newZoom)) return;
 
         Vector2 localPointer = GetPointerLocalToViewport();
         Vector2 contentPointBeforeZoom = (localPointer - targetAnchoredPosition) / oldZoom;
         targetZoom = newZoom;
         targetAnchoredPosition = localPointer - contentPointBeforeZoom * targetZoom;
+        ConstrainTargetAnchoredPosition();
     }
 
     private void HandleMouseDrag()
@@ -408,6 +612,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
         Vector2 currentPointerPosition = Input.mousePosition;
         Vector2 pointerDelta = currentPointerPosition - lastPointerPosition;
         targetAnchoredPosition += pointerDelta * dragPanSpeed;
+        ConstrainTargetAnchoredPosition();
         lastPointerPosition = currentPointerPosition;
     }
 
@@ -434,6 +639,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
         float currentZoom = contentRect.localScale.x;
         float newZoom = Mathf.Lerp(currentZoom, targetZoom, zoomLerp);
         contentRect.localScale = new Vector3(newZoom, newZoom, 1f);
+        ConstrainTargetAnchoredPosition();
         contentRect.anchoredPosition = Vector2.Lerp(contentRect.anchoredPosition, targetAnchoredPosition, panLerp);
     }
 
@@ -441,8 +647,91 @@ public class ManualMapLayoutLoader : MonoBehaviour
     {
         if (contentRect == null) return;
 
+        targetZoom = ClampZoom(targetZoom);
+        ConstrainTargetAnchoredPosition();
         contentRect.localScale = new Vector3(targetZoom, targetZoom, 1f);
         contentRect.anchoredPosition = targetAnchoredPosition;
+    }
+
+    private void StoreCurrentTargetAsHome()
+    {
+        homeZoom = targetZoom;
+        homeAnchoredPosition = targetAnchoredPosition;
+        hasHomeView = true;
+    }
+
+    private float ClampZoom(float requestedZoom)
+    {
+        float lowerBound = Mathf.Max(0.01f, minZoom);
+        if (preventZoomOutPastBounds && HasViewportBounds())
+        {
+            lowerBound = Mathf.Max(lowerBound, CalculateMinZoomToCoverViewport());
+        }
+
+        float upperBound = Mathf.Max(lowerBound, maxZoom);
+        return Mathf.Clamp(requestedZoom, lowerBound, upperBound);
+    }
+
+    private float CalculateMinZoomToCoverViewport()
+    {
+        if (viewportRect == null) return minZoom;
+
+        Vector2 boundsSize = GetViewportBoundsSize();
+        Vector2 viewportSize = viewportRect.rect.size;
+        if (boundsSize.x <= 0f || boundsSize.y <= 0f || viewportSize.x <= 0f || viewportSize.y <= 0f)
+        {
+            return minZoom;
+        }
+
+        return Mathf.Max(viewportSize.x / boundsSize.x, viewportSize.y / boundsSize.y);
+    }
+
+    private void ConstrainTargetAnchoredPosition()
+    {
+        if (!HasViewportBounds() || viewportRect == null) return;
+
+        Vector2 boundsSize = GetViewportBoundsSize();
+        Vector2 viewportSize = viewportRect.rect.size;
+        if (boundsSize.x <= 0f || boundsSize.y <= 0f || viewportSize.x <= 0f || viewportSize.y <= 0f) return;
+
+        float safeZoom = ClampZoom(targetZoom);
+        if (!Mathf.Approximately(targetZoom, safeZoom))
+        {
+            targetZoom = safeZoom;
+        }
+
+        Vector2 scaledBounds = boundsSize * targetZoom;
+        float maxX = Mathf.Max(0f, (scaledBounds.x - viewportSize.x) * 0.5f - boundsInset.x);
+        float maxY = Mathf.Max(0f, (scaledBounds.y - viewportSize.y) * 0.5f - boundsInset.y);
+        targetAnchoredPosition = new Vector2(
+            Mathf.Clamp(targetAnchoredPosition.x, -maxX, maxX),
+            Mathf.Clamp(targetAnchoredPosition.y, -maxY, maxY));
+    }
+
+    private bool HasViewportBounds()
+    {
+        return boundsMode != ManualMapViewportBoundsMode.None && viewportRect != null && contentRect != null;
+    }
+
+    private Vector2 GetViewportBoundsSize()
+    {
+        switch (boundsMode)
+        {
+            case ManualMapViewportBoundsMode.ManualSize:
+                return new Vector2(Mathf.Max(1f, manualBoundsSize.x), Mathf.Max(1f, manualBoundsSize.y));
+
+            case ManualMapViewportBoundsMode.BoundsRectOverride:
+                if (boundsRectOverride != null)
+                {
+                    return boundsRectOverride.rect.size;
+                }
+                break;
+
+            case ManualMapViewportBoundsMode.ContentRect:
+                break;
+        }
+
+        return contentRect != null ? contentRect.rect.size : Vector2.zero;
     }
 
     private void ClearRoot()

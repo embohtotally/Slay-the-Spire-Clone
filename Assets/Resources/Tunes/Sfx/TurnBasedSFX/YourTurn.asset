@@ -11,9 +11,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21d7b07925ceb9b48875388ffb0b5c69, type: 3}
   m_Name: YourTurn
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   Clips:
-  - {fileID: 8300000, guid: e90df0159bceb8645a676a39cb21f9f6, type: 3}
+  - {fileID: 8300000, guid: e120c72cf214f7e40a8e64a56dbb807d, type: 3}
   MixerGroup: {fileID: 514884215846408687, guid: dc2918a13f4532046913a785e411c04e, type: 2}
   UseRandomVolume: 0
   Volume: 1

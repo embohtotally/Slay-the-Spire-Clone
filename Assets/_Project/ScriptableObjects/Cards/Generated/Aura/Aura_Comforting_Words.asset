@@ -43,15 +43,25 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 5978927219931611286
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611287
       type: {class: HealEffect, ns: , asm: Assembly-CSharp}
       data:
         healAmount: 6
     - rid: 5978927219931611288
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611289
       type: {class: ReduceFearEffect, ns: , asm: Assembly-CSharp}
       data:
         amount: 2
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 79
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 985132354702716236, guid: bbf9e36a48d6c5648a13889afab076fd, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8

@@ -20,6 +20,12 @@ public class MerchantController : MonoBehaviour
     [Header("Navigation")]
     [SerializeField] private string mapSceneName = "Map";
 
+    [Header("Audio")]
+    [SerializeField] private TuneSfxCue shopOpenedSfx;
+    [SerializeField] private TuneSfxCue buyOfferSfx;
+    [SerializeField] private TuneSfxCue cannotAffordSfx;
+    [SerializeField] private TuneSfxCue returnToMapSfx;
+
     private readonly List<MerchantOffer> activeOffers = new();
     private readonly List<MerchantOfferSlotView> slots = new();
     private RunManager subscribedRunManager;
@@ -44,6 +50,7 @@ public class MerchantController : MonoBehaviour
     {
         SubscribeToRunStateChanges();
         GenerateOffers();
+        shopOpenedSfx?.Play(this, transform);
     }
 
     public void GenerateOffers()
@@ -93,6 +100,7 @@ public class MerchantController : MonoBehaviour
 
         if (!CanAfford(offer))
         {
+            cannotAffordSfx?.Play(this, slotView != null ? slotView.transform : transform);
             int currentGold = RunManager.Instance != null ? RunManager.Instance.Gold : 0;
             Gameseed26.Logger.Log($"Not enough gold for merchant offer '{offer.GetTitle()}'. Need {offer.Price}, have {currentGold}.");
             slotView?.Refresh();
@@ -115,6 +123,7 @@ public class MerchantController : MonoBehaviour
         }
 
         offer.MarkSold();
+        buyOfferSfx?.Play(this, slotView != null ? slotView.transform : transform);
         RefreshSlots();
     }
 
@@ -127,6 +136,8 @@ public class MerchantController : MonoBehaviour
 
     public void ReturnToMap()
     {
+        returnToMapSfx?.Play(this, transform);
+
         if (string.IsNullOrWhiteSpace(mapSceneName))
         {
             Gameseed26.Logger.LogWarning("MerchantController has no map scene name.");

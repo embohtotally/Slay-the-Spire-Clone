@@ -50,6 +50,18 @@ public class TreasureController : MonoBehaviour
     public UnityEvent OnTreasureCompleted;
     public UnityEvent OnReturnToMapRequested;
 
+    [Header("Audio")]
+    [SerializeField] private TuneSfxCue treasureOpenedSfx;
+    [SerializeField] private TuneSfxCue treasureClaimedSfx;
+    [SerializeField] private TuneSfxCue goldClaimedSfx;
+    [SerializeField] private TuneSfxCue healClaimedSfx;
+    [SerializeField] private TuneSfxCue stressReducedSfx;
+    [SerializeField] private TuneSfxCue relicClaimedSfx;
+    [SerializeField] private TuneSfxCue potionClaimedSfx;
+    [SerializeField] private TuneSfxCue cardRewardStartedSfx;
+    [SerializeField] private TuneSfxCue treasureCompletedSfx;
+    [SerializeField] private TuneSfxCue returnToMapSfx;
+
     [Header("Debug")]
     [ReadOnly][SerializeField] private bool treasureOpened;
     [ReadOnly][SerializeField] private bool treasureClaimed;
@@ -70,6 +82,7 @@ public class TreasureController : MonoBehaviour
     public void OpenTreasure()
     {
         treasureOpened = true;
+        treasureOpenedSfx?.Play(this, transform);
         OnTreasureOpened?.Invoke();
     }
 
@@ -80,6 +93,7 @@ public class TreasureController : MonoBehaviour
 
         ApplyImmediateRewards();
         treasureClaimed = true;
+        treasureClaimedSfx?.Play(this, transform);
         OnTreasureClaimed?.Invoke();
 
         if (grantCardReward)
@@ -97,6 +111,7 @@ public class TreasureController : MonoBehaviour
         if (!CanStartClaim()) return;
         GrantGold();
         treasureClaimed = true;
+        treasureClaimedSfx?.Play(this, transform);
         OnTreasureClaimed?.Invoke();
         CompleteTreasure();
     }
@@ -106,6 +121,7 @@ public class TreasureController : MonoBehaviour
     {
         if (!CanStartClaim()) return;
         treasureClaimed = true;
+        treasureClaimedSfx?.Play(this, transform);
         OnTreasureClaimed?.Invoke();
         StartCoroutine(OpenCardRewardAndComplete());
     }
@@ -173,6 +189,7 @@ public class TreasureController : MonoBehaviour
 
     public void ReturnToMap()
     {
+        returnToMapSfx?.Play(this, transform);
         OnReturnToMapRequested?.Invoke();
 
         if (string.IsNullOrWhiteSpace(mapSceneName))
@@ -213,6 +230,7 @@ public class TreasureController : MonoBehaviour
         if (!TryGetRunManager(out RunManager runManager)) return;
 
         runManager.AddGold(goldAmount);
+        goldClaimedSfx?.Play(this, transform);
         OnGoldClaimed?.Invoke();
     }
 
@@ -222,6 +240,7 @@ public class TreasureController : MonoBehaviour
         if (!TryGetRunManager(out RunManager runManager)) return;
 
         runManager.HealHero(healAmount);
+        healClaimedSfx?.Play(this, transform);
         OnHealClaimed?.Invoke();
     }
 
@@ -231,6 +250,7 @@ public class TreasureController : MonoBehaviour
         if (!TryGetRunManager(out RunManager runManager)) return;
 
         runManager.ReduceStress(stressReduction);
+        stressReducedSfx?.Play(this, transform);
         OnStressReduced?.Invoke();
     }
 
@@ -263,6 +283,7 @@ public class TreasureController : MonoBehaviour
 
         if (relicToGrant != null && relicManager.AddRelic(relicToGrant))
         {
+            relicClaimedSfx?.Play(this, transform);
             OnRelicClaimed?.Invoke();
         }
     }
@@ -296,6 +317,7 @@ public class TreasureController : MonoBehaviour
 
         if (potionToGrant != null && potionManager.AddPotion(potionToGrant))
         {
+            potionClaimedSfx?.Play(this, transform);
             OnPotionClaimed?.Invoke();
         }
     }
@@ -310,6 +332,7 @@ public class TreasureController : MonoBehaviour
         }
 
         cardRewardInProgress = true;
+        cardRewardStartedSfx?.Play(this, transform);
         OnCardRewardStarted?.Invoke();
 
         AsyncOperation loadOperation = SceneLoader.LoadSceneAdditive(cardRewardSceneName);
@@ -372,6 +395,7 @@ public class TreasureController : MonoBehaviour
 
     private void CompleteTreasure()
     {
+        treasureCompletedSfx?.Play(this, transform);
         OnTreasureCompleted?.Invoke();
 
         if (disableAfterClaim && !allowMultipleClaims)

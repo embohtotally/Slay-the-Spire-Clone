@@ -44,16 +44,26 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 5978927219931611270
       type: {class: SingleEnemyTargetMode, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611271
       type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
       data:
         damageAmount: 18
     - rid: 5978927219931611272
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
     - rid: 5978927219931611273
       type: {class: CostReductionEffect, ns: , asm: Assembly-CSharp}
       data:
         targetCardName: Rabbit Slash
         reduction: 1
+  <HoverSfx>k__BackingField: 15
+  <PlaySfx>k__BackingField: 85
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 8460667080445658512, guid: a3e2c3406e02f2c4ba86cfb1604277bd, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8

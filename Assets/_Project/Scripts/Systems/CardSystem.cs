@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Gameseed26;
 using TMPro;
 using UnityEngine;
 
@@ -110,7 +111,7 @@ public class CardSystem : Singleton<CardSystem>
     {
         hand.Remove(playCardGA.Card);
         CardView cardView = handView.RemoveCard(playCardGA.Card);
-        
+
         if (playCardSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(playCardSfx);
 
         if (playCardGA.Card.PlaySfx != Gameseed26.SfxID.None)
@@ -169,6 +170,8 @@ public class CardSystem : Singleton<CardSystem>
     #region Helpers
     private IEnumerator PlayAndDiscardCard(CardView cardView)
     {
+        if (cardView == null) yield break;
+
         discardPile.Add(cardView.Card);
         UpdatePileTexts();
 
@@ -189,12 +192,14 @@ public class CardSystem : Singleton<CardSystem>
 
     private IEnumerator DiscardCard(CardView cardView)
     {
+        if (cardView == null) yield break;
+
         discardPile.Add(cardView.Card);
         UpdatePileTexts();
         cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
         Tween tween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return tween.WaitForCompletion();
-        
+
         cardView.transform.DOKill();
         Destroy(cardView.gameObject);
     }
@@ -263,6 +268,24 @@ public class CardSystem : Singleton<CardSystem>
 
     private void PlayCardVisuals(PlayCardGA playCardGA)
     {
+        HashSet<CombatantView> targets = GetCardVfxTargets(playCardGA);
+
+        if (playCardGA.Card.PlayVfx != null && playCardGA.Card.PlayVfx.HasPrefab)
+        {
+            playCardGA.Card.PlayVfx.Play(targets);
+            return;
+        }
+
+        if (playCardGA.Card.PlayParticle == null) return;
+
+        foreach (CombatantView target in targets)
+        {
+            Instantiate(playCardGA.Card.PlayParticle, target.transform.position, Quaternion.identity);
+        }
+    }
+
+    private HashSet<CombatantView> GetCardVfxTargets(PlayCardGA playCardGA)
+    {
         HashSet<CombatantView> targets = new();
         if (playCardGA.ManualTarget != null)
         {
@@ -313,6 +336,8 @@ public class CardSystem : Singleton<CardSystem>
                 }
             }
         }
+
+        return targets;
     }
     #endregion
 }
