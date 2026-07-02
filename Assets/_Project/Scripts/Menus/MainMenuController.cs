@@ -31,6 +31,8 @@ namespace Gameseed26
 
         public void StartGame()
         {
+            Tune.SFX(_onPlaySfx);
+
             if (_beginNewCampaignOnStartGame)
             {
                 BeginNewCampaign();
@@ -43,6 +45,7 @@ namespace Gameseed26
 
         public void StartNewCampaign()
         {
+            Tune.SFX(_onPlaySfx);
             BeginNewCampaign();
             SceneLoader.LoadScene(_gameplaySceneName);
             Tune.StopMusicSafe();
@@ -50,6 +53,7 @@ namespace Gameseed26
 
         public void ContinueGame()
         {
+            Tune.SFX(_onPlaySfx);
             SceneLoader.LoadScene(_gameplaySceneName);
             Tune.StopMusicSafe();
         }

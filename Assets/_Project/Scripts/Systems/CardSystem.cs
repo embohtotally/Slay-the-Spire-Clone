@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Gameseed26;
 using TMPro;
 using UnityEngine;
 
@@ -16,6 +17,13 @@ public class CardSystem : Singleton<CardSystem>
     [SerializeField] private int enemyDrawCardsAmount = 5;
     [SerializeField] private TMP_Text drawPileText;
     [SerializeField] private TMP_Text discardPileText;
+
+    [Header("Audio")]
+    [SerializeField] private TuneSfxCue drawCardSfx;
+    [SerializeField] private TuneSfxCue playCardLiftSfx;
+    [SerializeField] private TuneSfxCue playCardDiscardSfx;
+    [SerializeField] private TuneSfxCue discardCardSfx;
+    [SerializeField] private TuneSfxCue reshuffleDiscardIntoDrawSfx;
 
     private readonly List<Card> drawPile = new();
     private readonly List<Card> discardPile = new();
@@ -151,8 +159,12 @@ public class CardSystem : Singleton<CardSystem>
     #region Helpers
     private IEnumerator PlayAndDiscardCard(CardView cardView)
     {
+        if (cardView == null) yield break;
+
         discardPile.Add(cardView.Card);
         UpdatePileTexts();
+
+        playCardLiftSfx?.Play(this, cardView.transform);
 
         cardView.transform.DOMove(new Vector3(0, 0, -1f), doTweenMoveDuration);
         cardView.transform.DORotate(Vector3.zero, doTweenMoveDuration);
@@ -161,6 +173,7 @@ public class CardSystem : Singleton<CardSystem>
 
         yield return new WaitForSeconds(0.2f);
 
+        playCardDiscardSfx?.Play(this, cardView.transform);
         cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
         Tween moveTween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return moveTween.WaitForCompletion();
@@ -170,8 +183,11 @@ public class CardSystem : Singleton<CardSystem>
 
     private IEnumerator DiscardCard(CardView cardView)
     {
+        if (cardView == null) yield break;
+
         discardPile.Add(cardView.Card);
         UpdatePileTexts();
+        discardCardSfx?.Play(this, cardView.transform);
         cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
         Tween tween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return tween.WaitForCompletion();
@@ -184,6 +200,7 @@ public class CardSystem : Singleton<CardSystem>
         UpdatePileTexts();
         CardView cardView = CardViewCreator.Instance.CreateCardView(card, drawPilePoint.position, drawPilePoint.rotation);
         hand.Add(card);
+        drawCardSfx?.Play(this, cardView != null ? cardView.transform : drawPilePoint);
         yield return handView.AddCard(cardView);
     }
 
@@ -200,6 +217,7 @@ public class CardSystem : Singleton<CardSystem>
         drawPile.AddRange(discardPile);
         discardPile.Clear();
         UpdatePileTexts();
+        reshuffleDiscardIntoDrawSfx?.Play(this, drawPilePoint);
     }
 
     private void SpendMana(PlayCardGA playCardGA)

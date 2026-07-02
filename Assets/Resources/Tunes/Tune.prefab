@@ -51,6 +51,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 22533359fe337d9499064194b77f2710, type: 2}
   - {fileID: 11400000, guid: 8d49d041a6c3847428eb827d95d0a672, type: 2}
   - {fileID: 11400000, guid: eddb5b8175c4f154a9f766631b918049, type: 2}
+  - {fileID: 11400000, guid: a57ceaf06feef2b4398426c9593952f8, type: 2}
   Musics:
   - {fileID: 11400000, guid: d16ccb05b38755a45894920a4c0e1b0d, type: 2}
+  - {fileID: 11400000, guid: b11a1915ee7f86a47aad5ea0b1ef7f0c, type: 2}
   _poolSize: 10

@@ -41,7 +41,7 @@ namespace Gameseed26.Editor
         {
             Undo.RecordObject(ctx, "Find Assets " + typeof(T).Name);
 
-            target = new();
+            target ??= new();
             string[] guids = AssetDatabase.FindAssets("t:" + typeof(T));
 
             if (guids.Length == 0)
@@ -54,7 +54,7 @@ namespace Gameseed26.Editor
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 var asset = AssetDatabase.LoadAssetAtPath<T>(path);
-                if (asset != null) target.Add(asset);
+                if (asset != null && !target.Contains(asset)) target.Add(asset);
             }
 
             Logger.Log($"There is {target.Count} of {typeof(T).Name} in the Project");

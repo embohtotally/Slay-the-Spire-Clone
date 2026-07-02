@@ -13,12 +13,14 @@ namespace Gameseed26
 		confirm_2,
 		hover,
 		on_start_game,
+		enter,
 	}
 
 	public enum MusicID
 	{
 		None,
 		MainMenuMusic,
+		LevelsMusic,
 	}
 
 }

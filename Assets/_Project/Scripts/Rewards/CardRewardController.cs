@@ -31,6 +31,12 @@ public class CardRewardController : MonoBehaviour
     public UnityEvent OnRewardSkipped;
     public UnityEvent OnRewardClosed;
 
+    [Header("Audio")]
+    [SerializeField] private TuneSfxCue rewardOpenedSfx;
+    [SerializeField] private TuneSfxCue rewardChosenSfx;
+    [SerializeField] private TuneSfxCue rewardSkippedSfx;
+    [SerializeField] private TuneSfxCue rewardClosedSfx;
+
     private readonly List<CardRewardOption> activeOptions = new();
     private readonly List<CardRewardOptionView> optionViews = new();
     private bool rewardAlreadyChosen;
@@ -88,6 +94,7 @@ public class CardRewardController : MonoBehaviour
         if (rewardRoot != null) rewardRoot.SetActive(true);
 
         GenerateOptions(request ?? defaultRequest);
+        rewardOpenedSfx?.Play(this, transform);
         OnRewardOpened?.Invoke();
     }
 
@@ -118,6 +125,7 @@ public class CardRewardController : MonoBehaviour
     public void CloseReward()
     {
         if (rewardRoot != null) rewardRoot.SetActive(false);
+        rewardClosedSfx?.Play(this, transform);
         OnRewardClosed?.Invoke();
     }
 
@@ -128,10 +136,12 @@ public class CardRewardController : MonoBehaviour
 
         if (claimed)
         {
+            rewardChosenSfx?.Play(this, transform);
             OnRewardChosen?.Invoke();
         }
         else
         {
+            rewardSkippedSfx?.Play(this, transform);
             OnRewardSkipped?.Invoke();
         }
 

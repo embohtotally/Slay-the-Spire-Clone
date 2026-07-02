@@ -92,6 +92,14 @@ public class EventController : MonoBehaviour
     public UnityEvent OnCardRewardFinished;
     public UnityEvent OnReturnToMapRequested;
 
+    [Header("Audio")]
+    [SerializeField] private TuneSfxCue eventOpenedSfx;
+    [SerializeField] private TuneSfxCue choiceSelectedSfx;
+    [SerializeField] private TuneSfxCue choiceCompletedSfx;
+    [SerializeField] private TuneSfxCue cardRewardStartedSfx;
+    [SerializeField] private TuneSfxCue returnToMapSfx;
+    [SerializeField] private TuneSfxCue choiceFailedSfx;
+
     [Header("Debug")]
     [ReadOnly][SerializeField] private bool eventOpened;
     [ReadOnly][SerializeField] private bool choiceAlreadyUsed;
@@ -113,6 +121,7 @@ public class EventController : MonoBehaviour
     public void OpenEvent()
     {
         eventOpened = true;
+        eventOpenedSfx?.Play(this, transform);
         OnEventOpened?.Invoke();
     }
 
@@ -213,6 +222,7 @@ public class EventController : MonoBehaviour
 
         choiceAlreadyUsed = true;
         choice.OnChoiceSelected?.Invoke();
+        choiceSelectedSfx?.Play(this, transform);
         OnChoiceSelected?.Invoke();
 
         StartCoroutine(ApplyChoiceAndFinish(choice));
@@ -226,6 +236,7 @@ public class EventController : MonoBehaviour
 
     public void ReturnToMap()
     {
+        returnToMapSfx?.Play(this, transform);
         OnReturnToMapRequested?.Invoke();
 
         if (string.IsNullOrWhiteSpace(mapSceneName))
@@ -250,6 +261,7 @@ public class EventController : MonoBehaviour
         }
 
         choice.OnChoiceCompleted?.Invoke();
+        choiceCompletedSfx?.Play(this, transform);
         OnChoiceCompleted?.Invoke();
 
         if (disableAfterChoice && !allowMultipleChoices)
@@ -420,6 +432,7 @@ public class EventController : MonoBehaviour
         }
 
         cardRewardInProgress = true;
+        cardRewardStartedSfx?.Play(this, transform);
         OnCardRewardStarted?.Invoke();
 
         AsyncOperation loadOperation = SceneLoader.LoadSceneAdditive(cardRewardSceneName);
@@ -493,6 +506,7 @@ public class EventController : MonoBehaviour
     private void LogFailure(string message)
     {
         if (!logActionFailures || string.IsNullOrWhiteSpace(message)) return;
+        choiceFailedSfx?.Play(this, transform);
         Gameseed26.Logger.Log(this, message);
     }
 }

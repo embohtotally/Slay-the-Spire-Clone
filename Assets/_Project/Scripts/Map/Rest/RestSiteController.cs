@@ -45,6 +45,14 @@ public class RestSiteController : MonoBehaviour
     public UnityEvent OnCardRemoved;
     public UnityEvent OnReturnToMapRequested;
 
+    [Header("Audio")]
+    [SerializeField] private TuneSfxCue restHealSfx;
+    [SerializeField] private TuneSfxCue stressReducedSfx;
+    [SerializeField] private TuneSfxCue cardUpgradedSfx;
+    [SerializeField] private TuneSfxCue cardRemovedSfx;
+    [SerializeField] private TuneSfxCue actionFailedSfx;
+    [SerializeField] private TuneSfxCue returnToMapSfx;
+
     [Header("Debug")]
     [ReadOnly][SerializeField] private bool actionAlreadyUsed;
 
@@ -85,6 +93,7 @@ public class RestSiteController : MonoBehaviour
         }
 
         MarkActionUsed();
+        restHealSfx?.Play(this, transform);
         OnRestUsed?.Invoke();
     }
 
@@ -109,6 +118,7 @@ public class RestSiteController : MonoBehaviour
         }
 
         MarkActionUsed();
+        stressReducedSfx?.Play(this, transform);
         OnStressReduced?.Invoke();
     }
 
@@ -128,6 +138,7 @@ public class RestSiteController : MonoBehaviour
         }
 
         MarkActionUsed();
+        cardUpgradedSfx?.Play(this, transform);
         OnCardUpgraded?.Invoke();
     }
 
@@ -146,6 +157,7 @@ public class RestSiteController : MonoBehaviour
         }
 
         MarkActionUsed();
+        cardRemovedSfx?.Play(this, transform);
         OnCardRemoved?.Invoke();
     }
 
@@ -167,6 +179,7 @@ public class RestSiteController : MonoBehaviour
 
     public void ReturnToMap()
     {
+        returnToMapSfx?.Play(this, transform);
         OnReturnToMapRequested?.Invoke();
 
         if (string.IsNullOrWhiteSpace(mapSceneName))
@@ -235,6 +248,7 @@ public class RestSiteController : MonoBehaviour
     private void LogFailure(string message)
     {
         if (!logActionFailures) return;
+        actionFailedSfx?.Play(this, transform);
         Gameseed26.Logger.Log(this, message);
     }
 }

@@ -7,12 +7,32 @@ namespace Gameseed26
     {
         private enum PlayerType { SFX, Music }
         private enum MusicPlayType { Normal, Fade, CrossFade }
+        private enum ImmediatePlayBehaviour { Awake, OnEnable, Start }
 
         [Header("Player Settings")]
         [SerializeField] private PlayerType _playerType;
         [SerializeField, ShowIf("_playerType", PlayerType.SFX)] private SfxID _sfx;
         [SerializeField, ShowIf("_playerType", PlayerType.Music)] private MusicID _music;
         [SerializeField, ShowIf("_playerType", PlayerType.Music)] private MusicPlayType _musicPlayType;
+
+        [Header("Behaviour Settings")]
+        [SerializeField] private bool _immediatePlay;
+        [SerializeField, ShowIf("_immediatePlay")] private ImmediatePlayBehaviour _immediateOn;
+
+        private void Awake()
+        {
+            if (_immediatePlay && _immediateOn == ImmediatePlayBehaviour.Awake) Play();
+        }
+
+        private void OnEnable()
+        {
+            if (_immediatePlay && _immediateOn == ImmediatePlayBehaviour.OnEnable) Play();
+        }
+
+        private void Start()
+        {
+            if (_immediatePlay && _immediateOn == ImmediatePlayBehaviour.Start) Play();
+        }
 
         public void Play()
         {
