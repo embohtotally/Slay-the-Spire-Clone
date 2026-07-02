@@ -1,7 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 using Gameseed26;
 namespace ModularEvents
@@ -219,7 +224,7 @@ namespace ModularEvents
     {
         [SerializeField] private List<ModularEventListener> listeners = new List<ModularEventListener>();
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
             foreach (var listener in listeners)
             {
@@ -228,7 +233,7 @@ namespace ModularEvents
             }
         }
 
-        private void OnDisable()
+        protected virtual void OnDisable()
         {
             foreach (var listener in listeners)
             {
@@ -251,20 +256,6 @@ namespace ModularEvents
         public void BroadcastDefault() => EventBus.Broadcast(defaultEventName);
     }
 
-    /// <summary>
-    /// Fires UnityEvents on common GameObject lifecycle events.
-    /// </summary>
-    [AddComponentMenu("Modular Events/Lifecycle Event Relay")]
-    public class LifecycleEventRelay : MonoBehaviour
-    {
-        public UnityEvent onAwake, onStart, onEnable, onDisable, onDestroy;
-
-        private void Awake() => onAwake?.Invoke();
-        private void Start() => onStart?.Invoke();
-        private void OnEnable() => onEnable?.Invoke();
-        private void OnDisable() => onDisable?.Invoke();
-        private void OnDestroy() => onDestroy?.Invoke();
-    }
 
     /// <summary>
     /// Delays then fires a UnityEvent. By default, re-triggering before the
@@ -366,8 +357,202 @@ namespace ModularEvents
     /// Unified wrapper matching the filename so Unity's Add Component menu finds it instantly.
     /// Acts as an EventListenerBinding.
     /// </summary>
+    [System.Serializable]
+    public class ExternalEventHook
+    {
+        public UnityEngine.Object target;
+        public string eventName;
+        public UnityEvent onEventTriggered;
+
+        private Delegate hookedDelegate;
+        private UnityEvent hookedUnityEvent;
+        private Component hookedComponent;
+
+        public void Subscribe()
+        {
+            if (target == null || string.IsNullOrEmpty(eventName)) return;
+            
+            Component[] comps;
+            if (target is GameObject go) comps = go.GetComponents<Component>();
+            else if (target is Component c) comps = new Component[] { c };
+            else return;
+
+            string[] parts = eventName.Split('/');
+            string targetEventName = parts[parts.Length - 1];
+            string targetCompName = parts.Length > 1 ? parts[0] : null;
+
+            foreach (var comp in comps)
+            {
+                if (comp == null) continue;
+                var type = comp.GetType();
+                
+                if (targetCompName != null && type.Name != targetCompName) continue;
+
+                var field = type.GetField(targetEventName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                if (field != null && typeof(UnityEventBase).IsAssignableFrom(field.FieldType))
+                {
+                    hookedUnityEvent = field.GetValue(comp) as UnityEvent;
+                    if (hookedUnityEvent != null)
+                    {
+                        hookedUnityEvent.AddListener(Trigger);
+                        hookedComponent = comp;
+                        return;
+                    }
+                }
+                
+                var prop = type.GetProperty(targetEventName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                if (prop != null && typeof(UnityEventBase).IsAssignableFrom(prop.PropertyType))
+                {
+                    hookedUnityEvent = prop.GetValue(comp) as UnityEvent;
+                    if (hookedUnityEvent != null)
+                    {
+                        hookedUnityEvent.AddListener(Trigger);
+                        hookedComponent = comp;
+                        return;
+                    }
+                }
+
+                var evt = type.GetEvent(targetEventName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                if (evt != null && evt.EventHandlerType == typeof(System.Action))
+                {
+                    hookedDelegate = new System.Action(Trigger);
+                    evt.AddEventHandler(comp, hookedDelegate);
+                    hookedComponent = comp;
+                    return;
+                }
+            }
+        }
+
+        public void Unsubscribe()
+        {
+            if (hookedUnityEvent != null)
+            {
+                hookedUnityEvent.RemoveListener(Trigger);
+                hookedUnityEvent = null;
+            }
+
+            if (hookedDelegate != null && hookedComponent != null && !string.IsNullOrEmpty(eventName))
+            {
+                string[] parts = eventName.Split('/');
+                string targetEventName = parts[parts.Length - 1];
+
+                var evt = hookedComponent.GetType().GetEvent(targetEventName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                if (evt != null) evt.RemoveEventHandler(hookedComponent, hookedDelegate);
+                hookedDelegate = null;
+            }
+            hookedComponent = null;
+        }
+
+        private void Trigger() => onEventTriggered?.Invoke();
+    }
+
     [AddComponentMenu("Modular Events/Universal Event Trigger")]
     public class UniversalEventTrigger : EventListenerBinding
     {
+        [Header("Lifecycle Events (Optional)")]
+        public UnityEvent onAwake;
+        public UnityEvent onStart;
+        public UnityEvent onEnableEvent;
+        public UnityEvent onDisableEvent;
+        public UnityEvent onDestroy;
+
+        [Header("Script Event Hooks (Optional)")]
+        public List<ExternalEventHook> externalEventHooks = new List<ExternalEventHook>();
+
+        private void Awake() => onAwake?.Invoke();
+        private void Start() => onStart?.Invoke();
+        private void OnDestroy() => onDestroy?.Invoke();
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            onEnableEvent?.Invoke();
+            foreach(var hook in externalEventHooks) hook.Subscribe();
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            onDisableEvent?.Invoke();
+            foreach(var hook in externalEventHooks) hook.Unsubscribe();
+        }
     }
+
+#if UNITY_EDITOR
+    [CustomPropertyDrawer(typeof(ExternalEventHook))]
+    public class ExternalEventHookDrawer : PropertyDrawer
+    {
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            var onEventTriggered = property.FindPropertyRelative("onEventTriggered");
+            return EditorGUIUtility.singleLineHeight * 2 + 4 + EditorGUI.GetPropertyHeight(onEventTriggered);
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+            
+            var targetProp = property.FindPropertyRelative("target");
+            var eventName = property.FindPropertyRelative("eventName");
+            var onEventTriggered = property.FindPropertyRelative("onEventTriggered");
+
+            Rect compRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+            Rect eventRect = new Rect(position.x, position.y + EditorGUIUtility.singleLineHeight + 2, position.width, EditorGUIUtility.singleLineHeight);
+            Rect unityEventRect = new Rect(position.x, position.y + EditorGUIUtility.singleLineHeight * 2 + 4, position.width, EditorGUI.GetPropertyHeight(onEventTriggered));
+
+            EditorGUI.PropertyField(compRect, targetProp, new GUIContent("Target Object"));
+
+            UnityEngine.Object targetObj = targetProp.objectReferenceValue;
+            if (targetObj != null)
+            {
+                Component[] comps;
+                if (targetObj is GameObject go) comps = go.GetComponents<Component>();
+                else if (targetObj is Component c) comps = new Component[] { c };
+                else comps = new Component[0];
+
+                List<string> options = new List<string>();
+                foreach(var comp in comps)
+                {
+                    if (comp == null) continue;
+                    var type = comp.GetType();
+                    string prefix = type.Name + "/";
+                    
+                    var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
+                        .Where(f => typeof(UnityEventBase).IsAssignableFrom(f.FieldType))
+                        .Select(f => prefix + f.Name);
+                    
+                    var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
+                        .Where(p => typeof(UnityEventBase).IsAssignableFrom(p.PropertyType))
+                        .Select(p => prefix + p.Name);
+
+                    var events = type.GetEvents(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
+                        .Where(e => e.EventHandlerType == typeof(System.Action))
+                        .Select(e => prefix + e.Name);
+
+                    options.AddRange(fields);
+                    options.AddRange(props);
+                    options.AddRange(events);
+                }
+
+                options.Insert(0, "None");
+
+                int currentIndex = Mathf.Max(0, options.IndexOf(eventName.stringValue));
+                if (string.IsNullOrEmpty(eventName.stringValue)) currentIndex = 0;
+
+                int selectedIndex = EditorGUI.Popup(eventRect, "Event Name", currentIndex, options.ToArray());
+                if (selectedIndex > 0 && selectedIndex < options.Count)
+                    eventName.stringValue = options[selectedIndex];
+                else
+                    eventName.stringValue = "";
+            }
+            else
+            {
+                EditorGUI.PropertyField(eventRect, eventName);
+            }
+
+            EditorGUI.PropertyField(unityEventRect, onEventTriggered);
+            EditorGUI.EndProperty();
+        }
+    }
+#endif
 }

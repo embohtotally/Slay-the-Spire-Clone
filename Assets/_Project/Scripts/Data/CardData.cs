@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using SerializeReferenceEditor;
 using UnityEngine;
+using Gameseed26;
 
 public enum CardTargetType
 {
@@ -35,4 +36,7 @@ public class CardData : ScriptableObject
     [field: SerializeField] public CardTargetType TargetType { get; private set; } = CardTargetType.Enemy;
     [field: SerializeReference, SR] public Effect ManualTargetEffect { get; private set; } = null;
     [field: SerializeField] public List<AutoTargetEffect> OtherEffects { get; private set; }
+    [field: SerializeField] public SfxID HoverSfx { get; private set; } = SfxID.hover;
+    [field: SerializeField] public SfxID PlaySfx { get; private set; } = SfxID.None;
+    [field: SerializeField] public GameObject PlayParticle { get; private set; }
 }

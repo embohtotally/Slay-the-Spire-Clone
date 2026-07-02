@@ -38,7 +38,7 @@ namespace Gameseed26
                 BeginNewCampaign();
             }
 
-            SceneLoader.LoadScene(_gameplaySceneName);
+            LoadGameplaySceneOrTutorial();
 
             Tune.StopMusicSafe();
         }
@@ -47,14 +47,13 @@ namespace Gameseed26
         {
             Tune.SFX(_onPlaySfx);
             BeginNewCampaign();
-            SceneLoader.LoadScene(_gameplaySceneName);
+            LoadGameplaySceneOrTutorial();
             Tune.StopMusicSafe();
         }
 
         public void ContinueGame()
         {
-            Tune.SFX(_onPlaySfx);
-            SceneLoader.LoadScene(_gameplaySceneName);
+            LoadGameplaySceneOrTutorial();
             Tune.StopMusicSafe();
         }
 
@@ -65,6 +64,22 @@ namespace Gameseed26
 #else
             Application.Quit();
 #endif
+        }
+
+        private void LoadGameplaySceneOrTutorial()
+        {
+            if (PlayerPrefs.GetInt("HasPlayedTutorial", 0) == 0)
+            {
+                // Set the flag so they never see the tutorial again
+                PlayerPrefs.SetInt("HasPlayedTutorial", 1);
+                PlayerPrefs.Save();
+                
+                SceneLoader.LoadScene("DialogueTutorial");
+            }
+            else
+            {
+                SceneLoader.LoadScene(_gameplaySceneName);
+            }
         }
 
         private void SetExitButton()

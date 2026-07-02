@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class HeroView : CombatantView
 {
@@ -275,7 +276,29 @@ public class HeroView : CombatantView
     {
         if (stressSlider != null)
         {
-            stressSlider.value = MaxStress > 0 ? (float)CurrentStress / MaxStress : 0f;
+            float targetStress = MaxStress > 0 ? (float)CurrentStress / MaxStress : 0f;
+            
+            stressSlider.DOKill();
+            if (stressSlider.fillRect != null)
+            {
+                if (CurrentStress > 0)
+                {
+                    stressSlider.fillRect.gameObject.SetActive(true);
+                    stressSlider.DOValue(targetStress, 0.3f);
+                }
+                else
+                {
+                    stressSlider.DOValue(0f, 0.3f).OnComplete(() => 
+                    {
+                        if (stressSlider.value <= 0.001f)
+                            stressSlider.fillRect.gameObject.SetActive(false);
+                    });
+                }
+            }
+            else
+            {
+                stressSlider.DOValue(targetStress, 0.3f);
+            }
         }
     }
 }

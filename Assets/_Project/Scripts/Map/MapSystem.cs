@@ -58,7 +58,15 @@ public class MapSystem : MonoBehaviour
                 Gameseed26.Logger.LogWarning($"Map node {node.Id} ({node.Type}) has no EncounterData. Combat will use MatchSetupSystem fallback enemies.");
             }
 
-            SceneLoader.LoadScene(combatSceneName);
+            string sceneToLoad = combatSceneName;
+            if (PlayerPrefs.GetInt("HasPlayedCardTutorial", 0) == 0)
+            {
+                PlayerPrefs.SetInt("HasPlayedCardTutorial", 1);
+                PlayerPrefs.Save();
+                sceneToLoad = "GameTutorial";
+            }
+
+            SceneLoader.LoadScene(sceneToLoad);
             return;
         }
 

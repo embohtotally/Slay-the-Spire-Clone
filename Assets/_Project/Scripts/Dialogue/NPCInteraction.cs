@@ -17,6 +17,7 @@ public struct NPCDialogueLine
     public Sprite speakerImageA;
     public Sprite speakerImageB;
     public bool isSpeakerAActive;
+    public bool disableClickToAdvance;
 }
 
 public class NPCInteraction : MonoBehaviour
@@ -28,11 +29,18 @@ public class NPCInteraction : MonoBehaviour
     [Header("Dialogue Settings")]
     [SerializeField] private List<NPCDialogueLine> dialogueLines;
     [SerializeField] private GameObject dialogueUI;
-    [SerializeField] private TextMeshProUGUI speakerText;
-    [SerializeField] private TextMeshProUGUI dialogueText;
     [SerializeField] private Image speakerImageA;
     [SerializeField] private Image speakerImageB;
     [SerializeField] private GameObject skipButton;
+
+    [Header("Speaker B Dialogue Box")]
+    [SerializeField] private GameObject dialogueUIB;
+
+    // Auto-resolved from children named "Name" and "Dialogue Lines"
+    [SerializeField] private TextMeshProUGUI speakerText;
+    [SerializeField] private TextMeshProUGUI dialogueText;
+    // [SerializeField] private TextMeshProUGUI speakerTextB;
+    // [SerializeField] private TextMeshProUGUI dialogueTextB;
 
     [Header("Skip Dialogue")]
     [SerializeField] private GameObject skipPanel;
@@ -65,24 +73,28 @@ public class NPCInteraction : MonoBehaviour
     [SerializeField] private string nextSceneName;
 
     [Header("SFX")]
-    [SerializeField] private AudioClip dialogueAdvanceSFX;
+    [SerializeField] private Gameseed26.SfxID dialogueAdvanceSFX;
 
     // [Header("Reference")]
     // [SerializeField] GameManager gameManager;
 
+    public bool IsDialogueActive => isDialogueActive;
+
     private bool isPlayerInRange = false;
     private bool isPatrolling = false;
     private bool isTyping = false;
+    private bool currentLineAllowsClickToAdvance = true;
     private bool isSkipPanelOpen = false;
     private bool isDialogueActive = false;
     private bool hasTriggered = false;
 
     private string currentFullLine = "";
+    private TextMeshProUGUI _activeDialogueText;
     private Coroutine typingCoroutine;
     private Coroutine autoStartCoroutine;
     private Queue<NPCDialogueLine> dialogueQueue;
 
-    private float previousTimeScale = 1f;
+    // private float previousTimeScale = 1f;
 
     // --- FIX START: Variables to store your Inspector Scale ---
     private Vector3 defaultScaleA;
@@ -95,11 +107,33 @@ public class NPCInteraction : MonoBehaviour
     private bool isSpeakerAVisible = false;
     private bool isSpeakerBVisible = false;
 
+    private TextMeshProUGUI FindTextRecursive(Transform parent, string name)
+    {
+        var allTexts = parent.GetComponentsInChildren<TextMeshProUGUI>(true);
+        foreach (var text in allTexts)
+        {
+            if (text.gameObject.name == name)
+            {
+                return text;
+            }
+        }
+        return null;
+    }
+
     private void Awake()
     {
         // gameManager = FindFirstObjectByType<GameManager>();
         dialogueQueue = new Queue<NPCDialogueLine>();
         dialogueUI.SetActive(false);
+        //if (dialogueUIB != null) dialogueUIB.SetActive(false);
+
+        // Auto-find text components from named children (now searches recursively)
+        speakerText  = FindTextRecursive(dialogueUI.transform, "Name");
+        dialogueText = FindTextRecursive(dialogueUI.transform, "Dialogue Lines");
+        if (dialogueUIB != null)
+        {
+            dialogueUIB.SetActive(false); // Hide B if it exists, as we use the same for both now
+        }
 
         if (interactIndicator != null)
             interactIndicator.SetActive(false);
@@ -113,12 +147,13 @@ public class NPCInteraction : MonoBehaviour
         if (speakerImageA != null) originalSpeakerAPos = speakerImageA.rectTransform.anchoredPosition;
         if (speakerImageB != null) originalSpeakerBPos = speakerImageB.rectTransform.anchoredPosition;
 
-        speakerImageA.enabled = false;
-        speakerImageB.enabled = false;
+        if (speakerImageA != null) speakerImageA.enabled = false;
+        if (speakerImageB != null) speakerImageB.enabled = false;
     }
 
     private void Start()
     {
+        Debug.Log($"[NPCInteraction] Start() called on {gameObject.name}. autoStartDialogue: {autoStartDialogue}, hasTriggered: {hasTriggered}");
         if (autoStartDialogue && !hasTriggered)
         {
             autoStartCoroutine = StartCoroutine(WaitAndStartDialogue());
@@ -127,8 +162,10 @@ public class NPCInteraction : MonoBehaviour
 
     private IEnumerator WaitAndStartDialogue()
     {
-        yield return new WaitForSeconds(autoStartDelay);
+        Debug.Log($"[NPCInteraction] WaitAndStartDialogue() started. Waiting for {autoStartDelay} seconds.");
+        yield return new WaitForSecondsRealtime(autoStartDelay);
 
+        Debug.Log($"[NPCInteraction] Wait finished. isDialogueActive: {isDialogueActive}, oneTimeOnly: {oneTimeOnly}, hasTriggered: {hasTriggered}");
         if (!isDialogueActive && (!oneTimeOnly || !hasTriggered))
         {
             StartDialogue();
@@ -152,20 +189,23 @@ public class NPCInteraction : MonoBehaviour
         // Advance Dialogue
         if (isDialogueActive)
         {
-            bool advancePressed = (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
+            bool advancePressed = (currentLineAllowsClickToAdvance && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
                                   (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.fKey.wasPressedThisFrame));
             if (advancePressed)
             {
+                Debug.Log("[NPCInteraction] Advance pressed in Update!");
                 if (isTyping)
                 {
+                    Debug.Log("[NPCInteraction] Skipping typing...");
                     if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-                    dialogueText.text = currentFullLine;
+                    if (_activeDialogueText != null) _activeDialogueText.text = currentFullLine;
                     isTyping = false;
                     typingCoroutine = null;
                 }
                 else
                 {
-                    // AudioManager.instance?.PlaySFX(dialogueAdvanceSFX);
+                    Debug.Log("[NPCInteraction] Advancing to next sentence...");
+                    Gameseed26.Tune.SFX(dialogueAdvanceSFX);
                     DisplayNextSentence();
                 }
             }
@@ -181,7 +221,7 @@ public class NPCInteraction : MonoBehaviour
         // Patrol
         if (isPatrolling)
         {
-            float step = patrolSpeed * Time.unscaledDeltaTime;
+            float step = patrolSpeed * Time.deltaTime;
             transform.position = Vector3.MoveTowards(transform.position, patrolPoint.position, step);
 
             if (Vector3.Distance(transform.position, patrolPoint.position) < 0.01f)
@@ -193,6 +233,7 @@ public class NPCInteraction : MonoBehaviour
 
     public void StartDialogue()
     {
+        Debug.Log($"[NPCInteraction] StartDialogue() called on {gameObject.name}.");
         if (autoStartCoroutine != null)
         {
             StopCoroutine(autoStartCoroutine);
@@ -201,13 +242,23 @@ public class NPCInteraction : MonoBehaviour
 
         if (hasTriggered && oneTimeOnly)
         {
+            Debug.LogWarning($"[NPCInteraction] Aborted: hasTriggered is true and oneTimeOnly is true.");
             return;
         }
 
-        if (dialogueLines.Count == 0)
+        if (dialogueLines == null || dialogueLines.Count == 0)
         {
+            Debug.LogWarning($"[NPCInteraction] Aborted: dialogueLines list is empty. Please add lines in the Inspector.");
             return;
         }
+        
+        if (dialogueUI == null)
+        {
+            Debug.LogError($"[NPCInteraction] Aborted: dialogueUI is not assigned in the Inspector!");
+            return;
+        }
+
+        Debug.Log($"[NPCInteraction] Successfully starting dialogue with {dialogueLines.Count} lines.");
 
         // previousTimeScale = Time.timeScale;
         // Time.timeScale = 0f;
@@ -237,19 +288,32 @@ public class NPCInteraction : MonoBehaviour
 
     private void DisplayNextSentence()
     {
+        Debug.Log($"[NPCInteraction] DisplayNextSentence called. Queue count: {dialogueQueue.Count}");
         if (dialogueQueue.Count == 0)
         {
+            Debug.Log("[NPCInteraction] Queue is empty, calling EndDialogue.");
             EndDialogue();
             return;
         }
 
         var currentLine = dialogueQueue.Dequeue();
+        currentLineAllowsClickToAdvance = !currentLine.disableClickToAdvance;
 
-        speakerText.text = currentLine.speakerName;
+        bool speakerAActive = currentLine.isSpeakerAActive;
+
+        // Show the dialogue box (same for both speakers)
+        dialogueUI.SetActive(true);
+        if (dialogueUIB != null) dialogueUIB.SetActive(false);
+
+        // Route name + body text to the active box
+        TextMeshProUGUI activeSpeakerLabel = speakerText;
+        _activeDialogueText = dialogueText;
+
+        if (activeSpeakerLabel != null) activeSpeakerLabel.text = currentLine.speakerName;
         currentFullLine = currentLine.dialogueText;
 
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-        typingCoroutine = StartCoroutine(TypeSentence(currentFullLine));
+        if (_activeDialogueText != null) typingCoroutine = StartCoroutine(TypeSentence(currentFullLine));
 
         // --- FIX START: Use the stored defaultScale instead of Vector3.one ---
 
@@ -308,15 +372,17 @@ public class NPCInteraction : MonoBehaviour
 
     private void EndDialogue()
     {
+        Debug.Log("[NPCInteraction] EndDialogue called!");
         // Time.timeScale = previousTimeScale;
 
         isDialogueActive = false;
         dialogueUI.SetActive(false);
+        if (dialogueUIB != null) dialogueUIB.SetActive(false);
         if (skipButton != null) skipButton.SetActive(false);
         if (blurPanel != null) blurPanel.SetActive(false);
 
-        speakerText.text = "";
-        dialogueText.text = "";
+        if (speakerText != null) speakerText.text = "";
+        if (dialogueText != null) dialogueText.text = "";
 
         speakerImageA.enabled = false;
         speakerImageB.enabled = false;
@@ -342,8 +408,8 @@ public class NPCInteraction : MonoBehaviour
 
         onDialogueFinished?.Invoke();
 
-        // if (!string.IsNullOrEmpty(nextSceneName))
-        //     SceneTransitionManager.LoadScene(nextSceneName);
+        if (!string.IsNullOrEmpty(nextSceneName))
+            Gameseed26.SceneLoader.LoadScene(nextSceneName);
 
         // gameManager.GameStart();
     }
@@ -360,6 +426,20 @@ public class NPCInteraction : MonoBehaviour
 
             if (skipButton != null) skipButton.SetActive(false);
         }
+    }
+
+    public void ForceEndDialogue()
+    {
+        if (!isDialogueActive) return;
+
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+            typingCoroutine = null;
+        }
+
+        dialogueQueue.Clear();
+        EndDialogue();
     }
 
     public void ConfirmSkip()
@@ -412,12 +492,15 @@ public class NPCInteraction : MonoBehaviour
     private IEnumerator TypeSentence(string sentence)
     {
         isTyping = true;
-        dialogueText.text = "";
+        _activeDialogueText.text = "";
 
-        foreach (char letter in sentence.ToCharArray())
+        if (_activeDialogueText != null)
         {
-            dialogueText.text += letter;
-            yield return new WaitForSecondsRealtime(typingSpeed);
+            foreach (char letter in sentence.ToCharArray())
+            {
+                _activeDialogueText.text += letter;
+                yield return new WaitForSecondsRealtime(typingSpeed);
+            }
         }
 
         isTyping = false;

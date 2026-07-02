@@ -9,6 +9,7 @@ public class MatchSetupSystem : MonoBehaviour
     [SerializeField] private List<HeroData> heroTeam;
     [SerializeField] private List<EnemyData> enemyDataList;
     [SerializeField] private int startingHandSize = 5;
+    [SerializeField] private Gameseed26.SfxID yourTurnSfx = Gameseed26.SfxID.YourTurn;
 
     private void Start()
     {
@@ -42,6 +43,7 @@ public class MatchSetupSystem : MonoBehaviour
 
     private void DrawStartingHand()
     {
+        if (yourTurnSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(yourTurnSfx);
         DrawCardsGA drawCardsGA = new(startingHandSize);
         ActionSystem.Instance.Perform(drawCardsGA);
     }
