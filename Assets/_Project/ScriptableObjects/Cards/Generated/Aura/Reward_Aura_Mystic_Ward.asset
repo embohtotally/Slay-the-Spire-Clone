@@ -28,7 +28,7 @@ MonoBehaviour:
       rid: 5978927219931611230
   <HoverSfx>k__BackingField: 5
   <PlaySfx>k__BackingField: 0
-  <PlayParticle>k__BackingField: {fileID: 580271456718116260, guid: b349075d12b902c4e9769dddde7b337a, type: 3}
+  <PlayParticle>k__BackingField: {fileID: 0}
   <VisualType>k__BackingField: 0
   <HeroAnimationTrigger>k__BackingField: 
   <TargetAnimationTrigger>k__BackingField: 
