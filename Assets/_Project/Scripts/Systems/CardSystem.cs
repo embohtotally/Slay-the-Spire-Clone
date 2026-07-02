@@ -268,6 +268,24 @@ public class CardSystem : Singleton<CardSystem>
 
     private void PlayCardVisuals(PlayCardGA playCardGA)
     {
+        HashSet<CombatantView> targets = GetCardVfxTargets(playCardGA);
+
+        if (playCardGA.Card.PlayVfx != null && playCardGA.Card.PlayVfx.HasPrefab)
+        {
+            playCardGA.Card.PlayVfx.Play(targets);
+            return;
+        }
+
+        if (playCardGA.Card.PlayParticle == null) return;
+
+        foreach (CombatantView target in targets)
+        {
+            Instantiate(playCardGA.Card.PlayParticle, target.transform.position, Quaternion.identity);
+        }
+    }
+
+    private HashSet<CombatantView> GetCardVfxTargets(PlayCardGA playCardGA)
+    {
         HashSet<CombatantView> targets = new();
         if (playCardGA.ManualTarget != null)
         {
