@@ -8,6 +8,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3972274632981022932, guid: bb318327b744adc4fb61e38249ea3cf9, type: 3}
+      propertyPath: defaultEventSceneName
+      value: MainMenu
+      objectReference: {fileID: 0}
+    - target: {fileID: 3972274632981022932, guid: bb318327b744adc4fb61e38249ea3cf9, type: 3}
+      propertyPath: defaultTreasureSceneName
+      value: MainMenu
+      objectReference: {fileID: 0}
     - target: {fileID: 5096757751023129211, guid: bb318327b744adc4fb61e38249ea3cf9, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -90,7 +98,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7132670413208564600, guid: bb318327b744adc4fb61e38249ea3cf9, type: 3}
       propertyPath: m_Name
-      value: DefaultLayout
+      value: LonelinessLayout
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -2818,6 +2818,9 @@ MonoBehaviour:
   encounterPool: {fileID: 11400000, guid: a607be09c33df1146a07c629e8d1d480, type: 2}
   defaultCombatSceneName: Game
   defaultMerchantSceneName: Merchant
+  defaultRestSceneName: Rest
+  defaultEventSceneName: Event
+  defaultTreasureSceneName: Treasure
   createRunForCombatReturn: 1
   resetRunWhenNoSavedState: 1
   enforceSinglePathProgression: 1

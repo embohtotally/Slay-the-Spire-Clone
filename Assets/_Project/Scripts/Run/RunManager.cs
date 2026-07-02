@@ -64,6 +64,11 @@ public class RunManager : PersistentSingleton<RunManager>
             RunDeckManager.Instance.ClearDeck();
         }
 
+        if (RunPotionManager.Instance != null)
+        {
+            RunPotionManager.Instance.ClearPotions();
+        }
+
         NotifyRunStateChanged();
     }
 
@@ -361,6 +366,11 @@ public class RunManager : PersistentSingleton<RunManager>
         if (RunDeckManager.Instance != null)
         {
             RunDeckManager.Instance.ClearDeck();
+        }
+
+        if (RunPotionManager.Instance != null)
+        {
+            RunPotionManager.Instance.ClearPotions();
         }
 
         NotifyRunStateChanged();

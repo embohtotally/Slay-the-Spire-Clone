@@ -9,18 +9,30 @@ using UnityEngine.SceneManagement;
 public class TreasureController : MonoBehaviour
 {
     [Header("Scene Flow")]
-    [SerializeField] private string mapSceneName = "Map";
-    [SerializeField] private string cardRewardSceneName = "CardReward";
+    [SerializeField, Scene] private string mapSceneName = "Map";
+    [SerializeField, Scene] private string cardRewardSceneName = "CardReward";
     [SerializeField] private bool autoOpenOnStart = true;
     [SerializeField] private bool allowMultipleClaims;
     [SerializeField] private bool disableAfterClaim = true;
 
     [Header("Rewards")]
-    [Min(0)] [SerializeField] private int goldAmount = 50;
-    [Min(0)] [SerializeField] private int healAmount;
-    [Min(0)] [SerializeField] private int stressReduction;
+    [Min(0)][SerializeField] private int goldAmount = 50;
+    [Min(0)][SerializeField] private int healAmount;
+    [Min(0)][SerializeField] private int stressReduction;
     [SerializeField] private bool grantCardReward;
     [SerializeField] private CardRewardRequest cardRewardRequest = new();
+
+    [Header("Relic Reward")]
+    [SerializeField] private RelicData grantRelic;
+    [SerializeField] private bool grantRandomRelic;
+    [SerializeField] private RelicRewardPool relicRewardPool;
+    [SerializeField] private RelicRarityMask allowedRelicRarities = RelicRarityMask.All;
+
+    [Header("Potion Reward")]
+    [SerializeField] private PotionData grantPotion;
+    [SerializeField] private bool grantRandomPotion;
+    [SerializeField] private PotionRewardPool potionRewardPool;
+    [SerializeField] private PotionRarityMask allowedPotionRarities = PotionRarityMask.All;
 
     [Header("Logging")]
     [SerializeField] private bool logActionFailures = true;
@@ -31,16 +43,19 @@ public class TreasureController : MonoBehaviour
     public UnityEvent OnGoldClaimed;
     public UnityEvent OnHealClaimed;
     public UnityEvent OnStressReduced;
+    public UnityEvent OnRelicClaimed;
+    public UnityEvent OnPotionClaimed;
     public UnityEvent OnCardRewardStarted;
     public UnityEvent OnCardRewardFinished;
     public UnityEvent OnTreasureCompleted;
     public UnityEvent OnReturnToMapRequested;
 
     [Header("Debug")]
-    [ReadOnly] [SerializeField] private bool treasureOpened;
-    [ReadOnly] [SerializeField] private bool treasureClaimed;
-    [ReadOnly] [SerializeField] private bool cardRewardInProgress;
+    [ReadOnly][SerializeField] private bool treasureOpened;
+    [ReadOnly][SerializeField] private bool treasureClaimed;
+    [ReadOnly][SerializeField] private bool cardRewardInProgress;
 
+    public bool IsTreasureOpen => treasureOpened;
     public bool CanClaim => allowMultipleClaims || !treasureClaimed;
 
     private void Start()
@@ -115,6 +130,36 @@ public class TreasureController : MonoBehaviour
         grantCardReward = enabled;
     }
 
+    public void SetGrantRelic(RelicData relicData)
+    {
+        grantRelic = relicData;
+    }
+
+    public void SetGrantRandomRelic(bool enabled)
+    {
+        grantRandomRelic = enabled;
+    }
+
+    public void SetRelicRewardPool(RelicRewardPool rewardPool)
+    {
+        relicRewardPool = rewardPool;
+    }
+
+    public void SetGrantPotion(PotionData potionData)
+    {
+        grantPotion = potionData;
+    }
+
+    public void SetGrantRandomPotion(bool enabled)
+    {
+        grantRandomPotion = enabled;
+    }
+
+    public void SetPotionRewardPool(PotionRewardPool rewardPool)
+    {
+        potionRewardPool = rewardPool;
+    }
+
     public void SetAllowMultipleClaims(bool enabled)
     {
         allowMultipleClaims = enabled;
@@ -158,6 +203,8 @@ public class TreasureController : MonoBehaviour
         GrantGold();
         GrantHeal();
         GrantStressReduction();
+        GrantRelic();
+        GrantPotion();
     }
 
     private void GrantGold()
@@ -185,6 +232,72 @@ public class TreasureController : MonoBehaviour
 
         runManager.ReduceStress(stressReduction);
         OnStressReduced?.Invoke();
+    }
+
+    private void GrantRelic()
+    {
+        if (grantRelic == null && !grantRandomRelic) return;
+
+        RunRelicManager relicManager = RunRelicManager.EnsureInstance();
+        if (relicManager == null)
+        {
+            LogFailure("TreasureController could not create or find a RunRelicManager.");
+            return;
+        }
+
+        RelicData relicToGrant = grantRelic;
+        if (relicToGrant == null && grantRandomRelic)
+        {
+            if (relicRewardPool == null)
+            {
+                LogFailure("TreasureController is set to grant a random relic, but Relic Reward Pool is empty.");
+                return;
+            }
+
+            if (!relicRewardPool.TryGetRandomRelic(relicManager, out relicToGrant, allowedRelicRarities))
+            {
+                LogFailure("Relic Reward Pool has no eligible relic for this treasure.");
+                return;
+            }
+        }
+
+        if (relicToGrant != null && relicManager.AddRelic(relicToGrant))
+        {
+            OnRelicClaimed?.Invoke();
+        }
+    }
+
+    private void GrantPotion()
+    {
+        if (grantPotion == null && !grantRandomPotion) return;
+
+        RunPotionManager potionManager = RunPotionManager.EnsureInstance();
+        if (potionManager == null)
+        {
+            LogFailure("TreasureController could not create or find a RunPotionManager.");
+            return;
+        }
+
+        PotionData potionToGrant = grantPotion;
+        if (potionToGrant == null && grantRandomPotion)
+        {
+            if (potionRewardPool == null)
+            {
+                LogFailure("TreasureController is set to grant a random potion, but Potion Reward Pool is empty.");
+                return;
+            }
+
+            if (!potionRewardPool.TryGetRandomPotion(potionManager, out potionToGrant, allowedPotionRarities))
+            {
+                LogFailure("Potion Reward Pool has no eligible potion for this treasure.");
+                return;
+            }
+        }
+
+        if (potionToGrant != null && potionManager.AddPotion(potionToGrant))
+        {
+            OnPotionClaimed?.Invoke();
+        }
     }
 
     private IEnumerator OpenCardRewardAndComplete()

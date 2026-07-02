@@ -35,6 +35,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Scenes/Rest.unity
     guid: fb9f7ce0df9a36843b55d4ce4fb1b4df
+  - enabled: 1
+    path: Assets/_Project/Scenes/Treasure.unity
+    guid: bd063fc9ceb5ff6418da128b04b94413
+  - enabled: 1
+    path: Assets/_Project/Scenes/Event.unity
+    guid: 654e15c651c027a47b11d945abcb05ca
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
