@@ -24,6 +24,13 @@ public enum Tier
     Special
 }
 
+public enum CardVisualType
+{
+    Particle,
+    Animator,
+    Both
+}
+
 [CreateAssetMenu(menuName = "Data/Card")]
 public class CardData : ScriptableObject
 {
@@ -41,5 +48,7 @@ public class CardData : ScriptableObject
 
     [Header("VFX")]
     [field: SerializeField] public GameObject PlayParticle { get; private set; }
-    [field: SerializeField] public VfxCue PlayVfx { get; private set; } = new();
+    [field: SerializeField, Header("Visuals")] public CardVisualType VisualType { get; private set; } = CardVisualType.Particle;
+    [field: SerializeField, Tooltip("Animation trigger name to play on the Hero")] public string HeroAnimationTrigger { get; private set; }
+    [field: SerializeField, Tooltip("Animation trigger name to play on the Target(s)")] public string TargetAnimationTrigger { get; private set; }
 }

@@ -119,7 +119,7 @@ public class CardSystem : Singleton<CardSystem>
             Gameseed26.Tune.SFX(playCardGA.Card.PlaySfx);
         }
 
-        SpawnCardParticles(playCardGA);
+        PlayCardVisuals(playCardGA);
 
         yield return PlayAndDiscardCard(cardView);
 
@@ -186,6 +186,7 @@ public class CardSystem : Singleton<CardSystem>
         Tween moveTween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return moveTween.WaitForCompletion();
 
+        cardView.transform.DOKill();
         Destroy(cardView.gameObject);
     }
 
@@ -198,6 +199,8 @@ public class CardSystem : Singleton<CardSystem>
         cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
         Tween tween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
         yield return tween.WaitForCompletion();
+        
+        cardView.transform.DOKill();
         Destroy(cardView.gameObject);
     }
 
@@ -263,25 +266,7 @@ public class CardSystem : Singleton<CardSystem>
         if (discardPileText != null) discardPileText.text = discardPile.Count.ToString();
     }
 
-    private void SpawnCardParticles(PlayCardGA playCardGA)
-    {
-        HashSet<CombatantView> targets = GetCardVfxTargets(playCardGA);
-
-        if (playCardGA.Card.PlayVfx != null && playCardGA.Card.PlayVfx.HasPrefab)
-        {
-            playCardGA.Card.PlayVfx.Play(targets);
-            return;
-        }
-
-        if (playCardGA.Card.PlayParticle == null) return;
-
-        foreach (CombatantView target in targets)
-        {
-            Instantiate(playCardGA.Card.PlayParticle, target.transform.position, Quaternion.identity);
-        }
-    }
-
-    private HashSet<CombatantView> GetCardVfxTargets(PlayCardGA playCardGA)
+    private void PlayCardVisuals(PlayCardGA playCardGA)
     {
         HashSet<CombatantView> targets = new();
         if (playCardGA.ManualTarget != null)
@@ -307,9 +292,31 @@ public class CardSystem : Singleton<CardSystem>
             }
         }
 
-        if (targets.Count == 0 && HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null)
+        bool playParticle = playCardGA.Card.VisualType == CardVisualType.Particle || playCardGA.Card.VisualType == CardVisualType.Both;
+        bool playAnimator = playCardGA.Card.VisualType == CardVisualType.Animator || playCardGA.Card.VisualType == CardVisualType.Both;
+
+        if (playAnimator && !string.IsNullOrEmpty(playCardGA.Card.HeroAnimationTrigger))
         {
-            targets.Add(HeroSystem.Instance.HeroView);
+            if (HeroSystem.Instance.HeroView.Animator != null)
+            {
+                HeroSystem.Instance.HeroView.Animator.SetTrigger(playCardGA.Card.HeroAnimationTrigger);
+            }
+        }
+
+        foreach (CombatantView target in targets)
+        {
+            if (playParticle && playCardGA.Card.PlayParticle != null)
+            {
+                Instantiate(playCardGA.Card.PlayParticle, target.transform.position, Quaternion.identity);
+            }
+
+            if (playAnimator && !string.IsNullOrEmpty(playCardGA.Card.TargetAnimationTrigger))
+            {
+                if (target.Animator != null)
+                {
+                    target.Animator.SetTrigger(playCardGA.Card.TargetAnimationTrigger);
+                }
+            }
         }
 
         return targets;

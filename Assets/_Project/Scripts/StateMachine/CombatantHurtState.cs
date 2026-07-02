@@ -23,9 +23,17 @@ public class CombatantHurtState : CombatantState
         timer = 0f;
         isComplete = false;
 
-        if (combatant.Animator != null)
+        if (combatant.SpriteRenderer != null)
         {
-            combatant.Animator.SetTrigger("Hurt");
+            combatant.SpriteRenderer.DOKill();
+            combatant.SpriteRenderer.color = Color.red;
+            combatant.SpriteRenderer.DOColor(Color.white, 0.2f);
+        }
+
+        if (combatant.Animator != null && !string.IsNullOrEmpty(combatant.HurtAnimationTrigger))
+        {
+            combatant.Animator.SetTrigger(combatant.HurtAnimationTrigger);
+            CompleteHurt(); // Instantly finish the state (fire and forget)
         }
         else
         {
@@ -35,16 +43,7 @@ public class CombatantHurtState : CombatantState
 
     public override void Update()
     {
-        if (isComplete) return;
-
-        if (combatant.Animator != null)
-        {
-            timer += Time.deltaTime;
-            if (timer >= shakeDuration)
-            {
-                CompleteHurt();
-            }
-        }
+        // No update logic needed anymore for Animator, as it instantly completes in Enter()
     }
 
     private void CompleteHurt()
