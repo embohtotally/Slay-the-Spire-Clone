@@ -333,9 +333,9 @@ public class CardSystem : Singleton<CardSystem>
 
         if (playAnimator && !string.IsNullOrEmpty(playCardGA.Card.HeroAnimationTrigger))
         {
-            if (HeroSystem.Instance.HeroView.Animator != null)
+            if (HeroSystem.Instance.HeroView.HasAnimator)
             {
-                HeroSystem.Instance.HeroView.Animator.SetTrigger(playCardGA.Card.HeroAnimationTrigger);
+                HeroSystem.Instance.HeroView.SetAnimationTrigger(playCardGA.Card.HeroAnimationTrigger);
             }
         }
 
@@ -348,9 +348,9 @@ public class CardSystem : Singleton<CardSystem>
 
             if (playAnimator && !string.IsNullOrEmpty(playCardGA.Card.TargetAnimationTrigger))
             {
-                if (target.Animator != null)
+                if (target.HasAnimator)
                 {
-                    target.Animator.SetTrigger(playCardGA.Card.TargetAnimationTrigger);
+                    target.SetAnimationTrigger(playCardGA.Card.TargetAnimationTrigger);
                 }
             }
         }

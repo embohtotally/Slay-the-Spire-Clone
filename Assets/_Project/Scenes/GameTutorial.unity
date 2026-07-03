@@ -2578,6 +2578,11 @@ MonoBehaviour:
   typeText: {fileID: 0}
   cardImage: {fileID: 0}
   cardSpriteRenderer: {fileID: 786343510}
+  frameImage: {fileID: 0}
+  frameSpriteRenderer: {fileID: 0}
+  basicFrameSprite: {fileID: 0}
+  rareFrameSprite: {fileID: 0}
+  specialFrameSprite: {fileID: 0}
   worldWrapper: {fileID: 117046000}
   enableCombatInteractions: 0
   enableCombatHoverPreview: 1
@@ -4233,6 +4238,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
+    - target: {fileID: 2417392831690447783, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
+      propertyPath: m_PreserveAspect
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3570978533501766310, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_IsActive
       value: 0

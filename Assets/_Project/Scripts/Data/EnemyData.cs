@@ -10,4 +10,5 @@ public class EnemyData : ScriptableObject
     [field: SerializeField] public int Health { get; private set; }
     [field: SerializeField] public List<EnemyIntent> Intents { get; private set; }
     [field: SerializeField] public AIAttackPattern AttackPattern { get; private set; }
+    [field: SerializeField, Tooltip("Offset applied to the sprite position")] public Vector3 SpriteOffset { get; private set; }
 }

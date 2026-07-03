@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
   m_Name: The Last Paradise
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: -213433825, guid: aa037ee5ede8a0c45ade15d0ad60331a, type: 3}
+  <Image>k__BackingField: {fileID: 21300000, guid: aa037ee5ede8a0c45ade15d0ad60331a, type: 3}
   <Health>k__BackingField: 200
   <Intents>k__BackingField:
   - <IntentName>k__BackingField: The Last Paradise

@@ -20,9 +20,9 @@ public class CombatantAttackState : CombatantState
         timer = 0f;
         isComplete = false;
 
-        if (combatant.Animator != null)
+        if (combatant.HasAnimator)
         {
-            combatant.Animator.SetTrigger("Attack");
+            combatant.SetAnimationTrigger("Attack");
         }
     }
 

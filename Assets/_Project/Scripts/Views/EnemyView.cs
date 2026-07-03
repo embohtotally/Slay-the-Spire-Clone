@@ -19,6 +19,11 @@ public class EnemyView : CombatantView
         currentIntentIndex = -1;
         PickNextIntent();
         SetupBase(enemyData.Health, enemyData.Image);
+        
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.transform.localPosition = enemyData.SpriteOffset;
+        }
     }
 
     public void PickNextIntent()

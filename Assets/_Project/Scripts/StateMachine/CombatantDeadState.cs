@@ -9,9 +9,9 @@ public class CombatantDeadState : CombatantState
 
     public override void Enter()
     {
-        if (combatant.Animator != null && !string.IsNullOrEmpty(combatant.DeadAnimationTrigger))
+        if (combatant.HasAnimator && !string.IsNullOrEmpty(combatant.DeadAnimationTrigger))
         {
-            combatant.Animator.SetTrigger(combatant.DeadAnimationTrigger);
+            combatant.SetAnimationTrigger(combatant.DeadAnimationTrigger);
         }
 
         onComplete?.Invoke();

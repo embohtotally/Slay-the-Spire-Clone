@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: aa037ee5ede8a0c45ade15d0ad60331a
+guid: 8b65839d613af28489ecda4ce4f1a414
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -97,13 +97,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Boss Eldritch God Shaccad'Yoggoth 1_0
+      name: Attack_0001_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 1
-        width: 858
-        height: 561
+        y: 0
+        width: 1250
+        height: 1000
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -112,8 +112,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f17bcadb2b35a3b43b865836991cf31b
-      internalID: -213433825
+      spriteID: c464b4250ad4ec5438dc5e8910182bf3
+      internalID: 362578178
       vertices: []
       indices: 
       edges: []
@@ -122,7 +122,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: ecd6e79de01b42044b869318602a3bcd
+    spriteID: d80ae0f365d9d3548bcc458cbad2f78f
     internalID: 0
     vertices: []
     indices: 
@@ -132,7 +132,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Boss Eldritch God Shaccad'Yoggoth 1_0: -213433825
+      Attack_0001_0: 362578178
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

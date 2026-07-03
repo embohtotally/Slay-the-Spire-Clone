@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: aa037ee5ede8a0c45ade15d0ad60331a
+guid: 6d3f9bb0d7de6f64187ad01cb70c36f9
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -43,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -97,13 +97,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Boss Eldritch God Shaccad'Yoggoth 1_0
+      name: logo LUME GUMI (1)_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 1
-        width: 858
-        height: 561
+        y: 0
+        width: 1250
+        height: 1000
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -112,8 +112,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f17bcadb2b35a3b43b865836991cf31b
-      internalID: -213433825
+      spriteID: d52ffaa4b73da0b48a2475b40bf3602c
+      internalID: 1373307898
       vertices: []
       indices: 
       edges: []
@@ -122,7 +122,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: ecd6e79de01b42044b869318602a3bcd
+    spriteID: 4ab42978c30d042459bb2ade2666fbc0
     internalID: 0
     vertices: []
     indices: 
@@ -132,7 +132,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Boss Eldritch God Shaccad'Yoggoth 1_0: -213433825
+      logo LUME GUMI (1)_0: 1373307898
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

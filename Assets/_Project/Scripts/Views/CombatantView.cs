@@ -19,7 +19,9 @@ public class CombatantView : MonoBehaviour
 
     [Header("Others")]
     [SerializeField] protected SpriteRenderer spriteRenderer;
+    [SerializeField] private List<SpriteRenderer> additionalSpriteRenderers = new();
     [SerializeField] private Animator animator;
+    [SerializeField] private List<Animator> additionalAnimators = new();
     [SerializeField] private string hurtAnimationTrigger = "Hurt";
     [SerializeField] private string deadAnimationTrigger = "Die";
     [SerializeField] private float shakeDuration;
@@ -29,9 +31,13 @@ public class CombatantView : MonoBehaviour
     [SerializeField] private Gameseed26.SfxID shieldSfx = Gameseed26.SfxID.Shield;
 
     public Animator Animator => animator;
+    public List<Animator> AdditionalAnimators => additionalAnimators;
     public string HurtAnimationTrigger => hurtAnimationTrigger;
     public string DeadAnimationTrigger => deadAnimationTrigger;
     public SpriteRenderer SpriteRenderer => spriteRenderer;
+    public List<SpriteRenderer> AdditionalSpriteRenderers => additionalSpriteRenderers;
+
+    public bool HasAnimator => animator != null || (additionalAnimators != null && additionalAnimators.Count > 0);
 
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
@@ -224,6 +230,50 @@ public class CombatantView : MonoBehaviour
     protected void NotifyStatusEffectsChanged()
     {
         StatusEffectsChanged?.Invoke();
+    }
+
+    public void SetAnimationTrigger(string trigger)
+    {
+        if (string.IsNullOrEmpty(trigger)) return;
+
+        if (animator != null)
+        {
+            animator.SetTrigger(trigger);
+        }
+
+        if (additionalAnimators != null)
+        {
+            foreach (var additionalAnimator in additionalAnimators)
+            {
+                if (additionalAnimator != null)
+                {
+                    additionalAnimator.SetTrigger(trigger);
+                }
+            }
+        }
+    }
+
+    public void DoHurtFlash(float duration = 0.2f)
+    {
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.DOKill();
+            spriteRenderer.color = Color.red;
+            spriteRenderer.DOColor(Color.white, duration);
+        }
+
+        if (additionalSpriteRenderers != null)
+        {
+            foreach (var sr in additionalSpriteRenderers)
+            {
+                if (sr != null)
+                {
+                    sr.DOKill();
+                    sr.color = Color.red;
+                    sr.DOColor(Color.white, duration);
+                }
+            }
+        }
     }
 
     protected virtual void SetupHealthVisual()
