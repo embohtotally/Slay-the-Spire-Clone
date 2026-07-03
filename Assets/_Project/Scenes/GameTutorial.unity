@@ -2012,7 +2012,7 @@ PrefabInstance:
     - target: {fileID: 2417392831690447783, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+      objectReference: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
     - target: {fileID: 3570978533501766310, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -2035,7 +2035,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4875046186467972655, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5008172011476626133, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_SizeDelta.x
@@ -2175,7 +2175,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8057019761126374266, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 175
+      value: 171
       objectReference: {fileID: 0}
     - target: {fileID: 8057019761126374266, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_ConstrainProportionsScale
@@ -2210,16 +2210,20 @@ PrefabInstance:
       value: Dialogue (1)
       objectReference: {fileID: 0}
     - target: {fileID: 8849939971604653082, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 8849939971604653082, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_LocalScale.x
-      value: 5
+      value: 6.15
       objectReference: {fileID: 0}
     - target: {fileID: 8849939971604653082, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_LocalScale.y
-      value: 5
+      value: 6.15
       objectReference: {fileID: 0}
     - target: {fileID: 8849939971604653082, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_LocalScale.z
-      value: 5
+      value: 6.15
       objectReference: {fileID: 0}
     - target: {fileID: 8849939971604653082, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -2227,7 +2231,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8849939971604653082, guid: 532c33ef474a51c4894fcd56af102e42, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 175
+      value: 273
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5520,8 +5524,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: -220434248, guid: 0681d7fdc3ff5324592d2530421bc375, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -6324,54 +6328,54 @@ MonoBehaviour:
   playCardDialogue:
   - speakerName: Ember
     dialogueText: Aira, There are enemies coming right at us
-    speakerImageA: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+    speakerImageA: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: Ready your weapon, I'll stand by yourside.
-    speakerImageA: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+    speakerImageA: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: "See those cards at the bottom of the screen? I need you to Drag
       and drop those in order to protect or attack.\t"
-    speakerImageA: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+    speakerImageA: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 1
   endTurnDialogue:
   - speakerName: Ember
     dialogueText: Aira We are out of MANA
-    speakerImageA: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+    speakerImageA: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
   - speakerName: Ember
     dialogueText: When you're out of moves, you need to brace yourself for the enemy's
       retaliation. Click the End Turn button on the right
-    speakerImageA: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+    speakerImageA: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 1
   completeDialogue:
-  - speakerName: Aira
+  - speakerName: Ember
     dialogueText: See? They swung back, but you survived. That's the rhythm of combat.
-    speakerImageA: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+    speakerImageA: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
-  - speakerName: Aira
+  - speakerName: Ember
     dialogueText: Attack, defend, pass the turn. Simple to learn, hard to master
-    speakerImageA: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+    speakerImageA: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
-  - speakerName: Aira
-    dialogueText: You're ready to head out into the real world now. Don't let me
-      down, rookie. Go show them what you're made of!
-    speakerImageA: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+  - speakerName: Ember
+    dialogueText: You're ready to head out into the real world now. I Believe you're
+      able to do it. Go show them what you're made of!
+    speakerImageA: {fileID: 1597602930, guid: 71eb54250520f8b45ab7ea58b6c8acac, type: 3}
     speakerImageB: {fileID: 0}
     isSpeakerAActive: 1
     disableClickToAdvance: 0
