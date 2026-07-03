@@ -1352,6 +1352,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RunStatusUI
       objectReference: {fileID: 0}
+    - target: {fileID: 3333048144837030486, guid: 51c029943500086428e6a2d815fbe67e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3504216709362701108, guid: 51c029943500086428e6a2d815fbe67e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -2808,6 +2812,10 @@ PrefabInstance:
     - target: {fileID: 6882606010477731139, guid: 840c44b990b100a49b3f715c7d5a5a27, type: 3}
       propertyPath: m_Name
       value: FadeScreen
+      objectReference: {fileID: 0}
+    - target: {fileID: 6882606010477731139, guid: 840c44b990b100a49b3f715c7d5a5a27, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8098885573568436650, guid: 840c44b990b100a49b3f715c7d5a5a27, type: 3}
       propertyPath: m_Pivot.x
