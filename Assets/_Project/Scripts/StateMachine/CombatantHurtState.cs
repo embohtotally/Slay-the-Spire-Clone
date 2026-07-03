@@ -23,16 +23,11 @@ public class CombatantHurtState : CombatantState
         timer = 0f;
         isComplete = false;
 
-        if (combatant.SpriteRenderer != null)
-        {
-            combatant.SpriteRenderer.DOKill();
-            combatant.SpriteRenderer.color = Color.red;
-            combatant.SpriteRenderer.DOColor(Color.white, 0.2f);
-        }
+        combatant.DoHurtFlash(0.2f);
 
-        if (combatant.Animator != null && !string.IsNullOrEmpty(combatant.HurtAnimationTrigger))
+        if (combatant.HasAnimator && !string.IsNullOrEmpty(combatant.HurtAnimationTrigger))
         {
-            combatant.Animator.SetTrigger(combatant.HurtAnimationTrigger);
+            combatant.SetAnimationTrigger(combatant.HurtAnimationTrigger);
             CompleteHurt(); // Instantly finish the state (fire and forget)
         }
         else
