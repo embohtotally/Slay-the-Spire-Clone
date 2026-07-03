@@ -74,8 +74,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278190080
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -338,6 +338,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2715856058219625837 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7310448199649872778, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
+  m_PrefabInstance: {fileID: 4666649872982849255}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &4222877170024468741 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8816334190320150498, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
@@ -354,9 +365,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &4858122361340402238 stripped
+--- !u!114 &5697462077431530206 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 263673720068910297, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
+  m_CorrespondingSourceObject: {fileID: 1140033884219733049, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
   m_PrefabInstance: {fileID: 4666649872982849255}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -387,11 +398,16 @@ MonoBehaviour:
   descriptionText: {fileID: 489791901356296869}
   manaText: {fileID: 4824243150495618670}
   typeText: {fileID: 521420339821235471}
-  cardImage: {fileID: 4858122361340402238}
+  cardImage: {fileID: 2715856058219625837}
   cardSpriteRenderer: {fileID: 0}
+  frameImage: {fileID: 5697462077431530206}
+  frameSpriteRenderer: {fileID: 0}
+  basicFrameSprite: {fileID: 21300000, guid: 0a6684df82bb77f40a3c13b3b33b346f, type: 3}
+  rareFrameSprite: {fileID: 21300000, guid: 7e37d1d1e2d8af248a73cce41228f26f, type: 3}
+  specialFrameSprite: {fileID: 21300000, guid: 5f1d8cdbb6e250146a806b0ee780cf62, type: 3}
   worldWrapper: {fileID: 0}
   enableCombatInteractions: 0
-  enableCombatHoverPreview: 1
+  enableCombatHoverPreview: 0
   enableFeebleTint: 1
   dropAreaLayer:
     serializedVersion: 2
@@ -406,6 +422,7 @@ MonoBehaviour:
   tweenDuration: 0.12
   hoverEase: 27
   bringToFrontOnHover: 1
+  enablePointerAudio: 1
   hoverSfx:
     sfxId: 0
     sfxName: 
