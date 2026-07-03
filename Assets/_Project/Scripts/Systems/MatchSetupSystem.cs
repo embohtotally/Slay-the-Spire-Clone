@@ -8,6 +8,7 @@ public class MatchSetupSystem : MonoBehaviour
 {
     [SerializeField] private List<HeroData> heroTeam;
     [SerializeField] private List<EnemyData> enemyDataList;
+    [SerializeField] private bool forceInspectorEnemies = false;
     [SerializeField] private int startingHandSize = 5;
     [SerializeField] private Gameseed26.SfxID yourTurnSfx = Gameseed26.SfxID.YourTurn;
 
@@ -16,7 +17,7 @@ public class MatchSetupSystem : MonoBehaviour
         HeroSystem.Instance.Setup(heroTeam);
 
         List<EnemyData> enemiesForThisMatch = enemyDataList;
-        if (RunManager.Instance != null && RunManager.Instance.SelectedEncounter != null)
+        if (!forceInspectorEnemies && RunManager.Instance != null && RunManager.Instance.SelectedEncounter != null)
         {
             enemiesForThisMatch = RunManager.Instance.SelectedEncounter.Enemies;
         }

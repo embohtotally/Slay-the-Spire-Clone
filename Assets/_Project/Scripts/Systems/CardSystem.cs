@@ -266,6 +266,24 @@ public class CardSystem : Singleton<CardSystem>
         if (discardPileText != null) discardPileText.text = discardPile.Count.ToString();
     }
 
+    public bool HasPlayableCards()
+    {
+        foreach (Card card in hand)
+        {
+            int cost = card.Mana;
+            if (RunManager.Instance != null && RunManager.Instance.CardCostModifiers.TryGetValue(card.Title, out int modifier))
+            {
+                cost = Mathf.Max(0, cost - modifier);
+            }
+            
+            if (ManaSystem.Instance.HasEnoughMana(cost))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void PlayCardVisuals(PlayCardGA playCardGA)
     {
         HashSet<CombatantView> targets = GetCardVfxTargets(playCardGA);
