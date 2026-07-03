@@ -533,8 +533,6 @@ public class ManualMapController : MonoBehaviour
 
         if (PlayerPrefs.GetInt("HasPlayedCardTutorial", 0) == 0)
         {
-            PlayerPrefs.SetInt("HasPlayedCardTutorial", 1);
-            PlayerPrefs.Save();
             sceneName = "GameTutorial";
         }
 

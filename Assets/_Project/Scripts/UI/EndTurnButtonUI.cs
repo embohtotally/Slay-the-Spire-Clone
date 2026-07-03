@@ -9,6 +9,8 @@ public class EndTurnButtonUI : MonoBehaviour
 
     public void OnClick()
     {
+        if (TutorialManager.Instance != null && !TutorialManager.Instance.CanEndTurn()) return;
+
         if (endTurnSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(endTurnSfx);
         EnemyTurnGA enemyTurnGA = new();
         ActionSystem.Instance.Perform(enemyTurnGA);

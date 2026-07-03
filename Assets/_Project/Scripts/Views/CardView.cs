@@ -407,6 +407,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     private bool CanStartCombatInteraction()
     {
         if (!enableCombatInteractions || Card == null || isFeebleBlocked) return false;
+        if (TutorialManager.Instance != null && !TutorialManager.Instance.CanInteractWithCard(Card)) return false;
         return Interactions.Instance != null && Interactions.Instance.PlayerCanInteract();
     }
 

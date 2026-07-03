@@ -61,8 +61,6 @@ public class MapSystem : MonoBehaviour
             string sceneToLoad = combatSceneName;
             if (PlayerPrefs.GetInt("HasPlayedCardTutorial", 0) == 0)
             {
-                PlayerPrefs.SetInt("HasPlayedCardTutorial", 1);
-                PlayerPrefs.Save();
                 sceneToLoad = "GameTutorial";
             }
 

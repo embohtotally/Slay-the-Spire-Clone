@@ -231,6 +231,13 @@ public class NPCInteraction : MonoBehaviour
         }
     }
 
+    public void StartDialogue(List<NPCDialogueLine> lines)
+    {
+        this.dialogueLines = lines;
+        this.hasTriggered = false;
+        StartDialogue();
+    }
+
     public void StartDialogue()
     {
         Debug.Log($"[NPCInteraction] StartDialogue() called on {gameObject.name}.");
@@ -496,9 +503,10 @@ public class NPCInteraction : MonoBehaviour
 
         if (_activeDialogueText != null)
         {
-            foreach (char letter in sentence.ToCharArray())
+            string[] words = sentence.Split(' ');
+            foreach (string word in words)
             {
-                _activeDialogueText.text += letter;
+                _activeDialogueText.text += word + " ";
                 yield return new WaitForSecondsRealtime(typingSpeed);
             }
         }
