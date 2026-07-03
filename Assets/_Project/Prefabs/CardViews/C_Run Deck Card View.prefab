@@ -335,6 +335,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 8633688147024821876, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
+    - {fileID: 6368102034846189707, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 5009446640019031247, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
@@ -344,6 +345,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1533523245500179996, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5294183449594141227}
+    - targetCorrespondingSourceObject: {fileID: 1533523245500179996, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3627436480066648202}
   m_SourcePrefab: {fileID: 100100000, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
 --- !u!114 &421359851310633928 stripped
 MonoBehaviour:
@@ -441,12 +445,24 @@ MonoBehaviour:
     delay: 0
   countRoot: {fileID: 3878547910033730230}
   countText: {fileID: 1143947859601801520}
-  selectButton: {fileID: 5938775962263695226}
+  selectButton: {fileID: 0}
   enableInventoryHoverJuice: 0
   enableInventoryPointerAudio: 0
   OnCardClicked:
     m_PersistentCalls:
       m_Calls: []
+--- !u!225 &3627436480066648202
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2252614612501365229}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!114 &5146374913568416934 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5575833462366143319, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
@@ -485,17 +501,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5009446640019031247, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
   m_PrefabInstance: {fileID: 723617509234190321}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5938775962263695226 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6368102034846189707, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
-  m_PrefabInstance: {fileID: 723617509234190321}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &8032490639921671291 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7310448199649872778, guid: 2399dd515611b6e4088156992d3c6b81, type: 3}
