@@ -80,18 +80,18 @@ public class HeroView : CombatantView
         float spacing = 2.0f;
         float startX = (heroTeam.Count - 1) * (spacing / 2.0f) * -1.0f;
 
-        for (int i = 0; i < heroTeam.Count; i++)
-        {
-            GameObject spriteObj = new($"HeroSprite_{i}");
-            spriteObj.transform.SetParent(transform);
-            spriteObj.transform.localPosition = new Vector3(startX + (i * spacing), 0, 0);
-
-            SpriteRenderer sr = spriteObj.AddComponent<SpriteRenderer>();
-            sr.sprite = heroTeam[i].Image;
-            sr.sortingOrder = 5;
-
-            heroSprites.Add(spriteObj);
-        }
+        // for (int i = 0; i < heroTeam.Count; i++)
+        // {
+        //     GameObject spriteObj = new($"HeroSprite_{i}");
+        //     spriteObj.transform.SetParent(transform);
+        //     spriteObj.transform.localPosition = new Vector3(startX + (i * spacing), 0, 0);
+        //
+        //     SpriteRenderer sr = spriteObj.AddComponent<SpriteRenderer>();
+        //     sr.sprite = heroTeam[i].Image;
+        //     sr.sortingOrder = 5;
+        //
+        //     heroSprites.Add(spriteObj);
+        // }
 
         if (shouldUseRunState && RunManager.Instance.HasHeroState)
         {

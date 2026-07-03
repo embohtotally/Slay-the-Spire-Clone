@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
   m_Name: Red Slime
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: -719126606, guid: cccf725d57cc6e14f91c7c7a878d2946, type: 3}
+  <Image>k__BackingField: {fileID: 21300000, guid: 78dfb63536c3b204db86ff8bb1d27fe5, type: 3}
   <Health>k__BackingField: 26
   <Intents>k__BackingField:
   - <IntentName>k__BackingField: RedSlime
