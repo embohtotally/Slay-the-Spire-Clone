@@ -6495,8 +6495,8 @@ MonoBehaviour:
   heroTeam:
   - {fileID: 11400000, guid: cae3ff5400bfc3e4d88ab3921131ba98, type: 2}
   enemyDataList:
-  - {fileID: 11400000, guid: eb08ed9ce92bcf14fa1ea625113a9c7e, type: 2}
-  - {fileID: 11400000, guid: eb08ed9ce92bcf14fa1ea625113a9c7e, type: 2}
+  - {fileID: 11400000, guid: 3c7364ba337e01a4ab6aadf6b5dba813, type: 2}
+  - {fileID: 11400000, guid: b1c14af732a57594da8e93baa6b4e405, type: 2}
   - {fileID: 11400000, guid: eb08ed9ce92bcf14fa1ea625113a9c7e, type: 2}
   forceInspectorEnemies: 0
   startingHandSize: 5

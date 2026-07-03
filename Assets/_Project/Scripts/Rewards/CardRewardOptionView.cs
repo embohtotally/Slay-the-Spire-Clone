@@ -13,6 +13,9 @@ public class CardRewardOptionView : CardView
     private CardRewardController rewardController;
     private CardRewardOption option;
 
+    public CardRewardOption Option => option;
+    public RectTransform RectTransform => transform as RectTransform;
+
     protected override void Awake()
     {
         base.Awake();
@@ -20,6 +23,7 @@ public class CardRewardOptionView : CardView
 
     public void Setup(CardRewardController controller, CardRewardOption newOption)
     {
+        gameObject.SetActive(true);
         rewardController = controller;
         option = newOption;
         CacheReferences();
@@ -44,6 +48,7 @@ public class CardRewardOptionView : CardView
     {
         option = null;
         ClearCardVisuals();
+        gameObject.SetActive(false);
     }
 
     public void Refresh()
@@ -60,10 +65,15 @@ public class CardRewardOptionView : CardView
         SetButtonInteractable(previewCard != null);
     }
 
+    public void SetInteractable(bool interactable)
+    {
+        SetButtonInteractable(interactable && option?.PreviewCard != null);
+    }
+
     private void SelectOption()
     {
         if (option == null) return;
-        rewardController?.ChooseReward(option);
+        rewardController?.ChooseReward(this);
     }
 
     private void SetActionText(string text)

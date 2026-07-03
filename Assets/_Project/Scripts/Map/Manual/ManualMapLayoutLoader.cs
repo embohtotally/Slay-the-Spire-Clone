@@ -49,6 +49,8 @@ public class ManualMapLayoutLoader : MonoBehaviour
     [SerializeField, ShowIf("enableViewportControls")] private bool enablePlayerViewportInput = true;
     [Tooltip("The visible area. Empty = Map Root if it is a RectTransform.")]
     [SerializeField, ShowIf("enableViewportControls")] private RectTransform viewportRect;
+    [Tooltip("Optional RectTransform that receives all pan/zoom movement. Empty = the spawned map layout, or the auto-detected static content. Assign a parent Content object here when you want background art, lines, and nodes to move/zoom together.")]
+    [SerializeField, ShowIf("enableViewportControls")] private RectTransform contentRectOverride;
     [Tooltip("Default viewport-local offset used by FocusNode. Negative X places the selected node left of center, useful when a detail panel occupies the right side.")]
     [SerializeField, ShowIf("enableViewportControls")] private Vector2 defaultFocusOffset;
     [Tooltip("Default zoom used when focusing the currently selectable path nodes.")]
@@ -94,6 +96,14 @@ public class ManualMapLayoutLoader : MonoBehaviour
 
     public ManualMapController SpawnedMap => spawnedMap;
     public bool PlayerViewportInputEnabled => enablePlayerViewportInput;
+    public RectTransform ViewportContentRect
+    {
+        get
+        {
+            EnsureViewportContentReady();
+            return contentRect;
+        }
+    }
 
     private void Awake()
     {
@@ -144,6 +154,18 @@ public class ManualMapLayoutLoader : MonoBehaviour
     public void SetFocusPathOnLoadEnabled(bool enabled)
     {
         focusPathOnLoad = enabled;
+    }
+
+    public void SetContentRectOverride(RectTransform newContentRect)
+    {
+        contentRectOverride = newContentRect;
+        contentRect = contentRectOverride != null ? contentRectOverride : ResolveSpawnedOrStaticContentRect();
+        if (contentRect == null) return;
+
+        targetZoom = ClampZoom(contentRect.localScale.x);
+        targetAnchoredPosition = contentRect.anchoredPosition;
+        ConstrainTargetAnchoredPosition();
+        StoreCurrentTargetAsHome();
     }
 
     public void CaptureHomeView()
@@ -394,7 +416,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
             spawnedMap.transform.localScale = Vector3.one;
         }
 
-        contentRect = spawnedMap.transform as RectTransform;
+        contentRect = ResolveSpawnedOrStaticContentRect();
         targetZoom = ClampZoom(focusedZoom);
         targetAnchoredPosition = contentRect != null ? contentRect.anchoredPosition : Vector2.zero;
         ConstrainTargetAnchoredPosition();
@@ -408,7 +430,7 @@ public class ManualMapLayoutLoader : MonoBehaviour
 
     private void InitializeStaticViewportContent()
     {
-        contentRect = ResolveStaticContentRect();
+        contentRect = ResolveSpawnedOrStaticContentRect();
         if (contentRect == null) return;
 
         targetZoom = ClampZoom(contentRect.localScale.x);
@@ -424,15 +446,30 @@ public class ManualMapLayoutLoader : MonoBehaviour
 
     private void EnsureViewportContentReady()
     {
-        if (contentRect != null) return;
-
-        if (spawnedMap != null)
+        if (contentRectOverride != null)
         {
-            contentRect = spawnedMap.transform as RectTransform;
+            contentRect = contentRectOverride;
             return;
         }
 
+        if (contentRect != null) return;
+
+        contentRect = ResolveSpawnedOrStaticContentRect();
+        if (contentRect != null) return;
+
         InitializeStaticViewportContent();
+    }
+
+    private RectTransform ResolveSpawnedOrStaticContentRect()
+    {
+        if (contentRectOverride != null) return contentRectOverride;
+
+        if (spawnedMap != null)
+        {
+            return spawnedMap.transform as RectTransform;
+        }
+
+        return ResolveStaticContentRect();
     }
 
     private RectTransform ResolveStaticContentRect()
@@ -541,16 +578,29 @@ public class ManualMapLayoutLoader : MonoBehaviour
 
     private Bounds GetNodeBounds(IReadOnlyList<ManualMapNode> targetNodes)
     {
-        Vector2 firstPosition = targetNodes[0].GetDesignerPosition();
+        Vector2 firstPosition = GetNodePositionInContent(targetNodes[0]);
         Bounds bounds = new(firstPosition, Vector3.zero);
 
         foreach (ManualMapNode node in targetNodes)
         {
             if (node == null) continue;
-            bounds.Encapsulate(node.GetDesignerPosition());
+            bounds.Encapsulate(GetNodePositionInContent(node));
         }
 
         return bounds;
+    }
+
+    private Vector2 GetNodePositionInContent(ManualMapNode node)
+    {
+        if (node == null) return Vector2.zero;
+
+        if (contentRect != null && node.transform is RectTransform nodeRect)
+        {
+            Vector3 nodeWorldCenter = nodeRect.TransformPoint(nodeRect.rect.center);
+            return contentRect.InverseTransformPoint(nodeWorldCenter);
+        }
+
+        return node.GetDesignerPosition();
     }
 
     private float CalculateFitZoom(Bounds bounds, Vector2 viewportSize)

@@ -18,6 +18,7 @@ public class CardRewardController : MonoBehaviour
     [SerializeField] private bool autoFindOptionsInChildren = true;
     [SerializeField] private bool autoOpenOnStart = true;
     [SerializeField] private GameObject rewardRoot;
+    [SerializeField] private CardRewardAnimationDirector animationDirector;
 
     [Header("After Choice")]
     [SerializeField] private bool hideAfterChoice = true;
@@ -41,12 +42,15 @@ public class CardRewardController : MonoBehaviour
     private readonly List<CardRewardOptionView> optionViews = new();
     private bool rewardAlreadyChosen;
     private bool rewardFinished;
+    private bool rewardTransitionInProgress;
+    private Coroutine openAnimationRoutine;
 
     public event Action<bool> RewardFinished;
 
     private void Awake()
     {
         EnsureRunDeckManagerExists();
+        if (animationDirector == null) animationDirector = GetComponentInChildren<CardRewardAnimationDirector>(true);
         CollectOptionViews();
     }
 
@@ -94,14 +98,62 @@ public class CardRewardController : MonoBehaviour
         if (rewardRoot != null) rewardRoot.SetActive(true);
 
         GenerateOptions(request ?? defaultRequest);
+        QueueOpenAnimationAfterLayout();
         rewardOpenedSfx?.Play(this, transform);
         OnRewardOpened?.Invoke();
     }
 
+    private void QueueOpenAnimationAfterLayout()
+    {
+        if (openAnimationRoutine != null)
+        {
+            StopCoroutine(openAnimationRoutine);
+        }
+
+        openAnimationRoutine = StartCoroutine(PlayOpenAnimationAfterLayout());
+    }
+
+    private IEnumerator PlayOpenAnimationAfterLayout()
+    {
+        // Wait one frame so LayoutGroups/content-size fitters finish placing generated reward cards.
+        // Without this, newly spawned options can all report their prefab/default anchoredPosition
+        // and animate into a stack near the parent corner.
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+        animationDirector?.PlayOptionsEnter(optionViews);
+        openAnimationRoutine = null;
+    }
+
+    public void ChooseReward(CardRewardOptionView optionView)
+    {
+        if (optionView == null) return;
+        ChooseReward(optionView.Option, optionView);
+    }
+
     public void ChooseReward(CardRewardOption option)
     {
-        if (rewardAlreadyChosen || rewardFinished || option == null) return;
+        ChooseReward(option, FindOptionView(option));
+    }
+
+    private void ChooseReward(CardRewardOption option, CardRewardOptionView optionView)
+    {
+        if (rewardAlreadyChosen || rewardFinished || rewardTransitionInProgress || option == null) return;
         EnsureRunDeckManagerExists();
+        if (!CanApplyReward(option)) return;
+
+        StartCoroutine(ChooseRewardRoutine(option, optionView));
+    }
+
+    private IEnumerator ChooseRewardRoutine(CardRewardOption option, CardRewardOptionView optionView)
+    {
+        rewardAlreadyChosen = true;
+        rewardTransitionInProgress = true;
+        SetOptionButtonsInteractable(false);
+
+        if (animationDirector != null && optionView != null)
+        {
+            yield return animationDirector.PlayChooseReward(optionView, optionViews);
+        }
 
         bool applied = option.Type switch
         {
@@ -110,15 +162,34 @@ public class CardRewardController : MonoBehaviour
             _ => false
         };
 
-        if (!applied) return;
+        rewardTransitionInProgress = false;
+        if (!applied)
+        {
+            rewardAlreadyChosen = false;
+            SetOptionButtonsInteractable(true);
+            yield break;
+        }
 
-        rewardAlreadyChosen = true;
         FinishReward(true);
     }
 
     public void SkipReward()
     {
-        if (rewardFinished) return;
+        if (rewardFinished || rewardTransitionInProgress) return;
+        StartCoroutine(SkipRewardRoutine());
+    }
+
+    private IEnumerator SkipRewardRoutine()
+    {
+        rewardTransitionInProgress = true;
+        SetOptionButtonsInteractable(false);
+
+        if (animationDirector != null)
+        {
+            yield return animationDirector.PlaySkipReward(optionViews);
+        }
+
+        rewardTransitionInProgress = false;
         FinishReward(false);
     }
 
@@ -168,6 +239,7 @@ public class CardRewardController : MonoBehaviour
     {
         activeOptions.Clear();
         CollectOptionViews();
+        animationDirector?.RestoreOptionHomes(optionViews);
 
         if (rewardPool == null)
         {
@@ -212,6 +284,54 @@ public class CardRewardController : MonoBehaviour
             {
                 optionViews[i].Clear();
             }
+        }
+    }
+
+    private CardRewardOptionView FindOptionView(CardRewardOption option)
+    {
+        if (option == null) return null;
+
+        foreach (CardRewardOptionView optionView in optionViews)
+        {
+            if (optionView != null && optionView.Option == option)
+            {
+                return optionView;
+            }
+        }
+
+        return null;
+    }
+
+    private void SetOptionButtonsInteractable(bool interactable)
+    {
+        foreach (CardRewardOptionView optionView in optionViews)
+        {
+            if (optionView != null)
+            {
+                optionView.SetInteractable(interactable);
+            }
+        }
+    }
+
+    private bool CanApplyReward(CardRewardOption option)
+    {
+        if (option == null) return false;
+
+        switch (option.Type)
+        {
+            case CardRewardOptionType.NewCard:
+                return option.Card != null;
+
+            case CardRewardOptionType.UpgradeCard:
+                CardUpgradeRecipe recipe = option.UpgradeRecipe;
+                return recipe != null
+                    && recipe.BaseCard != null
+                    && recipe.UpgradedCard != null
+                    && RunDeckManager.Instance != null
+                    && RunDeckManager.Instance.Contains(recipe.BaseCard);
+
+            default:
+                return false;
         }
     }
 
