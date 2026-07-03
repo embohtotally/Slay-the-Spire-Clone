@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
   m_Name: Wilted Rhino
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: -719126606, guid: cccf725d57cc6e14f91c7c7a878d2946, type: 3}
+  <Image>k__BackingField: {fileID: 21300000, guid: a50219ed9afa06843bb9e1b0ad5a7fdc, type: 3}
   <Health>k__BackingField: 55
   <Intents>k__BackingField:
   - <IntentName>k__BackingField: Wilted Rhino
@@ -32,6 +32,7 @@ MonoBehaviour:
       <Effect>k__BackingField:
         rid: 5978927130765950977
   <AttackPattern>k__BackingField: 1
+  <SpriteOffset>k__BackingField: {x: 0, y: 0, z: 0}
   references:
     version: 2
     RefIds:
