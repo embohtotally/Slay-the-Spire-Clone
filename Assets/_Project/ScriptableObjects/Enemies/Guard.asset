@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
   m_Name: Guard
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 0}
+  <Image>k__BackingField: {fileID: 1626216215, guid: 5c84c401824ed2042b98899c551bd3f3, type: 3}
   <Health>k__BackingField: 35
   <Intents>k__BackingField:
   - <IntentName>k__BackingField: Guard

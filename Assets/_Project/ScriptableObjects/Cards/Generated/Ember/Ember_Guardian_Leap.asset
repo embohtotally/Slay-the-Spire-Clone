@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Ember_Guardian_Leap
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 1597602930, guid: 980c431e13a15ae46bc6637b2cdb9679, type: 3}
+  <Image>k__BackingField: {fileID: 1597602930, guid: 28ea9aba4895f93488dbba35627d3515, type: 3}
   <Title>k__BackingField: Guardian Leap
   <Description>k__BackingField: Gain 12 Shield, Redirect Damage
-  <Tier>k__BackingField: 0
+  <Tier>k__BackingField: 2
   <Mana>k__BackingField: 2
   <Type>k__BackingField: 1
   <TargetType>k__BackingField: 1
@@ -33,8 +33,15 @@ MonoBehaviour:
   <HoverSfx>k__BackingField: 5
   <PlaySfx>k__BackingField: 0
   <PlayParticle>k__BackingField: {fileID: 0}
-  <VisualType>k__BackingField: 0
-  <HeroAnimationTrigger>k__BackingField: 
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 3696007233179127096, guid: c248f95ffea8b8543bc7ad0fffe0216d, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8
+  <VisualType>k__BackingField: 2
+  <HeroAnimationTrigger>k__BackingField: Heal
   <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2
@@ -43,25 +50,15 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 5978927219931611231
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data:
+      data: 
     - rid: 5978927219931611232
       type: {class: GainShieldEffect, ns: , asm: Assembly-CSharp}
       data:
         shieldAmount: 12
     - rid: 5978927219931611233
       type: {class: SelfTM, ns: , asm: Assembly-CSharp}
-      data:
+      data: 
     - rid: 5978927219931611234
       type: {class: RedirectDamageEffect, ns: , asm: Assembly-CSharp}
       data:
         duration: 1
-  <HoverSfx>k__BackingField: 15
-  <PlaySfx>k__BackingField: 87
-  <PlayParticle>k__BackingField: {fileID: 0}
-  <PlayVfx>k__BackingField:
-    prefab: {fileID: 3696007233179127096, guid: c248f95ffea8b8543bc7ad0fffe0216d, type: 3}
-    offset: {x: 0, y: 0, z: 0}
-    rotationEuler: {x: 0, y: 0, z: 0}
-    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
-    parentToTarget: 0
-    destroyAfter: 1.8

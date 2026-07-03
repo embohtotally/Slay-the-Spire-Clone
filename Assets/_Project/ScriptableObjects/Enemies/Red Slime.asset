@@ -25,6 +25,7 @@ MonoBehaviour:
         rid: 5978926881917108523
       <Effect>k__BackingField:
         rid: 5978926881917108524
+  <AttackPattern>k__BackingField: 0
   references:
     version: 2
     RefIds:

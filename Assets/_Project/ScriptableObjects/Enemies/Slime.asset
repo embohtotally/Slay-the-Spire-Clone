@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
   m_Name: Slime
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 21300000, guid: 9abc7a1d3f6a05d438a05ae4640eadb5, type: 3}
+  <Image>k__BackingField: {fileID: 21300000, guid: 774e30d5116a9bb4bbf3b746beee4e3c, type: 3}
   <Health>k__BackingField: 15
   <Intents>k__BackingField:
   - <IntentName>k__BackingField: 
@@ -21,6 +21,7 @@ MonoBehaviour:
         rid: 5978926881917108525
       <Effect>k__BackingField:
         rid: 5978926881917108526
+  <AttackPattern>k__BackingField: 0
   references:
     version: 2
     RefIds:

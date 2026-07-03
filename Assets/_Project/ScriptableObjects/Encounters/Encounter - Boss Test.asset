@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <EncounterName>k__BackingField: Boss Test
   <Enemies>k__BackingField:
-  - {fileID: 11400000, guid: f96a4dd9f192f9c499b9e9575a8a2afa, type: 2}
-  - {fileID: 11400000, guid: f96a4dd9f192f9c499b9e9575a8a2afa, type: 2}
+  - {fileID: 11400000, guid: 3c7364ba337e01a4ab6aadf6b5dba813, type: 2}

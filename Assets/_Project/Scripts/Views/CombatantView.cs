@@ -50,6 +50,7 @@ public class CombatantView : MonoBehaviour
     public float ShakeStrength => shakeStrength;
 
     private bool hasHealthVisual;
+    private Canvas combatantCanvas;
 
     public StateMachine StateMachine { get; private set; }
 
@@ -64,7 +65,7 @@ public class CombatantView : MonoBehaviour
         StateMachine.Initialize(new CombatantIdleState(this));
 
         SetupHealthVisual();
-        UpdateHealthVisual();
+        UpdateHealthVisual(true);
     }
 
     public void SetCurrentHealth(int health)
@@ -86,6 +87,15 @@ public class CombatantView : MonoBehaviour
     private void Update()
     {
         StateMachine?.Update();
+    }
+
+    private void LateUpdate()
+    {
+        if (combatantCanvas != null)
+        {
+            // Lock the canvas rotation so health bars don't fill backwards when the enemy is rotated to face the player
+            combatantCanvas.transform.rotation = Quaternion.identity;
+        }
     }
 
     public virtual void Damage(int damageAmount)
@@ -146,6 +156,8 @@ public class CombatantView : MonoBehaviour
             CurrentHealth = EffectiveMaxHealth;
         }
         UpdateHealthVisual();
+
+        StateMachine.ChangeState(new CombatantHealState(this));
     }
 
     public void ApplyHealthPenalty(int amount)
@@ -216,6 +228,7 @@ public class CombatantView : MonoBehaviour
 
     protected virtual void SetupHealthVisual()
     {
+        combatantCanvas = GetComponentInChildren<Canvas>();
         hasHealthVisual = !HealthObjectIsNull();
         if (!hasHealthVisual) return;
 
@@ -229,7 +242,7 @@ public class CombatantView : MonoBehaviour
         }
     }
 
-    protected virtual void UpdateHealthVisual()
+    protected virtual void UpdateHealthVisual(bool instant = false)
     {
         if (!hasHealthVisual) return;
 
@@ -237,43 +250,78 @@ public class CombatantView : MonoBehaviour
         {
             float targetHealth = Mathf.Clamp01((float)CurrentHealth / MaxHealth);
             healthSlider.DOKill();
-            healthSlider.DOValue(targetHealth, 0.3f);
+            if (instant) healthSlider.value = targetHealth;
+            else healthSlider.DOValue(targetHealth, 0.3f);
 
             float targetBlocked = Mathf.Clamp01((float)HealthPenalty / MaxHealth);
-            blockedSlider.DOKill();
-            if (blockedSlider.fillRect != null)
+            if (blockedSlider != null)
             {
-                if (HealthPenalty > 0)
+                blockedSlider.DOKill();
+                if (instant) blockedSlider.value = targetBlocked;
+
+                if (blockedSlider.fillRect != null)
                 {
-                    blockedSlider.fillRect.gameObject.SetActive(true);
-                    blockedSlider.DOValue(targetBlocked, 0.3f);
-                }
-                else
-                {
-                    blockedSlider.DOValue(0f, 0.3f).OnComplete(() => 
+                    if (HealthPenalty > 0)
                     {
-                        if (blockedSlider.value <= 0.001f)
+                        blockedSlider.fillRect.gameObject.SetActive(true);
+                        if (!instant) blockedSlider.DOValue(targetBlocked, 0.3f);
+                    }
+                    else
+                    {
+                        if (instant || blockedSlider.value <= 0.001f)
+                        {
+                            blockedSlider.value = 0f;
                             blockedSlider.fillRect.gameObject.SetActive(false);
-                    });
+                        }
+                        else
+                        {
+                            blockedSlider.DOValue(0f, 0.3f).OnComplete(() => 
+                            {
+                                if (blockedSlider != null && blockedSlider.fillRect != null && blockedSlider.value <= 0.001f)
+                                    blockedSlider.fillRect.gameObject.SetActive(false);
+                            });
+                        }
+                    }
+                }
+                else if (!instant)
+                {
+                    blockedSlider.DOValue(targetBlocked, 0.3f);
                 }
             }
 
             float targetShield = Mathf.Clamp01((float)CurrentShield / MaxHealth);
-            shieldSlider.DOKill();
-            if (shieldSlider.fillRect != null)
+            if (shieldSlider != null)
             {
-                if (CurrentShield > 0)
+                shieldSlider.DOKill();
+                if (instant) shieldSlider.value = targetShield;
+
+                if (shieldSlider.fillRect != null)
                 {
-                    shieldSlider.fillRect.gameObject.SetActive(true);
-                    shieldSlider.DOValue(targetShield, 0.3f);
-                }
-                else
-                {
-                    shieldSlider.DOValue(0f, 0.3f).OnComplete(() => 
+                    if (CurrentShield > 0)
                     {
-                        if (shieldSlider.value <= 0.001f)
+                        shieldSlider.fillRect.gameObject.SetActive(true);
+                        if (!instant) shieldSlider.DOValue(targetShield, 0.3f);
+                    }
+                    else
+                    {
+                        if (instant || shieldSlider.value <= 0.001f)
+                        {
+                            shieldSlider.value = 0f;
                             shieldSlider.fillRect.gameObject.SetActive(false);
-                    });
+                        }
+                        else
+                        {
+                            shieldSlider.DOValue(0f, 0.3f).OnComplete(() => 
+                            {
+                                if (shieldSlider != null && shieldSlider.fillRect != null && shieldSlider.value <= 0.001f)
+                                    shieldSlider.fillRect.gameObject.SetActive(false);
+                            });
+                        }
+                    }
+                }
+                else if (!instant)
+                {
+                    shieldSlider.DOValue(targetShield, 0.3f);
                 }
             }
         }
@@ -290,9 +338,9 @@ public class CombatantView : MonoBehaviour
     {
         if (useSlider)
         {
-            if (healthSlider == null || blockedSlider == null || shieldSlider == null)
+            if (healthSlider == null)
             {
-                Gameseed26.Logger.LogError(this, $"[{name}] Any slider is not assigned or null!");
+                Gameseed26.Logger.LogError(this, $"[{name}] Health slider is not assigned or null!");
                 return true;
             }
         }
