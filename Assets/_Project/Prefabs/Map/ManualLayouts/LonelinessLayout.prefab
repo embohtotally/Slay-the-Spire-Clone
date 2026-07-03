@@ -129,6 +129,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2252289210422267516, guid: bb318327b744adc4fb61e38249ea3cf9, type: 3}
+      propertyPath: encounter
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2252289210422267516, guid: bb318327b744adc4fb61e38249ea3cf9, type: 3}
       propertyPath: useNodeTypeIconVisuals
       value: 1
       objectReference: {fileID: 0}
