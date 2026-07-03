@@ -38,6 +38,23 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     [ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
     [SerializeField] private SpriteRenderer cardSpriteRenderer;
 
+    [BoxGroup("Visual References")]
+    [ShowIf(nameof(viewMode), CardViewMode.CanvasDisplay)]
+    [SerializeField] private Image frameImage;
+
+    [BoxGroup("Visual References")]
+    [ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
+    [SerializeField] private SpriteRenderer frameSpriteRenderer;
+
+    [BoxGroup("Visual References")]
+    [SerializeField] private Sprite basicFrameSprite;
+
+    [BoxGroup("Visual References")]
+    [SerializeField] private Sprite rareFrameSprite;
+
+    [BoxGroup("Visual References")]
+    [SerializeField] private Sprite specialFrameSprite;
+
 
     [BoxGroup("Optional Combat References"), ShowIf(nameof(viewMode), CardViewMode.WorldCombat)]
     [SerializeField] private GameObject worldWrapper;
@@ -160,7 +177,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
             return;
         }
 
-        ApplyVisuals(card.Title, card.Description, card.Mana, card.Type, card.Image);
+        ApplyVisuals(card.Title, card.Description, card.Mana, card.Type, card.Image, card.Tier);
     }
 
     public void Setup(CardData cardData)
@@ -175,7 +192,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
             return;
         }
 
-        ApplyVisuals(cardData.Title, cardData.Description, cardData.Mana, cardData.Type, cardData.Image);
+        ApplyVisuals(cardData.Title, cardData.Description, cardData.Mana, cardData.Type, cardData.Image, cardData.Tier);
     }
 
     public void SetupCard(CardData cardData, string titleOverride = null, string descriptionOverride = null)
@@ -192,7 +209,7 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
         string displayTitle = string.IsNullOrWhiteSpace(titleOverride) ? cardData.Title : titleOverride;
         string displayDescription = string.IsNullOrWhiteSpace(descriptionOverride) ? cardData.Description : descriptionOverride;
-        ApplyVisuals(displayTitle, displayDescription, cardData.Mana, cardData.Type, cardData.Image);
+        ApplyVisuals(displayTitle, displayDescription, cardData.Mana, cardData.Type, cardData.Image, cardData.Tier);
     }
 
     public void SetHoverJuiceEnabled(bool enabled)
@@ -218,6 +235,9 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         ApplyText(typeText, string.Empty);
 
         SetImage(null);
+        
+        if (frameImage != null) frameImage.enabled = false;
+        if (frameSpriteRenderer != null) frameSpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
     }
 
     public virtual void OnPointerEnter(PointerEventData eventData)
@@ -345,13 +365,37 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         }
     }
 
-    private void ApplyVisuals(string cardTitle, string cardDescription, int cardMana, CardType cardType, Sprite cardSprite)
+    private void ApplyVisuals(string cardTitle, string cardDescription, int cardMana, CardType cardType, Sprite cardSprite, Tier cardTier)
     {
         ApplyText(titleText, cardTitle);
         ApplyText(descriptionText, cardDescription);
         ApplyText(manaText, cardMana.ToString());
         ApplyText(typeText, cardType.ToString());
         SetImage(cardSprite);
+        SetFrame(cardTier);
+    }
+
+    private void SetFrame(Tier tier)
+    {
+        Sprite frameSprite = tier switch
+        {
+            Tier.Basic => basicFrameSprite,
+            Tier.Rare => rareFrameSprite,
+            Tier.Special => specialFrameSprite,
+            _ => basicFrameSprite
+        };
+
+        if (frameImage != null)
+        {
+            frameImage.sprite = frameSprite;
+            frameImage.enabled = frameSprite != null;
+        }
+
+        if (frameSpriteRenderer != null)
+        {
+            frameSpriteRenderer.sprite = frameSprite;
+            frameSpriteRenderer.color = frameSprite != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+        }
     }
 
     private void SetImage(Sprite sprite)

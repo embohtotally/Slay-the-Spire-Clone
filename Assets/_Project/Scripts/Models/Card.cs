@@ -15,6 +15,7 @@ public class Card
     public CardTargetType TargetType { get; private set; }
     public List<AutoTargetEffect> OtherEffects { get; private set; }
     public Sprite Image { get; private set; }
+    public Tier Tier { get; private set; }
     public int Mana { get; private set; }
     public SfxID HoverSfx { get; private set; }
     public SfxID PlaySfx { get; private set; }
@@ -32,6 +33,7 @@ public class Card
     {
         data = cardData;
         Image = data.Image;
+        Tier = data.Tier;
         Title = data.Title;
         Description = data.Description;
         Mana = data.Mana;

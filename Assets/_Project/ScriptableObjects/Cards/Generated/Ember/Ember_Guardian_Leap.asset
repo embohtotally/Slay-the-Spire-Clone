@@ -15,7 +15,7 @@ MonoBehaviour:
   <Image>k__BackingField: {fileID: 1597602930, guid: 28ea9aba4895f93488dbba35627d3515, type: 3}
   <Title>k__BackingField: Guardian Leap
   <Description>k__BackingField: Gain 12 Shield, Redirect Damage
-  <Tier>k__BackingField: 0
+  <Tier>k__BackingField: 2
   <Mana>k__BackingField: 2
   <Type>k__BackingField: 1
   <TargetType>k__BackingField: 1
@@ -40,8 +40,8 @@ MonoBehaviour:
     scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
     parentToTarget: 0
     destroyAfter: 1.8
-  <VisualType>k__BackingField: 0
-  <HeroAnimationTrigger>k__BackingField: 
+  <VisualType>k__BackingField: 2
+  <HeroAnimationTrigger>k__BackingField: Heal
   <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2

@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Aura_Starfall_Burst
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 21300006, guid: 7ab74e659e1f0a34d9cfec21c478fc12, type: 3}
+  <Image>k__BackingField: {fileID: 2054458977, guid: 56ce11f854e5896488c9b008fe7faaf5, type: 3}
   <Title>k__BackingField: Starfall Burst
   <Description>k__BackingField: Deal 18 Damage (+12 If Fear >= 50)
-  <Tier>k__BackingField: 0
+  <Tier>k__BackingField: 1
   <Mana>k__BackingField: 3
   <Type>k__BackingField: 0
   <TargetType>k__BackingField: 0
@@ -25,8 +25,15 @@ MonoBehaviour:
   <HoverSfx>k__BackingField: 5
   <PlaySfx>k__BackingField: 0
   <PlayParticle>k__BackingField: {fileID: 0}
-  <VisualType>k__BackingField: 0
-  <HeroAnimationTrigger>k__BackingField: 
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 2708598583165999485, guid: 6398d43fe79ea0140913dc5530c646af, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
+    parentToTarget: 0
+    destroyAfter: 1.8
+  <VisualType>k__BackingField: 2
+  <HeroAnimationTrigger>k__BackingField: Attack
   <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2
@@ -38,13 +45,3 @@ MonoBehaviour:
         bonusDamage: 12
         condition: 0
         threshold: 50
-  <HoverSfx>k__BackingField: 15
-  <PlaySfx>k__BackingField: 76
-  <PlayParticle>k__BackingField: {fileID: 0}
-  <PlayVfx>k__BackingField:
-    prefab: {fileID: 2708598583165999485, guid: 6398d43fe79ea0140913dc5530c646af, type: 3}
-    offset: {x: 0, y: 0, z: 0}
-    rotationEuler: {x: 0, y: 0, z: 0}
-    scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
-    parentToTarget: 0
-    destroyAfter: 1.8

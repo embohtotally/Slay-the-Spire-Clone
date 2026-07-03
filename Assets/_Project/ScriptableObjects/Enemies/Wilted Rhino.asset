@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60033c999cde836479a661ca9d868afa, type: 3}
   m_Name: Wilted Rhino
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 21300004, guid: 7ab74e659e1f0a34d9cfec21c478fc12, type: 3}
+  <Image>k__BackingField: {fileID: -719126606, guid: cccf725d57cc6e14f91c7c7a878d2946, type: 3}
   <Health>k__BackingField: 55
   <Intents>k__BackingField:
   - <IntentName>k__BackingField: Wilted Rhino

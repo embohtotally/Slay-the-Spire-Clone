@@ -36,8 +36,8 @@ MonoBehaviour:
     scaleMultiplier: {x: 0.55, y: 0.55, z: 0.55}
     parentToTarget: 0
     destroyAfter: 1.8
-  <VisualType>k__BackingField: 0
-  <HeroAnimationTrigger>k__BackingField: 
+  <VisualType>k__BackingField: 2
+  <HeroAnimationTrigger>k__BackingField: Attack
   <TargetAnimationTrigger>k__BackingField: 
   references:
     version: 2
