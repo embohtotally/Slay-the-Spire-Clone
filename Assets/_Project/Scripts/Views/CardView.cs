@@ -108,6 +108,8 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     [SerializeField] private bool bringToFrontOnHover = true;
 
     [Foldout("Audio")]
+    [SerializeField] private bool enablePointerAudio = true;
+    [Foldout("Audio")]
     [SerializeField] private TuneSfxCue hoverSfx;
     [Foldout("Audio")]
     [SerializeField] private TuneSfxCue pickUpSfx;
@@ -227,6 +229,11 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         enableCombatHoverPreview = enabled;
     }
 
+    public void SetPointerAudioEnabled(bool enabled)
+    {
+        enablePointerAudio = enabled;
+    }
+
     public virtual void ClearCardVisuals()
     {
         ApplyText(titleText, "Empty");
@@ -249,11 +256,11 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
             if (worldWrapper != null) worldWrapper.SetActive(false);
         }
 
-        if (Card != null && Card.HoverSfx != Gameseed26.SfxID.None)
+        if (enablePointerAudio && Card != null && Card.HoverSfx != Gameseed26.SfxID.None)
         {
             Gameseed26.Tune.SFX(Card.HoverSfx);
         }
-        else if (CardData != null && CardData.HoverSfx != Gameseed26.SfxID.None)
+        else if (enablePointerAudio && CardData != null && CardData.HoverSfx != Gameseed26.SfxID.None)
         {
             Gameseed26.Tune.SFX(CardData.HoverSfx);
         }

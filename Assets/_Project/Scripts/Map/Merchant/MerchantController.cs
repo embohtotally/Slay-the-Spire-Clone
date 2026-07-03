@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using Gameseed26;
+using NaughtyAttributes;
 using UnityEngine;
 
 public class MerchantController : MonoBehaviour
@@ -17,6 +19,22 @@ public class MerchantController : MonoBehaviour
     [SerializeField] private MerchantOfferSlotView slotPrefab;
     [SerializeField] private bool autoFindSlotsInChildren = true;
 
+    [Header("Interaction Lock")]
+    [Tooltip("Animation Sequencer can disable this while the shop opens/closes so players cannot click during transitions.")]
+    [SerializeField] private bool purchasesEnabled = true;
+
+    [Header("Shopkeeper Juice")]
+    [SerializeField] private RectTransform shopkeeperVisual;
+    [SerializeField] private bool playShopkeeperIdle = true;
+    [ShowIf(nameof(playShopkeeperIdle))]
+    [SerializeField] private float idleStartDelay = 1.05f;
+    [ShowIf(nameof(playShopkeeperIdle))]
+    [SerializeField] private float idleYOffset = 10f;
+    [ShowIf(nameof(playShopkeeperIdle))]
+    [SerializeField] private float idleDuration = 2.4f;
+    [ShowIf(nameof(playShopkeeperIdle))]
+    [SerializeField] private Ease idleEase = Ease.InOutSine;
+
     [Header("Navigation")]
     [SerializeField] private string mapSceneName = "Map";
 
@@ -29,6 +47,10 @@ public class MerchantController : MonoBehaviour
     private readonly List<MerchantOffer> activeOffers = new();
     private readonly List<MerchantOfferSlotView> slots = new();
     private RunManager subscribedRunManager;
+    private Tween shopkeeperIdleTween;
+    private Tween shopkeeperIdleDelayTween;
+
+    public bool PurchasesEnabled => purchasesEnabled;
 
     private void Awake()
     {
@@ -43,6 +65,7 @@ public class MerchantController : MonoBehaviour
 
     private void OnDisable()
     {
+        StopShopkeeperIdle();
         UnsubscribeFromRunStateChanges();
     }
 
@@ -51,6 +74,7 @@ public class MerchantController : MonoBehaviour
         SubscribeToRunStateChanges();
         GenerateOffers();
         shopOpenedSfx?.Play(this, transform);
+        StartShopkeeperIdleAfterDelay();
     }
 
     public void GenerateOffers()
@@ -96,6 +120,13 @@ public class MerchantController : MonoBehaviour
     public void BuyOffer(MerchantOffer offer, MerchantOfferSlotView slotView)
     {
         if (offer == null || offer.IsSold) return;
+
+        if (!purchasesEnabled)
+        {
+            slotView?.PlayUnavailableFeedback();
+            return;
+        }
+
         EnsureRunDeckManagerExists();
 
         if (!CanAfford(offer))
@@ -103,6 +134,7 @@ public class MerchantController : MonoBehaviour
             cannotAffordSfx?.Play(this, slotView != null ? slotView.transform : transform);
             int currentGold = RunManager.Instance != null ? RunManager.Instance.Gold : 0;
             Gameseed26.Logger.Log($"Not enough gold for merchant offer '{offer.GetTitle()}'. Need {offer.Price}, have {currentGold}.");
+            slotView?.PlayUnavailableFeedback();
             slotView?.Refresh();
             return;
         }
@@ -125,6 +157,7 @@ public class MerchantController : MonoBehaviour
         offer.MarkSold();
         buyOfferSfx?.Play(this, slotView != null ? slotView.transform : transform);
         RefreshSlots();
+        slotView?.PlayPurchasedFeedback();
     }
 
     public bool CanAfford(MerchantOffer offer)
@@ -145,6 +178,54 @@ public class MerchantController : MonoBehaviour
         }
 
         SceneLoader.LoadScene(mapSceneName);
+    }
+
+    public void SetPurchasesEnabled(bool enabled)
+    {
+        purchasesEnabled = enabled;
+        RefreshSlots();
+    }
+
+    [Button("Enable Purchases", EButtonEnableMode.Playmode)]
+    public void EnablePurchases()
+    {
+        SetPurchasesEnabled(true);
+    }
+
+    [Button("Disable Purchases", EButtonEnableMode.Playmode)]
+    public void DisablePurchases()
+    {
+        SetPurchasesEnabled(false);
+    }
+
+    public void StartShopkeeperIdleAfterDelay()
+    {
+        if (!playShopkeeperIdle || shopkeeperVisual == null) return;
+
+        shopkeeperIdleDelayTween?.Kill();
+        shopkeeperIdleDelayTween = DOVirtual.DelayedCall(Mathf.Max(0f, idleStartDelay), StartShopkeeperIdle, false)
+            .SetUpdate(false);
+    }
+
+    [Button("Start Shopkeeper Idle", EButtonEnableMode.Playmode)]
+    public void StartShopkeeperIdle()
+    {
+        if (!playShopkeeperIdle || shopkeeperVisual == null) return;
+
+        StopShopkeeperIdle();
+        Vector2 startPosition = shopkeeperVisual.anchoredPosition;
+        shopkeeperIdleTween = shopkeeperVisual.DOAnchorPosY(startPosition.y + idleYOffset, Mathf.Max(0.01f, idleDuration))
+            .SetEase(idleEase)
+            .SetLoops(-1, LoopType.Yoyo);
+    }
+
+    [Button("Stop Shopkeeper Idle", EButtonEnableMode.Playmode)]
+    public void StopShopkeeperIdle()
+    {
+        shopkeeperIdleDelayTween?.Kill();
+        shopkeeperIdleTween?.Kill();
+        shopkeeperIdleDelayTween = null;
+        shopkeeperIdleTween = null;
     }
 
     private bool BuyNewCard(MerchantOffer offer)

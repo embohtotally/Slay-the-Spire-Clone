@@ -46,6 +46,7 @@ public class RunDeckPanelController : MonoBehaviour
 
     private readonly List<RunDeckCardView> spawnedViews = new();
     private bool isOpen;
+    private RunDeckManager subscribedDeckManager;
 
     private void Awake()
     {
@@ -79,6 +80,19 @@ public class RunDeckPanelController : MonoBehaviour
     private void OnDisable()
     {
         UnsubscribeFromDeckManager();
+    }
+
+    private void Update()
+    {
+        if (subscribedDeckManager != RunDeckManager.Instance)
+        {
+            SubscribeToDeckManager();
+        }
+
+        if (closeWithEscape && isOpen && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            ClosePanel();
+        }
     }
 
     [Button("Open Deck Panel", EButtonEnableMode.Playmode)]
@@ -117,6 +131,8 @@ public class RunDeckPanelController : MonoBehaviour
     [Button("Refresh Deck View", EButtonEnableMode.Playmode)]
     public void RefreshDeckView()
     {
+        SubscribeToDeckManager();
+
         IReadOnlyList<CardData> deck = RunDeckManager.Instance != null
             ? RunDeckManager.Instance.CurrentDeck
             : new List<CardData>();
@@ -235,18 +251,23 @@ public class RunDeckPanelController : MonoBehaviour
 
     private void SubscribeToDeckManager()
     {
-        if (RunDeckManager.Instance != null)
+        if (subscribedDeckManager == RunDeckManager.Instance) return;
+
+        UnsubscribeFromDeckManager();
+        subscribedDeckManager = RunDeckManager.Instance;
+        if (subscribedDeckManager != null)
         {
-            RunDeckManager.Instance.DeckChanged -= HandleDeckChanged;
-            RunDeckManager.Instance.DeckChanged += HandleDeckChanged;
+            subscribedDeckManager.DeckChanged -= HandleDeckChanged;
+            subscribedDeckManager.DeckChanged += HandleDeckChanged;
         }
     }
 
     private void UnsubscribeFromDeckManager()
     {
-        if (RunDeckManager.Instance != null)
+        if (subscribedDeckManager != null)
         {
-            RunDeckManager.Instance.DeckChanged -= HandleDeckChanged;
+            subscribedDeckManager.DeckChanged -= HandleDeckChanged;
+            subscribedDeckManager = null;
         }
     }
 
