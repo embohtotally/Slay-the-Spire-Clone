@@ -10,10 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ae86d33516b145f4fa9e3d6e430835c1, type: 3}
-  m_Name: Encounter - Slime Medium
+  m_Name: Encounter - Lizard
   m_EditorClassIdentifier: 
   <EncounterName>k__BackingField: Slime Medium
   <Enemies>k__BackingField:
-  - {fileID: 11400000, guid: f96a4dd9f192f9c499b9e9575a8a2afa, type: 2}
-  - {fileID: 11400000, guid: 48a9bfa41cad7a8489c7a6646e23656a, type: 2}
-  - {fileID: 11400000, guid: 48a9bfa41cad7a8489c7a6646e23656a, type: 2}
+  - {fileID: 11400000, guid: b1c14af732a57594da8e93baa6b4e405, type: 2}
