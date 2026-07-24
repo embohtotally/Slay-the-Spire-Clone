@@ -27,6 +27,15 @@ namespace Gameseed26
             else Time.timeScale = 0f;
         }
 
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Equals))
+            {
+                PlayerPrefs.DeleteAll();
+                Debug.Log("PlayerPrefs deleted!");
+            }
+        }
+
         public static void GenerateFloatingText(string text, Transform target, float duration = 1f, float speed = 1f, string colorHex = "")
         {
             if (Instance == null) return;
