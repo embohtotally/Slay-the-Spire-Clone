@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Default Hero
   m_EditorClassIdentifier: 
   <Deck>k__BackingField:
+  - {fileID: 11400000, guid: 9da6e84391bf95849abf15149c84301f, type: 2}
   - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
   - {fileID: 11400000, guid: 0a9ddaf6d7968e240bcba775b6584084, type: 2}
   - {fileID: 11400000, guid: f08c5962a3de27e45a157d3a564f2515, type: 2}
@@ -32,6 +33,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d433d206b7c35404b899dc7ace58a5d3, type: 2}
   - {fileID: 11400000, guid: 1b49c1cf0e67a0a4e807f21eafd600bb, type: 2}
   - {fileID: 11400000, guid: 8122809098da372478039e3584de2aeb, type: 2}
+  - {fileID: 11400000, guid: 9da6e84391bf95849abf15149c84301f, type: 2}
   <Image>k__BackingField: {fileID: 21300000, guid: 774e30d5116a9bb4bbf3b746beee4e3c, type: 3}
   <Health>k__BackingField: 44
   <StartingPerks>k__BackingField: []
