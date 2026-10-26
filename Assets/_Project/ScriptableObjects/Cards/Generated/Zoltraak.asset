@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
+  m_Name: Zoltraak
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 2054458977, guid: 56ce11f854e5896488c9b008fe7faaf5, type: 3}
+  <Title>k__BackingField: Zoltraak
+  <Description>k__BackingField: Deal 16 damage with a concentrated piercing beam
+    that cuts through all enemies in its trajectory.
+  <Tier>k__BackingField: 1
+  <Mana>k__BackingField: 2
+  <Type>k__BackingField: 0
+  <TargetType>k__BackingField: 0
+  <ManualTargetEffect>k__BackingField:
+    rid: 3218947327116181588
+  <OtherEffects>k__BackingField: []
+  <HoverSfx>k__BackingField: 5
+  <PlaySfx>k__BackingField: 0
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 0}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 1, y: 1, z: 1}
+    parentToTarget: 0
+    destroyAfter: 3
+  <VisualType>k__BackingField: 0
+  <HeroAnimationTrigger>k__BackingField: 
+  <TargetAnimationTrigger>k__BackingField: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 3218947327116181588
+      type: {class: BeamAttackEffect, ns: , asm: Assembly-CSharp}
+      data:
+        damageAmount: 16
+        beamConfig: {fileID: 11400000, guid: dceee39a9e23e674c8d53b71772ed709, type: 2}

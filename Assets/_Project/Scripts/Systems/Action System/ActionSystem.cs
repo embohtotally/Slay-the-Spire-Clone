@@ -18,6 +18,10 @@ public class ActionSystem : Singleton<ActionSystem>
         {
             gameObject.AddComponent<BuffSystem>();
         }
+        if (BeamVfxSystem.Instance == null && GetComponent<BeamVfxSystem>() == null)
+        {
+            gameObject.AddComponent<BeamVfxSystem>();
+        }
     }
 
     private static Dictionary<Type, List<Action<GameAction>>> preSubs = new();
@@ -82,9 +86,9 @@ public class ActionSystem : Singleton<ActionSystem>
         }
     }
 
-    public void Perform(GameAction action, Action OnPerformFinished = null)
+    public bool Perform(GameAction action, Action OnPerformFinished = null)
     {
-        if (IsPerforming) return;
+        if (IsPerforming) return false;
 
         IsPerforming = true;
 
@@ -93,11 +97,20 @@ public class ActionSystem : Singleton<ActionSystem>
             IsPerforming = false;
             OnPerformFinished?.Invoke();
         }));
+
+        return true;
     }
 
     public void AddReaction(GameAction gameAction)
     {
         reactions?.Add(gameAction);
+    }
+
+    public IEnumerator PerformSubflow(GameAction action)
+    {
+        List<GameAction> restore = reactions;
+        yield return Flow(action);
+        reactions = restore;
     }
 
     private IEnumerator Flow(GameAction action, Action OnFlowFinished = null)

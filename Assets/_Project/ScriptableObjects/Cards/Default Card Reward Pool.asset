@@ -18,6 +18,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
   - {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
   - {fileID: 11400000, guid: d5ba679f2ef5c13459e021d26a1841b4, type: 2}
+  - {fileID: 11400000, guid: 9da6e84391bf95849abf15149c84301f, type: 2}
   upgradeRewards:
   - BaseCard: {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
     UpgradedCard: {fileID: 11400000, guid: 80af5434f9a9498c908361cc60b0a981, type: 2}

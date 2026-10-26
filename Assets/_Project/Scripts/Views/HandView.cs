@@ -61,8 +61,23 @@ public class HandView : MonoBehaviour
         yield return updateCardPositionTime;
     }
 
+    public void RefreshCardPositions()
+    {
+        if (cards.Count > 0)
+        {
+            StartCoroutine(UpdateCardPositions(doTweenUpdatePositionDuration));
+        }
+    }
+
     private CardView GetCardView(Card card)
     {
-        return cards.Where(cardView => cardView.Card == card).FirstOrDefault();
+        for (int i = 0; i < cards.Count; i++)
+        {
+            if (cards[i] != null && cards[i].Card == card)
+            {
+                return cards[i];
+            }
+        }
+        return null;
     }
 }

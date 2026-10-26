@@ -12,6 +12,13 @@ public class MatchSetupSystem : MonoBehaviour
     [SerializeField] private int startingHandSize = 5;
     [SerializeField] private Gameseed26.SfxID yourTurnSfx = Gameseed26.SfxID.YourTurn;
 
+#if UNITY_EDITOR
+    [Header("Developer Playtest Overrides (Editor Only, Zero Launch Impact)")]
+    [Tooltip("If enabled, these test cards are prepended to the opening deck only when running in the Unity Editor.")]
+    [SerializeField] private bool enableEditorTestCards = false;
+    [SerializeField] private List<CardData> editorTestCards = new();
+#endif
+
     private void Start()
     {
         HeroSystem.Instance.Setup(heroTeam);
@@ -52,6 +59,17 @@ public class MatchSetupSystem : MonoBehaviour
     private List<CardData> BuildStartingDeck()
     {
         List<CardData> combinedDeck = new();
+
+#if UNITY_EDITOR
+        if (enableEditorTestCards && editorTestCards != null)
+        {
+            foreach (CardData card in editorTestCards)
+            {
+                if (card != null) combinedDeck.Add(card);
+            }
+        }
+#endif
+
         foreach (HeroData hero in heroTeam)
         {
             if (hero != null && hero.Deck != null)

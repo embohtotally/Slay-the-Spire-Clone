@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb6ef00a1f9af9747b7886da4f9d84b8, type: 3}
+  m_Name: New Beam Vfx Config
+  m_EditorClassIdentifier: 
+  BeamPrefab: {fileID: 0}
+  ChargeDuration: 0.55
+  BeamTravelSpeed: 60
+  HoldDuration: 0.28
+  DissipateDuration: 0.45
+  CylinderSides: 12
+  BeamRadius: 0.22
+  SheathRadiusMultiplier: 1.8
+  CircleRadius: 1.15
+  CircleCameraTilt: 0.55
+  PierceOvershoot: 1.2
+  DepthOffset: -0.35
+  CasterAnchorNames:
+  - CastAnchor
+  - Muzzle
+  - Staff
+  CasterAnchorOffset: {x: 0.55, y: 0.35, z: 0}
+  TargetAnchorNames:
+  - ImpactAnchor
+  - HitPoint
+  TargetAnchorOffset: {x: 0, y: 0.15, z: 0}
+  BaseCoreMaterial: {fileID: 0}
+  BaseSheathMaterial: {fileID: 0}
+  BaseCircleMaterial: {fileID: 0}
+  BaseShockMaterial: {fileID: 0}
+  CoreColor: {r: 1, g: 0.35, b: 0.75, a: 1}
+  HotColor: {r: 1, g: 1, b: 1, a: 1}
+  SheathColor: {r: 0.72, g: 0.3, b: 1, a: 1}
+  CircleColor: {r: 1, g: 0.5, b: 0.85, a: 1}
+  ImpactRingColor: {r: 1, g: 0.6, b: 0.9, a: 1}
+  ImpactFlashColor: {r: 1, g: 1, b: 1, a: 1}
+  CoreIntensity: 6
+  SheathIntensity: 2.5
+  CircleIntensity: 4
+  ImpactRingIntensity: 7
+  ImpactFlashIntensity: 10
+  GateMode: 0
+  UsePerTargetSubflows: 0
+  SkipDeadTargets: 1
+  ExpandSingleTargetToLine: 0
+  LineMaxAngle: 18
+  LineMaxTargets: 4
+  MuzzleBurstCount: 16
+  SparkBurstCount: 28
+  IonLingerCount: 12
+  SmokePuffCount: 4
+  ShakeAmplitude: 0.22
+  ShakeDuration: 0.32
+  FlashStrength: 0.55
+  ChargeSfx: 0
+  FireSfx: 0
+  ImpactSfx: 0
+  SortingLayerName: VFX
+  SortingOrder: 50

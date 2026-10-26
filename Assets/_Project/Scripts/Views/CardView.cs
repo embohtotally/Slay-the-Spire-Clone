@@ -308,28 +308,44 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         PlayHoverJuice(baseHoverScale * hoverScale, hoverEase, false);
 
-        if (!CanStartCombatInteraction()) return;
+        if (Card == null) return;
 
         if (Card.ManualTargetEffect != null)
         {
-            CombatantView target = ManualTargetingSystem.Instance.EndTargeting(MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue), Card.TargetType);
-            if (target != null && ManaSystem.Instance.HasEnoughMana(Card.Mana))
+            CombatantView target = ManualTargetingSystem.Instance != null
+                ? ManualTargetingSystem.Instance.EndTargeting(MouseUtils.GetMousePositionInWorldSpace(mousePositionZValue), Card.TargetType)
+                : null;
+
+            int cost = GetEffectiveManaCost();
+            bool hasMana = ManaSystem.Instance != null && ManaSystem.Instance.HasEnoughMana(cost);
+            bool canInteract = CanStartCombatInteraction();
+
+            if (target != null && hasMana && canInteract && ActionSystem.Instance != null && !ActionSystem.Instance.IsPerforming)
             {
-                releaseValidSfx?.Play(this, transform);
                 PlayCardGA playCardGA = new(Card, target);
-                ActionSystem.Instance.Perform(playCardGA);
+                if (ActionSystem.Instance.Perform(playCardGA))
+                {
+                    releaseValidSfx?.Play(this, transform);
+                    return;
+                }
             }
-            else
-            {
-                releaseInvalidSfx?.Play(this, transform);
-            }
+
+            releaseInvalidSfx?.Play(this, transform);
+            ResetCardToHand();
         }
         else
         {
-            ManualTargetingSystem.Instance.EndAutoTargeting();
+            if (ManualTargetingSystem.Instance != null)
+            {
+                ManualTargetingSystem.Instance.EndAutoTargeting();
+            }
+
             PlayCardOrResetPosition();
 
-            Interactions.Instance.PlayerIsDragging = false;
+            if (Interactions.Instance != null)
+            {
+                Interactions.Instance.PlayerIsDragging = false;
+            }
         }
     }
 
@@ -462,27 +478,50 @@ public class CardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         return Interactions.Instance != null && Interactions.Instance.PlayerCanInteract();
     }
 
-    private bool CanPlayCard()
+    public int GetEffectiveManaCost()
     {
+        if (Card == null) return CardData != null ? CardData.Mana : 0;
         int cost = Card.Mana;
         if (RunManager.Instance != null && RunManager.Instance.CardCostModifiers.TryGetValue(Card.Title, out int modifier))
         {
             cost = Mathf.Max(0, cost - modifier);
         }
-        return ManaSystem.Instance.HasEnoughMana(cost) && Physics.Raycast(transform.position, Vector3.forward, out _, mouseUpRaycastDistance, dropAreaLayer);
+        return cost;
+    }
+
+    private bool CanPlayCard()
+    {
+        if (ActionSystem.Instance == null || ActionSystem.Instance.IsPerforming) return false;
+        int cost = GetEffectiveManaCost();
+        if (ManaSystem.Instance == null || !ManaSystem.Instance.HasEnoughMana(cost)) return false;
+        return Physics.Raycast(transform.position, Vector3.forward, out _, mouseUpRaycastDistance, dropAreaLayer);
     }
 
     private void PlayCardOrResetPosition()
     {
-        if (CanPlayCard())
+        if (CanPlayCard() && CanStartCombatInteraction())
         {
-            releaseValidSfx?.Play(this, transform);
             PlayCardGA playCardGA = new(Card);
-            ActionSystem.Instance.Perform(playCardGA);
+            if (ActionSystem.Instance != null && ActionSystem.Instance.Perform(playCardGA))
+            {
+                releaseValidSfx?.Play(this, transform);
+                return;
+            }
+        }
+
+        releaseInvalidSfx?.Play(this, transform);
+        ResetCardToHand();
+    }
+
+    public void ResetCardToHand()
+    {
+        transform.DOKill();
+        if (CardSystem.Instance != null && CardSystem.Instance.HandView != null)
+        {
+            CardSystem.Instance.HandView.RefreshCardPositions();
         }
         else
         {
-            releaseInvalidSfx?.Play(this, transform);
             transform.SetPositionAndRotation(dragStartPosition, dragStartRotation);
         }
     }

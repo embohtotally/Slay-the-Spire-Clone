@@ -10,6 +10,7 @@ using UnityEngine;
 public class CardSystem : Singleton<CardSystem>
 {
     [SerializeField] private HandView handView;
+    public HandView HandView => handView;
     [SerializeField] private Transform drawPilePoint;
     [SerializeField] private Transform discardPilePoint;
     [SerializeField] private float doTweenScaleDuration = 0.15f;
@@ -213,6 +214,37 @@ public class CardSystem : Singleton<CardSystem>
         hand.Add(card);
         yield return handView.AddCard(cardView);
     }
+
+    /// <summary>
+    /// Injects a card directly into the player's active hand during combat without modifying assets on disk.
+    /// </summary>
+    public void AddCardToHand(CardData cardData)
+    {
+        if (cardData == null || CardViewCreator.Instance == null || handView == null) return;
+        Card card = new(cardData);
+        Vector3 pos = drawPilePoint != null ? drawPilePoint.position : Vector3.zero;
+        Quaternion rot = drawPilePoint != null ? drawPilePoint.rotation : Quaternion.identity;
+        CardView cardView = CardViewCreator.Instance.CreateCardView(card, pos, rot);
+        hand.Add(card);
+        StartCoroutine(handView.AddCard(cardView));
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+#if UNITY_EDITOR
+            CardData testCard = UnityEditor.AssetDatabase.LoadAssetAtPath<CardData>("Assets/_Project/ScriptableObjects/Cards/Generated/Zoltraak.asset");
+            if (testCard != null)
+            {
+                AddCardToHand(testCard);
+                Debug.Log("<color=cyan><b>[CombatDebug] F1 Pressed: Injected 'Zoltraak' into hand for testing.</b></color>");
+            }
+#endif
+        }
+    }
+#endif
 
     private void RefillDeck()
     {
