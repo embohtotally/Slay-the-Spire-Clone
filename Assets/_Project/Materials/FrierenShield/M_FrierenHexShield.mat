@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_FrierenHexShield
+  m_Shader: {fileID: 4800000, guid: 44cebed59b4df944c865ef02adb33b48, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _DeployT: 1
+    - _DissolveT: 0
+    - _EdgeThickness: 0.1
+    - _FresnelBias: 0.06
+    - _FresnelPower: 3
+    - _HexScale: 8
+    - _HitIntensity: 0
+    - _HitTime: 999
+    - _InnerFacetAlpha: 0.22
+    - _Intensity: 3.2
+    - _RippleDamping: 2.6
+    - _RippleSharpness: 14
+    - _RippleSpeed: 1.6
+    - _Seed: 0
+    - _ShatterT: 0
+    m_Colors:
+    - _BaseColor: {r: 1, g: 0.878, b: 0.4, a: 1}
+    - _EdgeColor: {r: 1, g: 0.7, b: 0, a: 1}
+    - _HitPosOS: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -58,6 +58,32 @@ public class CombatantView : MonoBehaviour
     private bool hasHealthVisual;
     private Canvas combatantCanvas;
 
+    // === Frieren Shield VFX (auto-attached by FrierenShieldSystem) ===
+    private FrierenShieldController shieldVfx;
+
+    private void NotifyShieldDeployed(int amount)
+    {
+        if (shieldVfx == null && FrierenShieldSystem.Instance != null)
+            shieldVfx = FrierenShieldSystem.Instance.Attach(this);
+        if (shieldVfx != null) shieldVfx.Deploy(amount);
+    }
+
+    private void NotifyShieldHit(int absorbed)
+    {
+        if (shieldVfx == null) return;
+        shieldVfx.OnHit(absorbed, FrierenShieldSystem.ResolveHitPosition(this));
+    }
+
+    private void NotifyShieldBroken()
+    {
+        if (shieldVfx != null) shieldVfx.Shatter();
+    }
+
+    private void NotifyShieldCleared()
+    {
+        if (shieldVfx != null) shieldVfx.Dissolve();
+    }
+
     public StateMachine StateMachine { get; private set; }
 
     public event Action StatusEffectsChanged;
@@ -87,6 +113,7 @@ public class CombatantView : MonoBehaviour
         TauntDuration = 0;
         HealthPenalty = 0;
         UpdateHealthVisual();
+        NotifyShieldCleared();
         NotifyStatusEffectsChanged();
     }
 
@@ -111,15 +138,24 @@ public class CombatantView : MonoBehaviour
             Gameseed26.Tune.SFX(hitSfx);
         }
 
+        int absorbedByShield = 0;
         if (CurrentShield >= damageAmount)
         {
+            absorbedByShield = damageAmount;
             CurrentShield -= damageAmount;
             damageAmount = 0;
         }
         else
         {
+            absorbedByShield = CurrentShield;
             damageAmount -= CurrentShield;
             CurrentShield = 0;
+        }
+
+        if (absorbedByShield > 0)
+        {
+            NotifyShieldHit(absorbedByShield);
+            if (CurrentShield <= 0) NotifyShieldBroken();
         }
 
         if (damageAmount > 0)
@@ -202,12 +238,15 @@ public class CombatantView : MonoBehaviour
 
         CurrentShield += amount;
         UpdateHealthVisual();
+        NotifyShieldDeployed(amount);
     }
 
     public void ClearShield()
     {
+        bool hadShield = CurrentShield > 0;
         CurrentShield = 0;
         UpdateHealthVisual();
+        if (hadShield) NotifyShieldCleared();
     }
 
     public void ApplyTaunt(int duration)

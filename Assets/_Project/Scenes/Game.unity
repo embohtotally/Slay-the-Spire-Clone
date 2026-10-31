@@ -6684,8 +6684,9 @@ MonoBehaviour:
   forceInspectorEnemies: 0
   startingHandSize: 5
   yourTurnSfx: 12
-  enableEditorTestCards: 0
-  editorTestCards: []
+  enableEditorTestCards: 1
+  editorTestCards:
+  - {fileID: 11400000, guid: 9da6e84391bf95849abf15149c84301f, type: 2}
 --- !u!1 &1996649046
 GameObject:
   m_ObjectHideFlags: 0

@@ -22,6 +22,10 @@ public class ActionSystem : Singleton<ActionSystem>
         {
             gameObject.AddComponent<BeamVfxSystem>();
         }
+        if (FrierenShieldSystem.Instance == null && GetComponent<FrierenShieldSystem>() == null)
+        {
+            gameObject.AddComponent<FrierenShieldSystem>();
+        }
     }
 
     private static Dictionary<Type, List<Action<GameAction>>> preSubs = new();
