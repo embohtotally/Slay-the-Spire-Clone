@@ -14,6 +14,7 @@
   <Project Path="Unity.PerformanceTesting.Editor.csproj" />
   <Project Path="Unity.Searcher.Editor.csproj" />
   <Project Path="Unity.Burst.csproj" />
+  <Project Path="Coffee.SoftMaskForUGUI.Editor.csproj" />
   <Project Path="Unity.Pipeline.Editor.csproj" />
   <Project Path="Unity.VisualStudio.Editor.csproj" />
   <Project Path="SRDemo.csproj" />
@@ -26,6 +27,7 @@
   <Project Path="Unity.Postprocessing.Editor.csproj" />
   <Project Path="SREditor-Editor.csproj" />
   <Project Path="NaughtyAttributes.Test.csproj" />
+  <Project Path="Coffee.SoftMaskForUGUI.csproj" />
   <Project Path="Unity.Burst.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="DOTween.Modules.csproj" />

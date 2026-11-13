@@ -12,8 +12,8 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: DefaultCompany
-  productName: Code Otter Slay the Spire Tutorial
+  companyName: Lumi Gumi
+  productName: Plushie Odyssey
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -149,6 +149,7 @@ PlayerSettings:
   - {fileID: 2100000, guid: 62b249a74d0671b4398fab5d3b37483a, type: 2}
   - {fileID: 2100000, guid: ea502112668e7e14bb625c2fe110a8b2, type: 2}
   - {fileID: 7963447929636917112, guid: 33a90a81ce0874a488796ab4c38ac27f, type: 3}
+  - {fileID: 11400000, guid: a5ef97a91cbfc8b4f9ab83307d2e3c71, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
