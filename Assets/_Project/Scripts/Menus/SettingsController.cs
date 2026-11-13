@@ -1,11 +1,11 @@
+using PlushieOdyssey.Audio;
 using System;
 using System.Collections.Generic;
-using Gameseed26;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.UI;
 
-namespace Gameseed26
+namespace PlushieOdyssey.UI.Menus
 {
     [Serializable]
     public class AudioSliderData

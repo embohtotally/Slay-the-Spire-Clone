@@ -1,13 +1,20 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GainShieldEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private int shieldAmount;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "GainShieldEffect")]
+    public class GainShieldEffect : Effect
     {
-        GainShieldGA gainShieldGA = new GainShieldGA(shieldAmount, targets, caster);
-        return gainShieldGA;
+        [SerializeField] private int shieldAmount;
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            GainShieldGA gainShieldGA = new GainShieldGA(shieldAmount, targets, caster);
+            return gainShieldGA;
+        }
     }
 }

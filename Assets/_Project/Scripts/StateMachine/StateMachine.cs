@@ -2,25 +2,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class StateMachine
+namespace PlushieOdyssey.Core.StateMachines
 {
-    public State CurrentState { get; private set; }
-
-    public void Initialize(State startingState)
+    public class StateMachine
     {
-        CurrentState = startingState;
-        CurrentState.Enter();
-    }
+        public State CurrentState { get; private set; }
 
-    public void ChangeState(State newState)
-    {
-        CurrentState?.Exit();
-        CurrentState = newState;
-        CurrentState.Enter();
-    }
+        public void Initialize(State startingState)
+        {
+            CurrentState = startingState;
+            CurrentState.Enter();
+        }
 
-    public void Update()
-    {
-        CurrentState?.Update();
+        public void ChangeState(State newState)
+        {
+            CurrentState?.Exit();
+            CurrentState = newState;
+            CurrentState.Enter();
+        }
+
+        public void Update()
+        {
+            CurrentState?.Update();
+        }
     }
 }

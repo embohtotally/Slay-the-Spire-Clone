@@ -1,16 +1,19 @@
-using System.Collections.Generic;
+using PlushieOdyssey.Combat.Models;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PerkUI : MonoBehaviour
+namespace PlushieOdyssey.UI
 {
-    public Perk Perk { get; private set; }
-
-    [SerializeField] private Image image;
-
-    public void Setup(Perk perk)
+    public class PerkUI : MonoBehaviour
     {
-        Perk = perk;
-        image.sprite = perk.Image;
+        public Perk Perk { get; private set; }
+
+        [SerializeField] private Image image;
+
+        public void Setup(Perk perk)
+        {
+            Perk = perk;
+            image.sprite = perk.Image;
+        }
     }
 }

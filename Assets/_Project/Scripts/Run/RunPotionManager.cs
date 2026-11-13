@@ -1,175 +1,180 @@
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Data;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RunPotionManager : PersistentSingleton<RunPotionManager>
+namespace PlushieOdyssey.Run
 {
-    [SerializeField, Min(0)] private int defaultCapacity = 3;
-
-    private readonly List<PotionData> currentPotions = new();
-
-    public IReadOnlyList<PotionData> CurrentPotions => currentPotions;
-    public int Capacity { get; private set; }
-    public bool HasPotions => currentPotions.Count > 0;
-    public bool IsFull => Capacity > 0 && currentPotions.Count >= Capacity;
-    public event Action<IReadOnlyList<PotionData>> PotionsChanged;
-
-    protected override void Awake()
+    public class RunPotionManager : PersistentSingleton<RunPotionManager>
     {
-        base.Awake();
-        if (Capacity <= 0)
+        [SerializeField, Min(0)] private int defaultCapacity = 3;
+
+        private readonly List<PotionData> currentPotions = new();
+
+        public IReadOnlyList<PotionData> CurrentPotions => currentPotions;
+        public int Capacity { get; private set; }
+        public bool HasPotions => currentPotions.Count > 0;
+        public bool IsFull => Capacity > 0 && currentPotions.Count >= Capacity;
+        public event Action<IReadOnlyList<PotionData>> PotionsChanged;
+
+        protected override void Awake()
         {
-            Capacity = Mathf.Max(0, defaultCapacity);
-        }
-    }
-
-    public static RunPotionManager EnsureInstance()
-    {
-        if (Instance != null) return Instance;
-
-        GameObject host = RunManager.Instance != null
-            ? RunManager.Instance.gameObject
-            : new GameObject("Run Potion Manager");
-
-        RunPotionManager manager = host.GetComponent<RunPotionManager>();
-        if (manager == null)
-        {
-            manager = host.AddComponent<RunPotionManager>();
-        }
-
-        return manager;
-    }
-
-    public List<PotionData> GetPotionsCopy()
-    {
-        return new List<PotionData>(currentPotions);
-    }
-
-    public void ResetPotions(IEnumerable<PotionData> startingPotions = null, int capacity = -1)
-    {
-        currentPotions.Clear();
-
-        if (capacity >= 0)
-        {
-            Capacity = Mathf.Max(0, capacity);
-        }
-        else if (Capacity <= 0)
-        {
-            Capacity = Mathf.Max(0, defaultCapacity);
-        }
-
-        if (startingPotions != null)
-        {
-            foreach (PotionData potion in startingPotions)
+            base.Awake();
+            if (Capacity <= 0)
             {
-                AddPotionInternal(potion, false);
+                Capacity = Mathf.Max(0, defaultCapacity);
             }
         }
 
-        NotifyPotionsChanged();
-    }
-
-    public void ClearPotions()
-    {
-        if (currentPotions.Count == 0) return;
-
-        currentPotions.Clear();
-        NotifyPotionsChanged();
-    }
-
-    public void SetCapacity(int capacity, bool trimOverflow = false)
-    {
-        Capacity = Mathf.Max(0, capacity);
-
-        if (trimOverflow && Capacity > 0)
+        public static RunPotionManager EnsureInstance()
         {
-            while (currentPotions.Count > Capacity)
+            if (Instance != null) return Instance;
+
+            GameObject host = RunManager.Instance != null
+                ? RunManager.Instance.gameObject
+                : new GameObject("Run Potion Manager");
+
+            RunPotionManager manager = host.GetComponent<RunPotionManager>();
+            if (manager == null)
             {
-                currentPotions.RemoveAt(currentPotions.Count - 1);
+                manager = host.AddComponent<RunPotionManager>();
             }
+
+            return manager;
         }
 
-        NotifyPotionsChanged();
-    }
-
-    public bool Contains(PotionData potion)
-    {
-        return potion != null && currentPotions.Contains(potion);
-    }
-
-    public int Count(PotionData potion)
-    {
-        if (potion == null) return 0;
-
-        int count = 0;
-        foreach (PotionData currentPotion in currentPotions)
+        public List<PotionData> GetPotionsCopy()
         {
-            if (currentPotion == potion) count++;
+            return new List<PotionData>(currentPotions);
         }
 
-        return count;
-    }
-
-    public bool HasIndex(int index)
-    {
-        return index >= 0 && index < currentPotions.Count;
-    }
-
-    public bool AddPotion(PotionData potion)
-    {
-        bool added = AddPotionInternal(potion, true);
-        if (added) NotifyPotionsChanged();
-        return added;
-    }
-
-    public bool RemovePotion(PotionData potion)
-    {
-        if (potion == null) return false;
-
-        bool removed = currentPotions.Remove(potion);
-        if (removed)
+        public void ResetPotions(IEnumerable<PotionData> startingPotions = null, int capacity = -1)
         {
+            currentPotions.Clear();
+
+            if (capacity >= 0)
+            {
+                Capacity = Mathf.Max(0, capacity);
+            }
+            else if (Capacity <= 0)
+            {
+                Capacity = Mathf.Max(0, defaultCapacity);
+            }
+
+            if (startingPotions != null)
+            {
+                foreach (PotionData potion in startingPotions)
+                {
+                    AddPotionInternal(potion, false);
+                }
+            }
+
             NotifyPotionsChanged();
         }
 
-        return removed;
-    }
-
-    public bool RemoveAt(int index)
-    {
-        if (!HasIndex(index)) return false;
-
-        currentPotions.RemoveAt(index);
-        NotifyPotionsChanged();
-        return true;
-    }
-
-    private bool AddPotionInternal(PotionData potion, bool logFailures)
-    {
-        if (potion == null)
+        public void ClearPotions()
         {
-            if (logFailures) Gameseed26.Logger.LogWarning("Tried to add a null potion to the run.");
-            return false;
+            if (currentPotions.Count == 0) return;
+
+            currentPotions.Clear();
+            NotifyPotionsChanged();
         }
 
-        if (IsFull)
+        public void SetCapacity(int capacity, bool trimOverflow = false)
         {
-            if (logFailures) Gameseed26.Logger.Log($"Potion slots are full ({currentPotions.Count}/{Capacity}).");
-            return false;
+            Capacity = Mathf.Max(0, capacity);
+
+            if (trimOverflow && Capacity > 0)
+            {
+                while (currentPotions.Count > Capacity)
+                {
+                    currentPotions.RemoveAt(currentPotions.Count - 1);
+                }
+            }
+
+            NotifyPotionsChanged();
         }
 
-        if (potion.Unique && Contains(potion))
+        public bool Contains(PotionData potion)
         {
-            if (logFailures) Gameseed26.Logger.Log(this, $"Potion '{potion.Title}' is unique and already owned.");
-            return false;
+            return potion != null && currentPotions.Contains(potion);
         }
 
-        currentPotions.Add(potion);
-        return true;
-    }
+        public int Count(PotionData potion)
+        {
+            if (potion == null) return 0;
 
-    public void NotifyPotionsChanged()
-    {
-        PotionsChanged?.Invoke(CurrentPotions);
+            int count = 0;
+            foreach (PotionData currentPotion in currentPotions)
+            {
+                if (currentPotion == potion) count++;
+            }
+
+            return count;
+        }
+
+        public bool HasIndex(int index)
+        {
+            return index >= 0 && index < currentPotions.Count;
+        }
+
+        public bool AddPotion(PotionData potion)
+        {
+            bool added = AddPotionInternal(potion, true);
+            if (added) NotifyPotionsChanged();
+            return added;
+        }
+
+        public bool RemovePotion(PotionData potion)
+        {
+            if (potion == null) return false;
+
+            bool removed = currentPotions.Remove(potion);
+            if (removed)
+            {
+                NotifyPotionsChanged();
+            }
+
+            return removed;
+        }
+
+        public bool RemoveAt(int index)
+        {
+            if (!HasIndex(index)) return false;
+
+            currentPotions.RemoveAt(index);
+            NotifyPotionsChanged();
+            return true;
+        }
+
+        private bool AddPotionInternal(PotionData potion, bool logFailures)
+        {
+            if (potion == null)
+            {
+                if (logFailures) global::PlushieOdyssey.Core.Logger.LogWarning("Tried to add a null potion to the run.");
+                return false;
+            }
+
+            if (IsFull)
+            {
+                if (logFailures) global::PlushieOdyssey.Core.Logger.Log($"Potion slots are full ({currentPotions.Count}/{Capacity}).");
+                return false;
+            }
+
+            if (potion.Unique && Contains(potion))
+            {
+                if (logFailures) global::PlushieOdyssey.Core.Logger.Log(this, $"Potion '{potion.Title}' is unique and already owned.");
+                return false;
+            }
+
+            currentPotions.Add(potion);
+            return true;
+        }
+
+        public void NotifyPotionsChanged()
+        {
+            PotionsChanged?.Invoke(CurrentPotions);
+        }
     }
 }

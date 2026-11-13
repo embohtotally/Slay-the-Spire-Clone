@@ -339,7 +339,7 @@ PrefabInstance:
     - target: {fileID: 7581927665586147330, guid: 8cb3859f2f27ec143993ae6609b1c1ae, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1538229522}
+      objectReference: {fileID: 0}
     - target: {fileID: 7581927665586147330, guid: 8cb3859f2f27ec143993ae6609b1c1ae, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
@@ -458,6 +458,93 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8878762369091719803, guid: 8cb3859f2f27ec143993ae6609b1c1ae, type: 3}
   m_PrefabInstance: {fileID: 352607657}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &582917093
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 582917095}
+  - component: {fileID: 582917094}
+  m_Layer: 0
+  m_Name: MerchantUITween
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &582917094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 582917093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3132a2d60602477895df89834a3e71c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _target: {fileID: 782525353}
+  _duration: 1
+  _playOnEnable: 0
+  _changeBaseSettings: 0
+  _easing: 7
+  _delay: 0
+  _loopCount: 1
+  _loopType: 0
+  _updateType: 0
+  _isIndependentUpdate: 1
+  _isRelative: 0
+  _isSpeedBased: 0
+  _changeLifetimeSettings: 0
+  _setAnId: 0
+  _setId: 
+  _onPlay:
+    m_PersistentCalls:
+      m_Calls: []
+  _onReversePlay:
+    m_PersistentCalls:
+      m_Calls: []
+  _onComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  _onReverseComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  _openPosition: {x: 0, y: 200}
+  _openStartOffset: {x: 0, y: -1500}
+  _closedOffset: {x: 0, y: -1500}
+  _additionalParts:
+  - Target: {fileID: 787897547}
+    OpenPosition: {x: 0, y: 193}
+    OpenStartOffset: {x: -1500, y: 193}
+    ClosedOffset: {x: 1500, y: 193}
+  _fadeGroup: {fileID: 0}
+  _fadeCanvasGroup: 1
+  _openAlpha: 1
+  _closedAlpha: 0
+  _inputGroup: {fileID: 0}
+  _manageInput: 1
+  _startClosed: 0
+  _deactivateWhenClosed: 0
+--- !u!4 &582917095
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 582917093}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 434.5, y: 244.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &739981911
 GameObject:
   m_ObjectHideFlags: 0
@@ -1252,195 +1339,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!1 &1538229521
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1538229523}
-  - component: {fileID: 1538229522}
-  m_Layer: 0
-  m_Name: CloseMerchantTween
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1538229522
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1538229521}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c10d422b52559da41aa9676770a8fc65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  animationSteps:
-  - rid: 7261170939307753867
-  - rid: 7261170939307753868
-  - rid: 7261170939307753865
-  - rid: 7261170939307753864
-  updateType: 0
-  timeScaleIndependent: 0
-  autoplayMode: 2
-  startPaused: 0
-  playbackSpeed: 1
-  playType: 0
-  loops: 0
-  loopType: 0
-  autoKill: 1
-  onStartEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 739981912}
-        m_TargetAssemblyTypeName: MerchantController, Assembly-CSharp
-        m_MethodName: DisablePurchases
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 739981912}
-        m_TargetAssemblyTypeName: MerchantController, Assembly-CSharp
-        m_MethodName: StopShopkeeperIdle
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onFinishedEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 739981912}
-        m_TargetAssemblyTypeName: MerchantController, Assembly-CSharp
-        m_MethodName: ReturnToMap
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onProgressEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  progress: -1
-  references:
-    version: 2
-    RefIds:
-    - rid: 7261170939307753864
-      type: {class: DOTweenAnimationStep, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        delay: 0
-        flowType: 1
-        target: {fileID: 782525352}
-        duration: 1
-        loopCount: 0
-        loopType: 0
-        actions:
-        - rid: 7261170939307753869
-    - rid: 7261170939307753865
-      type: {class: DOTweenAnimationStep, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        delay: 0
-        flowType: 1
-        target: {fileID: 787897546}
-        duration: 1
-        loopCount: 0
-        loopType: 0
-        actions:
-        - rid: 7261170939307753866
-    - rid: 7261170939307753866
-      type: {class: AnchoredPositionMoveToPositionDOTweenActionBase, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        direction: 0
-        ease:
-          ease: 7
-          curve:
-            serializedVersion: 2
-            m_Curve: []
-            m_PreInfinity: 2
-            m_PostInfinity: 2
-            m_RotationOrder: 4
-        isRelative: 0
-        axisConstraint: 2
-        position: {x: 1300, y: 0}
-    - rid: 7261170939307753867
-      type: {class: SetTargetRectTransformPropertiesStep, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        delay: 0
-        flowType: 0
-        targetRectTransform: {fileID: 787897547}
-        useLocal: 0
-        position: {x: 0, y: 0, z: 0}
-        eulerAngles: {x: 0, y: 0, z: 0}
-        scale: {x: 1, y: 1, z: 1}
-        anchorMin: {x: 0.5, y: 0.5}
-        anchorMax: {x: 0.5, y: 0.5}
-        anchoredPosition: {x: 0, y: 193}
-        sizeDelta: {x: 500, y: 500}
-        pivot: {x: 0.5, y: 0.5}
-    - rid: 7261170939307753868
-      type: {class: SetTargetRectTransformPropertiesStep, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        delay: 0
-        flowType: 1
-        targetRectTransform: {fileID: 782525353}
-        useLocal: 0
-        position: {x: 0, y: 0, z: 0}
-        eulerAngles: {x: 0, y: 0, z: 0}
-        scale: {x: 1, y: 1, z: 1}
-        anchorMin: {x: 0, y: 0}
-        anchorMax: {x: 1, y: 0}
-        anchoredPosition: {x: 0, y: 200}
-        sizeDelta: {x: 0, y: 400}
-        pivot: {x: 0.5, y: 0.5}
-    - rid: 7261170939307753869
-      type: {class: AnchoredPositionMoveToPositionDOTweenActionBase, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        direction: 0
-        ease:
-          ease: 7
-          curve:
-            serializedVersion: 2
-            m_Curve: []
-            m_PreInfinity: 2
-            m_PostInfinity: 2
-            m_RotationOrder: 4
-        isRelative: 0
-        axisConstraint: 4
-        position: {x: 0, y: -200}
---- !u!4 &1538229523
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1538229521}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1554772988
 GameObject:
   m_ObjectHideFlags: 0
@@ -2159,207 +2057,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!1 &1963657231
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1963657233}
-  - component: {fileID: 1963657232}
-  m_Layer: 0
-  m_Name: OpenMerchantTween
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1963657232
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1963657231}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c10d422b52559da41aa9676770a8fc65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  animationSteps:
-  - rid: 7261170939307753867
-  - rid: 7261170939307753868
-  - rid: 7261170939307753865
-  - rid: 7261170939307753864
-  updateType: 0
-  timeScaleIndependent: 0
-  autoplayMode: 0
-  startPaused: 0
-  playbackSpeed: 1
-  playType: 0
-  loops: 0
-  loopType: 0
-  autoKill: 1
-  onStartEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 739981912}
-        m_TargetAssemblyTypeName: MerchantController, Assembly-CSharp
-        m_MethodName: DisablePurchases
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 739981912}
-        m_TargetAssemblyTypeName: MerchantController, Assembly-CSharp
-        m_MethodName: StopShopkeeperIdle
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onFinishedEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 739981912}
-        m_TargetAssemblyTypeName: MerchantController, Assembly-CSharp
-        m_MethodName: EnablePurchases
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 739981912}
-        m_TargetAssemblyTypeName: MerchantController, Assembly-CSharp
-        m_MethodName: StartShopkeeperIdle
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onProgressEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  progress: -1
-  references:
-    version: 2
-    RefIds:
-    - rid: 7261170939307753864
-      type: {class: DOTweenAnimationStep, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        delay: 0
-        flowType: 1
-        target: {fileID: 782525352}
-        duration: 1
-        loopCount: 0
-        loopType: 0
-        actions:
-        - rid: 7261170939307753869
-    - rid: 7261170939307753865
-      type: {class: DOTweenAnimationStep, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        delay: 0
-        flowType: 1
-        target: {fileID: 787897546}
-        duration: 1
-        loopCount: 0
-        loopType: 0
-        actions:
-        - rid: 7261170939307753866
-    - rid: 7261170939307753866
-      type: {class: AnchoredPositionMoveToPositionDOTweenActionBase, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        direction: 0
-        ease:
-          ease: 7
-          curve:
-            serializedVersion: 2
-            m_Curve: []
-            m_PreInfinity: 2
-            m_PostInfinity: 2
-            m_RotationOrder: 4
-        isRelative: 0
-        axisConstraint: 2
-        position: {x: 0, y: 0}
-    - rid: 7261170939307753867
-      type: {class: SetTargetRectTransformPropertiesStep, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        delay: 0
-        flowType: 0
-        targetRectTransform: {fileID: 787897547}
-        useLocal: 0
-        position: {x: 0, y: 0, z: 0}
-        eulerAngles: {x: 0, y: 0, z: 0}
-        scale: {x: 1, y: 1, z: 1}
-        anchorMin: {x: 0.5, y: 0.5}
-        anchorMax: {x: 0.5, y: 0.5}
-        anchoredPosition: {x: -1300, y: 193}
-        sizeDelta: {x: 500, y: 500}
-        pivot: {x: 0.5, y: 0.5}
-    - rid: 7261170939307753868
-      type: {class: SetTargetRectTransformPropertiesStep, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        delay: 0
-        flowType: 1
-        targetRectTransform: {fileID: 782525353}
-        useLocal: 0
-        position: {x: 0, y: 0, z: 0}
-        eulerAngles: {x: 0, y: 0, z: 0}
-        scale: {x: 1, y: 1, z: 1}
-        anchorMin: {x: 0, y: 0}
-        anchorMax: {x: 1, y: 0}
-        anchoredPosition: {x: 0, y: -200}
-        sizeDelta: {x: 0, y: 400}
-        pivot: {x: 0.5, y: 0.5}
-    - rid: 7261170939307753869
-      type: {class: AnchoredPositionMoveToPositionDOTweenActionBase, ns: BrunoMikoski.AnimationSequencer, asm: BrunoMikoski.AnimationSequencer}
-      data:
-        direction: 0
-        ease:
-          ease: 7
-          curve:
-            serializedVersion: 2
-            m_Curve: []
-            m_PreInfinity: 2
-            m_PostInfinity: 2
-            m_RotationOrder: 4
-        isRelative: 0
-        axisConstraint: 4
-        position: {x: 0, y: 200}
---- !u!4 &1963657233
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1963657231}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5666233049368147
 GameObject:
   m_ObjectHideFlags: 0
@@ -2804,8 +2501,7 @@ SceneRoots:
   - {fileID: 1397607369}
   - {fileID: 895033188}
   - {fileID: 820526808}
-  - {fileID: 1963657233}
-  - {fileID: 1538229523}
+  - {fileID: 582917095}
   - {fileID: 348230525}
   - {fileID: 739981913}
   - {fileID: 1764754995}

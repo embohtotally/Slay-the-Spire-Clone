@@ -1,8 +1,10 @@
+using PlushieOdyssey.Core;
+using Logger = PlushieOdyssey.Core.Logger;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Core.Scenes
 {
     public static class SceneLoader
     {

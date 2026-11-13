@@ -1,12 +1,19 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RemoveDebuffEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private int count;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RemoveDebuffEffect")]
+    public class RemoveDebuffEffect : Effect
     {
-        return new RemoveDebuffGA(count, targets, caster);
+        [SerializeField] private int count;
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            return new RemoveDebuffGA(count, targets, caster);
+        }
     }
 }

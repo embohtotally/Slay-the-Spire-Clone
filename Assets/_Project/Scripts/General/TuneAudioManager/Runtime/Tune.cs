@@ -1,8 +1,9 @@
+using PlushieOdyssey.Core;
 using System.Collections.Generic;
 using NaughtyAttributes;
 using UnityEngine;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Audio
 {
     /// <summary>
     /// A persistent singleton component that handle Audio Play.    <br />

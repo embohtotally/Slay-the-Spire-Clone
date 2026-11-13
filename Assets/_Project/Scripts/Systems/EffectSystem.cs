@@ -1,27 +1,32 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Views;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class EffectSystem : MonoBehaviour
+namespace PlushieOdyssey.Combat.Systems
 {
-    private void OnEnable()
+    [System.Serializable]
+    public class EffectSystem : MonoBehaviour
     {
-        ActionSystem.AttachPerformer<PerformEffectGA>(PerformEffectPerformer);
-    }
+        private void OnEnable()
+        {
+            ActionSystem.AttachPerformer<PerformEffectGA>(PerformEffectPerformer);
+        }
 
-    private void OnDisable()
-    {
-        ActionSystem.DetachPerformer<PerformEffectGA>();
-    }
+        private void OnDisable()
+        {
+            ActionSystem.DetachPerformer<PerformEffectGA>();
+        }
 
     #region Performers
-    private IEnumerator PerformEffectPerformer(PerformEffectGA performEffectGA)
-    {
-        GameAction effectAction = performEffectGA.Effect.GetGameAction(performEffectGA.Targets, HeroSystem.Instance.HeroView);
-        ActionSystem.Instance.AddReaction(effectAction);
-        yield return null;
-    }
+        private IEnumerator PerformEffectPerformer(PerformEffectGA performEffectGA)
+        {
+            GameAction effectAction = performEffectGA.Effect.GetGameAction(performEffectGA.Targets, HeroSystem.Instance.HeroView);
+            ActionSystem.Instance.AddReaction(effectAction);
+            yield return null;
+        }
     #endregion
+    }
 }

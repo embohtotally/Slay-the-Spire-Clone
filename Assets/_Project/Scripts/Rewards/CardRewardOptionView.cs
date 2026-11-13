@@ -1,88 +1,93 @@
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CardRewardOptionView : CardView
+namespace PlushieOdyssey.Rewards
 {
-    [Header("Reward")]
-    [SerializeField] private Button button;
-    [SerializeField] private TMP_Text actionText;
-    [SerializeField] private string newCardActionLabel = "Choose Card";
-    [SerializeField] private string upgradeActionLabel = "Choose Upgrade";
-
-    private CardRewardController rewardController;
-    private CardRewardOption option;
-
-    public CardRewardOption Option => option;
-    public RectTransform RectTransform => transform as RectTransform;
-
-    protected override void Awake()
+    public class CardRewardOptionView : CardView
     {
-        base.Awake();
-    }
+        [Header("Reward")]
+        [SerializeField] private Button button;
+        [SerializeField] private TMP_Text actionText;
+        [SerializeField] private string newCardActionLabel = "Choose Card";
+        [SerializeField] private string upgradeActionLabel = "Choose Upgrade";
 
-    public void Setup(CardRewardController controller, CardRewardOption newOption)
-    {
-        gameObject.SetActive(true);
-        rewardController = controller;
-        option = newOption;
-        CacheReferences();
+        private CardRewardController rewardController;
+        private CardRewardOption option;
 
-        if (button != null)
+        public CardRewardOption Option => option;
+        public RectTransform RectTransform => transform as RectTransform;
+
+        protected override void Awake()
         {
-            button.onClick.RemoveListener(SelectOption);
-            button.onClick.AddListener(SelectOption);
+            base.Awake();
         }
 
-        Refresh();
-    }
-
-    public override void ClearCardVisuals()
-    {
-        base.ClearCardVisuals();
-        SetActionText(string.Empty);
-        SetButtonInteractable(false);
-    }
-
-    public void Clear()
-    {
-        option = null;
-        ClearCardVisuals();
-        gameObject.SetActive(false);
-    }
-
-    public void Refresh()
-    {
-        if (option == null)
+        public void Setup(CardRewardController controller, CardRewardOption newOption)
         {
-            Clear();
-            return;
+            gameObject.SetActive(true);
+            rewardController = controller;
+            option = newOption;
+            CacheReferences();
+
+            if (button != null)
+            {
+                button.onClick.RemoveListener(SelectOption);
+                button.onClick.AddListener(SelectOption);
+            }
+
+            Refresh();
         }
 
-        CardData previewCard = option.PreviewCard;
-        SetupCard(previewCard, option.GetTitle(), option.GetDescription());
-        SetActionText(option.Type == CardRewardOptionType.UpgradeCard ? upgradeActionLabel : newCardActionLabel);
-        SetButtonInteractable(previewCard != null);
-    }
+        public override void ClearCardVisuals()
+        {
+            base.ClearCardVisuals();
+            SetActionText(string.Empty);
+            SetButtonInteractable(false);
+        }
 
-    public void SetInteractable(bool interactable)
-    {
-        SetButtonInteractable(interactable && option?.PreviewCard != null);
-    }
+        public void Clear()
+        {
+            option = null;
+            ClearCardVisuals();
+            gameObject.SetActive(false);
+        }
 
-    private void SelectOption()
-    {
-        if (option == null) return;
-        rewardController?.ChooseReward(this);
-    }
+        public void Refresh()
+        {
+            if (option == null)
+            {
+                Clear();
+                return;
+            }
 
-    private void SetActionText(string text)
-    {
-        if (actionText != null) actionText.text = text ?? string.Empty;
-    }
+            CardData previewCard = option.PreviewCard;
+            SetupCard(previewCard, option.GetTitle(), option.GetDescription());
+            SetActionText(option.Type == CardRewardOptionType.UpgradeCard ? upgradeActionLabel : newCardActionLabel);
+            SetButtonInteractable(previewCard != null);
+        }
 
-    private void SetButtonInteractable(bool enable)
-    {
-        if (button != null) button.interactable = enable;
+        public void SetInteractable(bool interactable)
+        {
+            SetButtonInteractable(interactable && option?.PreviewCard != null);
+        }
+
+        private void SelectOption()
+        {
+            if (option == null) return;
+            rewardController?.ChooseReward(this);
+        }
+
+        private void SetActionText(string text)
+        {
+            if (actionText != null) actionText.text = text ?? string.Empty;
+        }
+
+        private void SetButtonInteractable(bool enable)
+        {
+            if (button != null) button.interactable = enable;
+        }
     }
 }

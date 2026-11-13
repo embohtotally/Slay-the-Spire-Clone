@@ -1,43 +1,46 @@
+using PlushieOdyssey.Core;
 using UnityEngine;
 
-using Gameseed26;
-public class ManualMapRunSelection : PersistentSingleton<ManualMapRunSelection>
+namespace PlushieOdyssey.Map.Manual
 {
-    public string SelectedLayoutId { get; private set; }
-    public bool HasSelectedLayout => !string.IsNullOrWhiteSpace(SelectedLayoutId);
-
-    public void SelectLayout(string layoutId)
+    public class ManualMapRunSelection : PersistentSingleton<ManualMapRunSelection>
     {
-        if (string.IsNullOrWhiteSpace(layoutId))
+        public string SelectedLayoutId { get; private set; }
+        public bool HasSelectedLayout => !string.IsNullOrWhiteSpace(SelectedLayoutId);
+
+        public void SelectLayout(string layoutId)
         {
-            Gameseed26.Logger.LogWarning("Tried to select an empty manual map layout id.");
-            return;
+            if (string.IsNullOrWhiteSpace(layoutId))
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning("Tried to select an empty manual map layout id.");
+                return;
+            }
+
+            SelectedLayoutId = layoutId.Trim();
         }
 
-        SelectedLayoutId = layoutId.Trim();
-    }
-
-    public ManualMapLayoutEntry SelectRandomLayout(ManualMapLayoutRegistry registry)
-    {
-        if (registry == null)
+        public ManualMapLayoutEntry SelectRandomLayout(ManualMapLayoutRegistry registry)
         {
-            Gameseed26.Logger.LogWarning("Cannot randomize manual map layout because registry is missing.");
-            return null;
+            if (registry == null)
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning("Cannot randomize manual map layout because registry is missing.");
+                return null;
+            }
+
+            ManualMapLayoutEntry layout = registry.GetRandomLayout();
+            if (layout == null)
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning("Cannot randomize manual map layout because registry has no available layouts.");
+                return null;
+            }
+
+            SelectLayout(layout.SafeId);
+            return layout;
         }
 
-        ManualMapLayoutEntry layout = registry.GetRandomLayout();
-        if (layout == null)
+        public void ClearSelection()
         {
-            Gameseed26.Logger.LogWarning("Cannot randomize manual map layout because registry has no available layouts.");
-            return null;
+            SelectedLayoutId = null;
         }
-
-        SelectLayout(layout.SafeId);
-        return layout;
-    }
-
-    public void ClearSelection()
-    {
-        SelectedLayoutId = null;
     }
 }

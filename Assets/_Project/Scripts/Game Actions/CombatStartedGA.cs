@@ -1,3 +1,6 @@
-public class CombatStartedGA : GameAction
+namespace PlushieOdyssey.Combat.Actions
 {
+    public class CombatStartedGA : GameAction
+    {
+    }
 }

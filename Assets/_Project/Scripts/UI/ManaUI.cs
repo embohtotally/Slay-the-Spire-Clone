@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class ManaUI : MonoBehaviour
+namespace PlushieOdyssey.UI
 {
-    [SerializeField] private TMP_Text mana;
-
-    public void UpdateManaText(int currentMana)
+    public class ManaUI : MonoBehaviour
     {
-        mana.text = currentMana.ToString();
+        [SerializeField] private TMP_Text mana;
+
+        public void UpdateManaText(int currentMana)
+        {
+            mana.text = currentMana.ToString();
+        }
     }
 }

@@ -1,8 +1,10 @@
+using PlushieOdyssey.Audio;
+using PlushieOdyssey.Core.Extensions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace Gameseed26
+namespace PlushieOdyssey.UI.Menus
 {
     public class ButtonController : MonoBehaviour
     {

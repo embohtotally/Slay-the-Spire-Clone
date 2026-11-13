@@ -1,12 +1,15 @@
-public enum MapNodeType
+namespace PlushieOdyssey.Map
 {
-    Start,
-    Enemy,
-    Elite,
-    Event,
-    Shop,
-    Rest,
-    Treasure,
-    Boss,
-    Custom
+    public enum MapNodeType
+    {
+        Start,
+        Enemy,
+        Elite,
+        Event,
+        Shop,
+        Rest,
+        Treasure,
+        Boss,
+        Custom
+    }
 }

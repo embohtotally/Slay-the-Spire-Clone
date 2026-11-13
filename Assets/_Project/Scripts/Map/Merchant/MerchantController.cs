@@ -1,348 +1,354 @@
+using PlushieOdyssey.Audio;
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Core.Scenes;
+using PlushieOdyssey.Run;
 using System.Collections.Generic;
 using DG.Tweening;
-using Gameseed26;
 using NaughtyAttributes;
 using UnityEngine;
 
-public class MerchantController : MonoBehaviour
+namespace PlushieOdyssey.Map.Merchant
 {
-    [Header("Offers")]
-    [SerializeField] private MerchantCardPool merchantPool;
-    [SerializeField] private int offerCount = 5;
-    [SerializeField] private bool includeNewCards = true;
-    [SerializeField] private bool includeUpgrades = true;
-    [SerializeField] private bool allowDuplicateOffers;
-
-    [Header("UI")]
-    [Tooltip("Parent that contains manually positioned MerchantOfferSlotView children. Their RectTransforms decide the layout.")]
-    [SerializeField] private RectTransform slotsParent;
-    [SerializeField] private MerchantOfferSlotView slotPrefab;
-    [SerializeField] private bool autoFindSlotsInChildren = true;
-
-    [Header("Interaction Lock")]
-    [Tooltip("Animation Sequencer can disable this while the shop opens/closes so players cannot click during transitions.")]
-    [SerializeField] private bool purchasesEnabled = true;
-
-    [Header("Shopkeeper Juice")]
-    [SerializeField] private RectTransform shopkeeperVisual;
-    [SerializeField] private bool playShopkeeperIdle = true;
-    [ShowIf(nameof(playShopkeeperIdle))]
-    [SerializeField] private float idleStartDelay = 1.05f;
-    [ShowIf(nameof(playShopkeeperIdle))]
-    [SerializeField] private float idleYOffset = 10f;
-    [ShowIf(nameof(playShopkeeperIdle))]
-    [SerializeField] private float idleDuration = 2.4f;
-    [ShowIf(nameof(playShopkeeperIdle))]
-    [SerializeField] private Ease idleEase = Ease.InOutSine;
-
-    [Header("Navigation")]
-    [SerializeField] private string mapSceneName = "Map";
-
-    [Header("Audio")]
-    [SerializeField] private TuneSfxCue shopOpenedSfx;
-    [SerializeField] private TuneSfxCue buyOfferSfx;
-    [SerializeField] private TuneSfxCue cannotAffordSfx;
-    [SerializeField] private TuneSfxCue returnToMapSfx;
-
-    private readonly List<MerchantOffer> activeOffers = new();
-    private readonly List<MerchantOfferSlotView> slots = new();
-    private RunManager subscribedRunManager;
-    private Tween shopkeeperIdleTween;
-    private Tween shopkeeperIdleDelayTween;
-
-    public bool PurchasesEnabled => purchasesEnabled;
-
-    private void Awake()
+    public class MerchantController : MonoBehaviour
     {
-        EnsureRunDeckManagerExists();
-        CollectSlots();
-    }
+        [Header("Offers")]
+        [SerializeField] private MerchantCardPool merchantPool;
+        [SerializeField] private int offerCount = 5;
+        [SerializeField] private bool includeNewCards = true;
+        [SerializeField] private bool includeUpgrades = true;
+        [SerializeField] private bool allowDuplicateOffers;
 
-    private void OnEnable()
-    {
-        SubscribeToRunStateChanges();
-    }
+        [Header("UI")]
+        [Tooltip("Parent that contains manually positioned MerchantOfferSlotView children. Their RectTransforms decide the layout.")]
+        [SerializeField] private RectTransform slotsParent;
+        [SerializeField] private MerchantOfferSlotView slotPrefab;
+        [SerializeField] private bool autoFindSlotsInChildren = true;
 
-    private void OnDisable()
-    {
-        StopShopkeeperIdle();
-        UnsubscribeFromRunStateChanges();
-    }
+        [Header("Interaction Lock")]
+        [Tooltip("Animation Sequencer can disable this while the shop opens/closes so players cannot click during transitions.")]
+        [SerializeField] private bool purchasesEnabled = true;
 
-    private void Start()
-    {
-        SubscribeToRunStateChanges();
-        GenerateOffers();
-        shopOpenedSfx?.Play(this, transform);
-        StartShopkeeperIdleAfterDelay();
-    }
+        [Header("Shopkeeper Juice")]
+        [SerializeField] private RectTransform shopkeeperVisual;
+        [SerializeField] private bool playShopkeeperIdle = true;
+        [ShowIf(nameof(playShopkeeperIdle))]
+        [SerializeField] private float idleStartDelay = 1.05f;
+        [ShowIf(nameof(playShopkeeperIdle))]
+        [SerializeField] private float idleYOffset = 10f;
+        [ShowIf(nameof(playShopkeeperIdle))]
+        [SerializeField] private float idleDuration = 2.4f;
+        [ShowIf(nameof(playShopkeeperIdle))]
+        [SerializeField] private Ease idleEase = Ease.InOutSine;
 
-    public void GenerateOffers()
-    {
-        activeOffers.Clear();
-        CollectSlots();
+        [Header("Navigation")]
+        [SerializeField] private string mapSceneName = "Map";
 
-        if (merchantPool == null)
+        [Header("Audio")]
+        [SerializeField] private TuneSfxCue shopOpenedSfx;
+        [SerializeField] private TuneSfxCue buyOfferSfx;
+        [SerializeField] private TuneSfxCue cannotAffordSfx;
+        [SerializeField] private TuneSfxCue returnToMapSfx;
+
+        private readonly List<MerchantOffer> activeOffers = new();
+        private readonly List<MerchantOfferSlotView> slots = new();
+        private RunManager subscribedRunManager;
+        private Tween shopkeeperIdleTween;
+        private Tween shopkeeperIdleDelayTween;
+
+        public bool PurchasesEnabled => purchasesEnabled;
+
+        private void Awake()
         {
-            Gameseed26.Logger.LogWarning("MerchantController needs a MerchantCardPool.");
-            ClearSlots();
-            return;
+            EnsureRunDeckManagerExists();
+            CollectSlots();
         }
 
-        List<MerchantOffer> candidates = merchantPool.BuildCandidateOffers(RunDeckManager.Instance, includeNewCards, includeUpgrades);
-        if (candidates.Count == 0)
+        private void OnEnable()
         {
-            Gameseed26.Logger.LogWarning("Merchant has no valid offers. Add cards/upgrades to MerchantCardPool or make sure RunDeckManager has a deck.");
-            ClearSlots();
-            return;
+            SubscribeToRunStateChanges();
         }
 
-        int targetCount = Mathf.Max(0, offerCount);
-        EnsureSlotCount(targetCount);
-
-        for (int i = 0; i < targetCount; i++)
+        private void OnDisable()
         {
-            if (candidates.Count == 0) break;
+            StopShopkeeperIdle();
+            UnsubscribeFromRunStateChanges();
+        }
 
-            int randomIndex = Random.Range(0, candidates.Count);
-            MerchantOffer offer = candidates[randomIndex];
-            activeOffers.Add(offer);
+        private void Start()
+        {
+            SubscribeToRunStateChanges();
+            GenerateOffers();
+            shopOpenedSfx?.Play(this, transform);
+            StartShopkeeperIdleAfterDelay();
+        }
 
-            if (!allowDuplicateOffers)
+        public void GenerateOffers()
+        {
+            activeOffers.Clear();
+            CollectSlots();
+
+            if (merchantPool == null)
             {
-                candidates.RemoveAt(randomIndex);
+                global::PlushieOdyssey.Core.Logger.LogWarning("MerchantController needs a MerchantCardPool.");
+                ClearSlots();
+                return;
+            }
+
+            List<MerchantOffer> candidates = merchantPool.BuildCandidateOffers(RunDeckManager.Instance, includeNewCards, includeUpgrades);
+            if (candidates.Count == 0)
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning("Merchant has no valid offers. Add cards/upgrades to MerchantCardPool or make sure RunDeckManager has a deck.");
+                ClearSlots();
+                return;
+            }
+
+            int targetCount = Mathf.Max(0, offerCount);
+            EnsureSlotCount(targetCount);
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                if (candidates.Count == 0) break;
+
+                int randomIndex = Random.Range(0, candidates.Count);
+                MerchantOffer offer = candidates[randomIndex];
+                activeOffers.Add(offer);
+
+                if (!allowDuplicateOffers)
+                {
+                    candidates.RemoveAt(randomIndex);
+                }
+            }
+
+            RefreshSlotAssignments();
+        }
+
+        public void BuyOffer(MerchantOffer offer, MerchantOfferSlotView slotView)
+        {
+            if (offer == null || offer.IsSold) return;
+
+            if (!purchasesEnabled)
+            {
+                slotView?.PlayUnavailableFeedback();
+                return;
+            }
+
+            EnsureRunDeckManagerExists();
+
+            if (!CanAfford(offer))
+            {
+                cannotAffordSfx?.Play(this, slotView != null ? slotView.transform : transform);
+                int currentGold = RunManager.Instance != null ? RunManager.Instance.Gold : 0;
+                global::PlushieOdyssey.Core.Logger.Log($"Not enough gold for merchant offer '{offer.GetTitle()}'. Need {offer.Price}, have {currentGold}.");
+                slotView?.PlayUnavailableFeedback();
+                slotView?.Refresh();
+                return;
+            }
+
+            bool success = offer.Type switch
+            {
+                MerchantOfferType.NewCard => BuyNewCard(offer),
+                MerchantOfferType.UpgradeCard => BuyUpgrade(offer),
+                _ => false
+            };
+
+            if (!success) return;
+
+            if (!SpendOfferPrice(offer))
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning($"Merchant offer '{offer.GetTitle()}' was applied but gold could not be spent. Check RunManager setup.");
+                return;
+            }
+
+            offer.MarkSold();
+            buyOfferSfx?.Play(this, slotView != null ? slotView.transform : transform);
+            RefreshSlots();
+            slotView?.PlayPurchasedFeedback();
+        }
+
+        public bool CanAfford(MerchantOffer offer)
+        {
+            if (offer == null) return false;
+            if (offer.Price <= 0) return true;
+            return RunManager.Instance != null && RunManager.Instance.Gold >= offer.Price;
+        }
+
+        public void ReturnToMap()
+        {
+            returnToMapSfx?.Play(this, transform);
+
+            if (string.IsNullOrWhiteSpace(mapSceneName))
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning("MerchantController has no map scene name.");
+                return;
+            }
+
+            SceneLoader.LoadScene(mapSceneName);
+        }
+
+        public void SetPurchasesEnabled(bool enabled)
+        {
+            purchasesEnabled = enabled;
+            RefreshSlots();
+        }
+
+        [Button("Enable Purchases", EButtonEnableMode.Playmode)]
+        public void EnablePurchases()
+        {
+            SetPurchasesEnabled(true);
+        }
+
+        [Button("Disable Purchases", EButtonEnableMode.Playmode)]
+        public void DisablePurchases()
+        {
+            SetPurchasesEnabled(false);
+        }
+
+        public void StartShopkeeperIdleAfterDelay()
+        {
+            if (!playShopkeeperIdle || shopkeeperVisual == null) return;
+
+            shopkeeperIdleDelayTween?.Kill();
+            shopkeeperIdleDelayTween = DOVirtual.DelayedCall(Mathf.Max(0f, idleStartDelay), StartShopkeeperIdle, false)
+                .SetUpdate(false);
+        }
+
+        [Button("Start Shopkeeper Idle", EButtonEnableMode.Playmode)]
+        public void StartShopkeeperIdle()
+        {
+            if (!playShopkeeperIdle || shopkeeperVisual == null) return;
+
+            StopShopkeeperIdle();
+            Vector2 startPosition = shopkeeperVisual.anchoredPosition;
+            shopkeeperIdleTween = shopkeeperVisual.DOAnchorPosY(startPosition.y + idleYOffset, Mathf.Max(0.01f, idleDuration))
+                .SetEase(idleEase)
+                .SetLoops(-1, LoopType.Yoyo);
+        }
+
+        [Button("Stop Shopkeeper Idle", EButtonEnableMode.Playmode)]
+        public void StopShopkeeperIdle()
+        {
+            shopkeeperIdleDelayTween?.Kill();
+            shopkeeperIdleTween?.Kill();
+            shopkeeperIdleDelayTween = null;
+            shopkeeperIdleTween = null;
+        }
+
+        private bool BuyNewCard(MerchantOffer offer)
+        {
+            if (offer.Card == null) return false;
+
+            RunDeckManager.Instance.AddCard(offer.Card);
+            global::PlushieOdyssey.Core.Logger.Log($"Bought card: {offer.Card.Title} for {offer.Price} gold.");
+            return true;
+        }
+
+        private bool BuyUpgrade(MerchantOffer offer)
+        {
+            CardUpgradeRecipe recipe = offer.UpgradeRecipe;
+            if (recipe == null || recipe.BaseCard == null || recipe.UpgradedCard == null) return false;
+
+            bool replaced = RunDeckManager.Instance.ReplaceFirst(recipe.BaseCard, recipe.UpgradedCard);
+            if (!replaced)
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning($"Could not upgrade {recipe.BaseCard.Title}; the base card is not in the current run deck.");
+                return false;
+            }
+
+            global::PlushieOdyssey.Core.Logger.Log($"Upgraded card: {recipe.BaseCard.Title} -> {recipe.UpgradedCard.Title} for {offer.Price} gold.");
+            return true;
+        }
+
+        private void CollectSlots()
+        {
+            slots.Clear();
+
+            if (autoFindSlotsInChildren)
+            {
+                Transform root = slotsParent != null ? slotsParent : transform;
+                slots.AddRange(root.GetComponentsInChildren<MerchantOfferSlotView>(true));
+            }
+
+            slots.RemoveAll(slot => slot == null);
+        }
+
+        private void EnsureSlotCount(int targetCount)
+        {
+            if (targetCount <= slots.Count || slotPrefab == null) return;
+
+            Transform parent = slotsParent != null ? slotsParent : transform;
+            while (slots.Count < targetCount)
+            {
+                MerchantOfferSlotView slot = Instantiate(slotPrefab, parent);
+                slots.Add(slot);
             }
         }
 
-        RefreshSlotAssignments();
-    }
-
-    public void BuyOffer(MerchantOffer offer, MerchantOfferSlotView slotView)
-    {
-        if (offer == null || offer.IsSold) return;
-
-        if (!purchasesEnabled)
+        private void RefreshSlotAssignments()
         {
-            slotView?.PlayUnavailableFeedback();
-            return;
-        }
-
-        EnsureRunDeckManagerExists();
-
-        if (!CanAfford(offer))
-        {
-            cannotAffordSfx?.Play(this, slotView != null ? slotView.transform : transform);
-            int currentGold = RunManager.Instance != null ? RunManager.Instance.Gold : 0;
-            Gameseed26.Logger.Log($"Not enough gold for merchant offer '{offer.GetTitle()}'. Need {offer.Price}, have {currentGold}.");
-            slotView?.PlayUnavailableFeedback();
-            slotView?.Refresh();
-            return;
-        }
-
-        bool success = offer.Type switch
-        {
-            MerchantOfferType.NewCard => BuyNewCard(offer),
-            MerchantOfferType.UpgradeCard => BuyUpgrade(offer),
-            _ => false
-        };
-
-        if (!success) return;
-
-        if (!SpendOfferPrice(offer))
-        {
-            Gameseed26.Logger.LogWarning($"Merchant offer '{offer.GetTitle()}' was applied but gold could not be spent. Check RunManager setup.");
-            return;
-        }
-
-        offer.MarkSold();
-        buyOfferSfx?.Play(this, slotView != null ? slotView.transform : transform);
-        RefreshSlots();
-        slotView?.PlayPurchasedFeedback();
-    }
-
-    public bool CanAfford(MerchantOffer offer)
-    {
-        if (offer == null) return false;
-        if (offer.Price <= 0) return true;
-        return RunManager.Instance != null && RunManager.Instance.Gold >= offer.Price;
-    }
-
-    public void ReturnToMap()
-    {
-        returnToMapSfx?.Play(this, transform);
-
-        if (string.IsNullOrWhiteSpace(mapSceneName))
-        {
-            Gameseed26.Logger.LogWarning("MerchantController has no map scene name.");
-            return;
-        }
-
-        SceneLoader.LoadScene(mapSceneName);
-    }
-
-    public void SetPurchasesEnabled(bool enabled)
-    {
-        purchasesEnabled = enabled;
-        RefreshSlots();
-    }
-
-    [Button("Enable Purchases", EButtonEnableMode.Playmode)]
-    public void EnablePurchases()
-    {
-        SetPurchasesEnabled(true);
-    }
-
-    [Button("Disable Purchases", EButtonEnableMode.Playmode)]
-    public void DisablePurchases()
-    {
-        SetPurchasesEnabled(false);
-    }
-
-    public void StartShopkeeperIdleAfterDelay()
-    {
-        if (!playShopkeeperIdle || shopkeeperVisual == null) return;
-
-        shopkeeperIdleDelayTween?.Kill();
-        shopkeeperIdleDelayTween = DOVirtual.DelayedCall(Mathf.Max(0f, idleStartDelay), StartShopkeeperIdle, false)
-            .SetUpdate(false);
-    }
-
-    [Button("Start Shopkeeper Idle", EButtonEnableMode.Playmode)]
-    public void StartShopkeeperIdle()
-    {
-        if (!playShopkeeperIdle || shopkeeperVisual == null) return;
-
-        StopShopkeeperIdle();
-        Vector2 startPosition = shopkeeperVisual.anchoredPosition;
-        shopkeeperIdleTween = shopkeeperVisual.DOAnchorPosY(startPosition.y + idleYOffset, Mathf.Max(0.01f, idleDuration))
-            .SetEase(idleEase)
-            .SetLoops(-1, LoopType.Yoyo);
-    }
-
-    [Button("Stop Shopkeeper Idle", EButtonEnableMode.Playmode)]
-    public void StopShopkeeperIdle()
-    {
-        shopkeeperIdleDelayTween?.Kill();
-        shopkeeperIdleTween?.Kill();
-        shopkeeperIdleDelayTween = null;
-        shopkeeperIdleTween = null;
-    }
-
-    private bool BuyNewCard(MerchantOffer offer)
-    {
-        if (offer.Card == null) return false;
-
-        RunDeckManager.Instance.AddCard(offer.Card);
-        Gameseed26.Logger.Log($"Bought card: {offer.Card.Title} for {offer.Price} gold.");
-        return true;
-    }
-
-    private bool BuyUpgrade(MerchantOffer offer)
-    {
-        CardUpgradeRecipe recipe = offer.UpgradeRecipe;
-        if (recipe == null || recipe.BaseCard == null || recipe.UpgradedCard == null) return false;
-
-        bool replaced = RunDeckManager.Instance.ReplaceFirst(recipe.BaseCard, recipe.UpgradedCard);
-        if (!replaced)
-        {
-            Gameseed26.Logger.LogWarning($"Could not upgrade {recipe.BaseCard.Title}; the base card is not in the current run deck.");
-            return false;
-        }
-
-        Gameseed26.Logger.Log($"Upgraded card: {recipe.BaseCard.Title} -> {recipe.UpgradedCard.Title} for {offer.Price} gold.");
-        return true;
-    }
-
-    private void CollectSlots()
-    {
-        slots.Clear();
-
-        if (autoFindSlotsInChildren)
-        {
-            Transform root = slotsParent != null ? slotsParent : transform;
-            slots.AddRange(root.GetComponentsInChildren<MerchantOfferSlotView>(true));
-        }
-
-        slots.RemoveAll(slot => slot == null);
-    }
-
-    private void EnsureSlotCount(int targetCount)
-    {
-        if (targetCount <= slots.Count || slotPrefab == null) return;
-
-        Transform parent = slotsParent != null ? slotsParent : transform;
-        while (slots.Count < targetCount)
-        {
-            MerchantOfferSlotView slot = Instantiate(slotPrefab, parent);
-            slots.Add(slot);
-        }
-    }
-
-    private void RefreshSlotAssignments()
-    {
-        for (int i = 0; i < slots.Count; i++)
-        {
-            if (i < activeOffers.Count)
+            for (int i = 0; i < slots.Count; i++)
             {
-                slots[i].Setup(this, activeOffers[i]);
-            }
-            else
-            {
-                slots[i].Clear();
+                if (i < activeOffers.Count)
+                {
+                    slots[i].Setup(this, activeOffers[i]);
+                }
+                else
+                {
+                    slots[i].Clear();
+                }
             }
         }
-    }
 
-    private void ClearSlots()
-    {
-        foreach (MerchantOfferSlotView slot in slots)
+        private void ClearSlots()
         {
-            if (slot != null)
+            foreach (MerchantOfferSlotView slot in slots)
             {
-                slot.Clear();
+                if (slot != null)
+                {
+                    slot.Clear();
+                }
             }
         }
-    }
 
-    private bool SpendOfferPrice(MerchantOffer offer)
-    {
-        if (offer == null || offer.Price <= 0) return true;
-        return RunManager.Instance != null && RunManager.Instance.SpendGold(offer.Price);
-    }
-
-    private void RefreshSlots()
-    {
-        foreach (MerchantOfferSlotView slot in slots)
+        private bool SpendOfferPrice(MerchantOffer offer)
         {
-            if (slot != null)
+            if (offer == null || offer.Price <= 0) return true;
+            return RunManager.Instance != null && RunManager.Instance.SpendGold(offer.Price);
+        }
+
+        private void RefreshSlots()
+        {
+            foreach (MerchantOfferSlotView slot in slots)
             {
-                slot.Refresh();
+                if (slot != null)
+                {
+                    slot.Refresh();
+                }
             }
         }
-    }
 
-    private void SubscribeToRunStateChanges()
-    {
-        if (RunManager.Instance == null || subscribedRunManager == RunManager.Instance) return;
+        private void SubscribeToRunStateChanges()
+        {
+            if (RunManager.Instance == null || subscribedRunManager == RunManager.Instance) return;
 
-        UnsubscribeFromRunStateChanges();
-        subscribedRunManager = RunManager.Instance;
-        subscribedRunManager.RunStateChanged += RefreshSlots;
-    }
+            UnsubscribeFromRunStateChanges();
+            subscribedRunManager = RunManager.Instance;
+            subscribedRunManager.RunStateChanged += RefreshSlots;
+        }
 
-    private void UnsubscribeFromRunStateChanges()
-    {
-        if (subscribedRunManager == null) return;
+        private void UnsubscribeFromRunStateChanges()
+        {
+            if (subscribedRunManager == null) return;
 
-        subscribedRunManager.RunStateChanged -= RefreshSlots;
-        subscribedRunManager = null;
-    }
+            subscribedRunManager.RunStateChanged -= RefreshSlots;
+            subscribedRunManager = null;
+        }
 
-    private static void EnsureRunDeckManagerExists()
-    {
-        if (RunDeckManager.Instance != null) return;
+        private static void EnsureRunDeckManagerExists()
+        {
+            if (RunDeckManager.Instance != null) return;
 
-        GameObject deckManagerObject = new("Run Deck Manager");
-        deckManagerObject.AddComponent<RunDeckManager>();
+            GameObject deckManagerObject = new("Run Deck Manager");
+            deckManagerObject.AddComponent<RunDeckManager>();
+        }
     }
 }

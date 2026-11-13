@@ -1,26 +1,34 @@
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Systems;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Data;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class AllyByCharacterTargetMode : TargetMode
+namespace PlushieOdyssey.Combat.Targeting
 {
-    [SerializeField] private string characterName;
-
-    public override List<CombatantView> GetTargets(CombatantView caster = null)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "AllyByCharacterTargetMode")]
+    [System.Serializable]
+    public class AllyByCharacterTargetMode : TargetMode
     {
-        List<CombatantView> targets = new();
-        if (HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null)
+        [SerializeField] private string characterName;
+
+        public override List<CombatantView> GetTargets(CombatantView caster = null)
         {
-            HeroView heroView = HeroSystem.Instance.HeroView;
-            foreach (var heroData in heroView.HeroTeam)
+            List<CombatantView> targets = new();
+            if (HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null)
             {
-                if (heroData != null && heroData.name.Contains(characterName))
+                HeroView heroView = HeroSystem.Instance.HeroView;
+                foreach (var heroData in heroView.HeroTeam)
                 {
-                    targets.Add(heroView);
-                    break;
+                    if (heroData != null && heroData.name.Contains(characterName))
+                    {
+                        targets.Add(heroView);
+                        break;
+                    }
                 }
             }
+            return targets;
         }
-        return targets;
     }
 }

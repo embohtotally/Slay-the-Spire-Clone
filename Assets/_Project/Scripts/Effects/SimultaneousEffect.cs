@@ -1,26 +1,33 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SimultaneousEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [field: SerializeField] public List<AutoTargetEffect> Effects { get; private set; }
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SimultaneousEffect")]
+    public class SimultaneousEffect : Effect
     {
-        List<GameAction> childActions = new List<GameAction>();
-        if (Effects != null)
+        [field: SerializeField] public List<AutoTargetEffect> Effects { get; private set; }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
-            foreach (AutoTargetEffect effect in Effects)
+            List<GameAction> childActions = new List<GameAction>();
+            if (Effects != null)
             {
-                if (effect.Effect != null)
+                foreach (AutoTargetEffect effect in Effects)
                 {
-                    List<CombatantView> specificTargets = effect.TargetMode != null ? effect.TargetMode.GetTargets(caster) : null;
-                    childActions.Add(effect.Effect.GetGameAction(specificTargets, caster));
+                    if (effect.Effect != null)
+                    {
+                        List<CombatantView> specificTargets = effect.TargetMode != null ? effect.TargetMode.GetTargets(caster) : null;
+                        childActions.Add(effect.Effect.GetGameAction(specificTargets, caster));
+                    }
                 }
             }
-        }
 
-        SimultaneousGA simultaneousGA = new SimultaneousGA(childActions, caster);
-        return simultaneousGA;
+            SimultaneousGA simultaneousGA = new SimultaneousGA(childActions, caster);
+            return simultaneousGA;
+        }
     }
 }

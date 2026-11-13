@@ -1,47 +1,55 @@
+using PlushieOdyssey.Combat;
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Systems;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Data;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Perk
+namespace PlushieOdyssey.Combat.Models
 {
-    public Sprite Image => data.Image;
-
-    private readonly PerkData data;
-    private readonly PerkCondition condition;
-    private readonly AutoTargetEffect autoTargetEffect;
-
-    public Perk(PerkData perkData)
+    public class Perk
     {
-        data = perkData;
-        condition = data.Condition;
-        autoTargetEffect = data.AutoTargetEffect;
-    }
+        public Sprite Image => data.Image;
 
-    public void OnAdd()
-    {
-        condition.SubscribeCondition(Reaction);
-    }
+        private readonly PerkData data;
+        private readonly PerkCondition condition;
+        private readonly AutoTargetEffect autoTargetEffect;
 
-    public void OnRemove()
-    {
-        condition.UnsubscribeCondition(Reaction);
-    }
-
-    private void Reaction(GameAction gameAction)
-    {
-        if (condition.SubConditionIsMet(gameAction))
+        public Perk(PerkData perkData)
         {
-            List<CombatantView> targets = new();
-            if (data.UseActionCasterAsTarget && gameAction is IHaveCaster haveCaster)
-            {
-                targets.Add(haveCaster.Caster);
-            }
-            if (data.UseAutoTarget)
-            {
-                targets.AddRange(autoTargetEffect.TargetMode.GetTargets());
-            }
+            data = perkData;
+            condition = data.Condition;
+            autoTargetEffect = data.AutoTargetEffect;
+        }
 
-            GameAction perkEffectAction = autoTargetEffect.Effect.GetGameAction(targets, HeroSystem.Instance.HeroView);
-            ActionSystem.Instance.AddReaction(perkEffectAction);
+        public void OnAdd()
+        {
+            condition.SubscribeCondition(Reaction);
+        }
+
+        public void OnRemove()
+        {
+            condition.UnsubscribeCondition(Reaction);
+        }
+
+        private void Reaction(GameAction gameAction)
+        {
+            if (condition.SubConditionIsMet(gameAction))
+            {
+                List<CombatantView> targets = new();
+                if (data.UseActionCasterAsTarget && gameAction is IHaveCaster haveCaster)
+                {
+                    targets.Add(haveCaster.Caster);
+                }
+                if (data.UseAutoTarget)
+                {
+                    targets.AddRange(autoTargetEffect.TargetMode.GetTargets());
+                }
+
+                GameAction perkEffectAction = autoTargetEffect.Effect.GetGameAction(targets, HeroSystem.Instance.HeroView);
+                ActionSystem.Instance.AddReaction(perkEffectAction);
+            }
         }
     }
 }

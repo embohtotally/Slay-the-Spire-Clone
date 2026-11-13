@@ -1,18 +1,24 @@
+using PlushieOdyssey.Audio;
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Tutorials;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EndTurnButtonUI : MonoBehaviour
+namespace PlushieOdyssey.UI
 {
-    [SerializeField] private Gameseed26.SfxID endTurnSfx = Gameseed26.SfxID.EndTurn;
-
-    public void OnClick()
+    public class EndTurnButtonUI : MonoBehaviour
     {
-        if (TutorialManager.Instance != null && !TutorialManager.Instance.CanEndTurn()) return;
+        [SerializeField] private global::PlushieOdyssey.Audio.SfxID endTurnSfx = global::PlushieOdyssey.Audio.SfxID.EndTurn;
 
-        if (endTurnSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(endTurnSfx);
-        EnemyTurnGA enemyTurnGA = new();
-        ActionSystem.Instance.Perform(enemyTurnGA);
+        public void OnClick()
+        {
+            if (TutorialManager.Instance != null && !TutorialManager.Instance.CanEndTurn()) return;
+
+            if (endTurnSfx != global::PlushieOdyssey.Audio.SfxID.None) global::PlushieOdyssey.Audio.Tune.SFX(endTurnSfx);
+            EnemyTurnGA enemyTurnGA = new();
+            ActionSystem.Instance.Perform(enemyTurnGA);
+        }
     }
 }

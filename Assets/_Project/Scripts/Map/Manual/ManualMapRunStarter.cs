@@ -1,86 +1,91 @@
-using Gameseed26;
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Core.Scenes;
+using PlushieOdyssey.Run;
 using UnityEngine;
 
-public class ManualMapRunStarter : MonoBehaviour
+namespace PlushieOdyssey.Map.Manual
 {
-    [SerializeField] private ManualMapLayoutRegistry layoutRegistry;
-    [SerializeField] private string mapSceneName = "Map";
-    [SerializeField] private bool clearManualMapProgress = true;
-    [SerializeField] private bool abandonExistingRun = true;
-
-    public void StartRandomManualMapRun()
+    public class ManualMapRunStarter : MonoBehaviour
     {
-        EnsureSelectionManagerExists();
-        ResetRunStateIfNeeded();
+        [SerializeField] private ManualMapLayoutRegistry layoutRegistry;
+        [SerializeField] private string mapSceneName = "Map";
+        [SerializeField] private bool clearManualMapProgress = true;
+        [SerializeField] private bool abandonExistingRun = true;
 
-        ManualMapLayoutEntry layout = ManualMapRunSelection.Instance.SelectRandomLayout(layoutRegistry);
-        if (layout == null) return;
-
-        LoadMapScene();
-    }
-
-    public void StartManualMapRunWithLayout(string layoutId)
-    {
-        EnsureSelectionManagerExists();
-        if (layoutRegistry == null)
+        public void StartRandomManualMapRun()
         {
-            Gameseed26.Logger.LogWarning("Cannot start manual map run because layout registry is missing.");
-            return;
+            EnsureSelectionManagerExists();
+            ResetRunStateIfNeeded();
+
+            ManualMapLayoutEntry layout = ManualMapRunSelection.Instance.SelectRandomLayout(layoutRegistry);
+            if (layout == null) return;
+
+            LoadMapScene();
         }
 
-        ManualMapLayoutEntry layout = layoutRegistry.GetById(layoutId);
-        if (layout == null)
+        public void StartManualMapRunWithLayout(string layoutId)
         {
-            Gameseed26.Logger.LogWarning($"Cannot start manual map run because layout '{layoutId}' was not found.");
-            return;
+            EnsureSelectionManagerExists();
+            if (layoutRegistry == null)
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning("Cannot start manual map run because layout registry is missing.");
+                return;
+            }
+
+            ManualMapLayoutEntry layout = layoutRegistry.GetById(layoutId);
+            if (layout == null)
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning($"Cannot start manual map run because layout '{layoutId}' was not found.");
+                return;
+            }
+
+            ResetRunStateIfNeeded();
+            ManualMapRunSelection.Instance.SelectLayout(layout.SafeId);
+            LoadMapScene();
         }
 
-        ResetRunStateIfNeeded();
-        ManualMapRunSelection.Instance.SelectLayout(layout.SafeId);
-        LoadMapScene();
-    }
-
-    public void ClearManualMapSelectionAndProgress()
-    {
-        EnsureSelectionManagerExists();
-        ManualMapRunSelection.Instance.ClearSelection();
-        ManualMapController.ClearAllSavedStates();
-    }
-
-    private void ResetRunStateIfNeeded()
-    {
-        if (clearManualMapProgress)
+        public void ClearManualMapSelectionAndProgress()
         {
+            EnsureSelectionManagerExists();
+            ManualMapRunSelection.Instance.ClearSelection();
             ManualMapController.ClearAllSavedStates();
         }
 
-        if (ManualMapRunSelection.Instance != null)
+        private void ResetRunStateIfNeeded()
         {
-            ManualMapRunSelection.Instance.ClearSelection();
+            if (clearManualMapProgress)
+            {
+                ManualMapController.ClearAllSavedStates();
+            }
+
+            if (ManualMapRunSelection.Instance != null)
+            {
+                ManualMapRunSelection.Instance.ClearSelection();
+            }
+
+            if (abandonExistingRun && RunManager.Instance != null)
+            {
+                RunManager.Instance.AbandonRun();
+            }
         }
 
-        if (abandonExistingRun && RunManager.Instance != null)
+        private void LoadMapScene()
         {
-            RunManager.Instance.AbandonRun();
-        }
-    }
+            if (string.IsNullOrWhiteSpace(mapSceneName))
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning("Cannot load map scene because map scene name is empty.");
+                return;
+            }
 
-    private void LoadMapScene()
-    {
-        if (string.IsNullOrWhiteSpace(mapSceneName))
-        {
-            Gameseed26.Logger.LogWarning("Cannot load map scene because map scene name is empty.");
-            return;
+            SceneLoader.LoadScene(mapSceneName);
         }
 
-        SceneLoader.LoadScene(mapSceneName);
-    }
+        private static void EnsureSelectionManagerExists()
+        {
+            if (ManualMapRunSelection.Instance != null) return;
 
-    private static void EnsureSelectionManagerExists()
-    {
-        if (ManualMapRunSelection.Instance != null) return;
-
-        GameObject selectionObject = new("Manual Map Run Selection");
-        selectionObject.AddComponent<ManualMapRunSelection>();
+            GameObject selectionObject = new("Manual Map Run Selection");
+            selectionObject.AddComponent<ManualMapRunSelection>();
+        }
     }
 }

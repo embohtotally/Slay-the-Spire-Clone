@@ -1,11 +1,16 @@
-public class ModifyManaGA : GameAction, IHaveCaster
+using PlushieOdyssey.Combat;
+using PlushieOdyssey.Combat.Views;
+namespace PlushieOdyssey.Combat.Actions
 {
-    public int Amount { get; private set; }
-    public CombatantView Caster { get; private set; }
-
-    public ModifyManaGA(int amount, CombatantView caster)
+    public class ModifyManaGA : GameAction, IHaveCaster
     {
-        Amount = amount;
-        Caster = caster;
+        public int Amount { get; private set; }
+        public CombatantView Caster { get; private set; }
+
+        public ModifyManaGA(int amount, CombatantView caster)
+        {
+            Amount = amount;
+            Caster = caster;
+        }
     }
 }

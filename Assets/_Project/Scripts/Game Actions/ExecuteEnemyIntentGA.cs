@@ -1,12 +1,18 @@
-public class ExecuteEnemyIntentGA : GameAction, IHaveCaster
+using PlushieOdyssey.Combat;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
+namespace PlushieOdyssey.Combat.Actions
 {
-    public EnemyView Attacker { get; private set; }
-    public CombatantView Caster => Attacker;
-    public EnemyIntent Intent { get; private set; }
-
-    public ExecuteEnemyIntentGA(EnemyView attacker, EnemyIntent intent)
+    public class ExecuteEnemyIntentGA : GameAction, IHaveCaster
     {
-        Attacker = attacker;
-        Intent = intent;
+        public EnemyView Attacker { get; private set; }
+        public CombatantView Caster => Attacker;
+        public EnemyIntent Intent { get; private set; }
+
+        public ExecuteEnemyIntentGA(EnemyView attacker, EnemyIntent intent)
+        {
+            Attacker = attacker;
+            Intent = intent;
+        }
     }
 }

@@ -1,9 +1,11 @@
+using PlushieOdyssey.Core;
+using Logger = PlushieOdyssey.Core.Logger;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Core.Scenes
 {
     public class LoadingSceneController : MonoBehaviour
     {

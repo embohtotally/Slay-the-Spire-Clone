@@ -1,14 +1,22 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Data;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SummonEnemyEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private EnemyData enemyToSummon;
-    [SerializeField] private int summonCount = 1;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SummonEnemyEffect")]
+    public class SummonEnemyEffect : Effect
     {
-        SummonEnemyGA summonEnemyGA = new SummonEnemyGA(enemyToSummon, summonCount, caster);
-        return summonEnemyGA;
+        [SerializeField] private EnemyData enemyToSummon;
+        [SerializeField] private int summonCount = 1;
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            SummonEnemyGA summonEnemyGA = new SummonEnemyGA(enemyToSummon, summonCount, caster);
+            return summonEnemyGA;
+        }
     }
 }

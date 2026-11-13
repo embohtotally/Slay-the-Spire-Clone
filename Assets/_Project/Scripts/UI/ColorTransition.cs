@@ -3,92 +3,95 @@ using UnityEngine.UI;
 using DG.Tweening;
 using UnityEngine.Events;
 
-public class ColorTransition : MonoBehaviour
+namespace PlushieOdyssey.UI
 {
-    [Header("Targets (Assign at least one)")]
-    [SerializeField] private Graphic targetGraphic;
-    [SerializeField] private SpriteRenderer targetSprite;
-    
-    [Header("Settings")]
-    [SerializeField] private float transitionDuration = 0.5f;
-
-    [Header("Events")]
-    public UnityEvent onTurnedWhite;
-    public UnityEvent onTurnedBlack;
-
-    private void Reset()
+    public class ColorTransition : MonoBehaviour
     {
-        // Auto-assign if attached to the same GameObject
-        targetGraphic = GetComponent<Graphic>();
-        targetSprite = GetComponent<SpriteRenderer>();
-    }
+        [Header("Targets (Assign at least one)")]
+        [SerializeField] private Graphic targetGraphic;
+        [SerializeField] private SpriteRenderer targetSprite;
 
-    public void TransitionToWhite()
-    {
-        TransitionToColor(Color.white);
-    }
+        [Header("Settings")]
+        [SerializeField] private float transitionDuration = 0.5f;
 
-    public void TransitionToBlack()
-    {
-        TransitionToColor(Color.black);
-    }
+        [Header("Events")]
+        public UnityEvent onTurnedWhite;
+        public UnityEvent onTurnedBlack;
 
-    public void TransitionToColor(Color targetColor)
-    {
-        Tween tween = null;
-
-        if (targetGraphic != null)
+        private void Reset()
         {
-            targetGraphic.DOKill();
-            tween = targetGraphic.DOColor(targetColor, transitionDuration);
+            // Auto-assign if attached to the same GameObject
+            targetGraphic = GetComponent<Graphic>();
+            targetSprite = GetComponent<SpriteRenderer>();
         }
 
-        if (targetSprite != null)
+        public void TransitionToWhite()
         {
-            targetSprite.DOKill();
-            tween = targetSprite.DOColor(targetColor, transitionDuration);
+            TransitionToColor(Color.white);
         }
 
-        if (tween != null)
+        public void TransitionToBlack()
         {
-            tween.OnComplete(() => InvokeColorEvents(targetColor));
+            TransitionToColor(Color.black);
         }
-        else
+
+        public void TransitionToColor(Color targetColor)
         {
+            Tween tween = null;
+
+            if (targetGraphic != null)
+            {
+                targetGraphic.DOKill();
+                tween = targetGraphic.DOColor(targetColor, transitionDuration);
+            }
+
+            if (targetSprite != null)
+            {
+                targetSprite.DOKill();
+                tween = targetSprite.DOColor(targetColor, transitionDuration);
+            }
+
+            if (tween != null)
+            {
+                tween.OnComplete(() => InvokeColorEvents(targetColor));
+            }
+            else
+            {
+                InvokeColorEvents(targetColor);
+            }
+        }
+
+        public void TurnCompletelyWhiteInstant()
+        {
+            SetColorInstant(Color.white);
+        }
+
+        public void TurnCompletelyBlackInstant()
+        {
+            SetColorInstant(Color.black);
+        }
+
+        public void SetColorInstant(Color targetColor)
+        {
+            if (targetGraphic != null)
+            {
+                targetGraphic.DOKill();
+                targetGraphic.color = targetColor;
+            }
+
+            if (targetSprite != null)
+            {
+                targetSprite.DOKill();
+                targetSprite.color = targetColor;
+            }
+
             InvokeColorEvents(targetColor);
         }
-    }
 
-    public void TurnCompletelyWhiteInstant()
-    {
-        SetColorInstant(Color.white);
-    }
-
-    public void TurnCompletelyBlackInstant()
-    {
-        SetColorInstant(Color.black);
-    }
-
-    public void SetColorInstant(Color targetColor)
-    {
-        if (targetGraphic != null)
+        private void InvokeColorEvents(Color color)
         {
-            targetGraphic.DOKill();
-            targetGraphic.color = targetColor;
+            if (color == Color.white) onTurnedWhite?.Invoke();
+            else if (color == Color.black) onTurnedBlack?.Invoke();
         }
-
-        if (targetSprite != null)
-        {
-            targetSprite.DOKill();
-            targetSprite.color = targetColor;
-        }
-
-        InvokeColorEvents(targetColor);
-    }
-
-    private void InvokeColorEvents(Color color)
-    {
-        if (color == Color.white) onTurnedWhite?.Invoke();
-        else if (color == Color.black) onTurnedBlack?.Invoke();
     }
 }

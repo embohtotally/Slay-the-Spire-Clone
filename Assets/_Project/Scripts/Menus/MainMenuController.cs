@@ -1,3 +1,6 @@
+using PlushieOdyssey.Audio;
+using PlushieOdyssey.Core.Scenes;
+using PlushieOdyssey.Levels;
 using UnityEngine;
 using NaughtyAttributes;
 
@@ -6,7 +9,7 @@ using NaughtyAttributes;
 using UnityEditor;
 #endif
 
-namespace Gameseed26
+namespace PlushieOdyssey.UI.Menus
 {
     public class MainMenuController : MonoBehaviour
     {
@@ -73,7 +76,7 @@ namespace Gameseed26
                 // Set the flag so they never see the tutorial again
                 PlayerPrefs.SetInt("HasPlayedTutorial", 1);
                 PlayerPrefs.Save();
-                
+
                 SceneLoader.LoadScene("DialogueTutorial");
             }
             else

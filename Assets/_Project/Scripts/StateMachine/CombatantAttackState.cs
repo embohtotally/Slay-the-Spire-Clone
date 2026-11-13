@@ -1,46 +1,50 @@
+using PlushieOdyssey.Combat.Views;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CombatantAttackState : CombatantState
+namespace PlushieOdyssey.Combat.States
 {
-    private float animationDuration;
-    private float timer;
-    private bool isComplete;
-
-    public CombatantAttackState(CombatantView combatant, float animationDuration, Action onComplete = null) 
-        : base(combatant, onComplete)
+    public class CombatantAttackState : CombatantState
     {
-        this.animationDuration = animationDuration;
-    }
+        private float animationDuration;
+        private float timer;
+        private bool isComplete;
 
-    public override void Enter()
-    {
-        timer = 0f;
-        isComplete = false;
-
-        if (combatant.HasAnimator)
+        public CombatantAttackState(CombatantView combatant, float animationDuration, Action onComplete = null)
+            : base(combatant, onComplete)
         {
-            combatant.SetAnimationTrigger("Attack");
+            this.animationDuration = animationDuration;
         }
-    }
 
-    public override void Update()
-    {
-        if (isComplete) return;
-
-        timer += Time.deltaTime;
-        if (timer >= animationDuration)
+        public override void Enter()
         {
-            CompleteAttack();
-        }
-    }
+            timer = 0f;
+            isComplete = false;
 
-    private void CompleteAttack()
-    {
-        isComplete = true;
-        onComplete?.Invoke();
-        combatant.StateMachine.ChangeState(new CombatantIdleState(combatant));
+            if (combatant.HasAnimator)
+            {
+                combatant.SetAnimationTrigger("Attack");
+            }
+        }
+
+        public override void Update()
+        {
+            if (isComplete) return;
+
+            timer += Time.deltaTime;
+            if (timer >= animationDuration)
+            {
+                CompleteAttack();
+            }
+        }
+
+        private void CompleteAttack()
+        {
+            isComplete = true;
+            onComplete?.Invoke();
+            combatant.StateMachine.ChangeState(new CombatantIdleState(combatant));
+        }
     }
 }

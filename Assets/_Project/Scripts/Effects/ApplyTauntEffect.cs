@@ -1,13 +1,20 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ApplyTauntEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private int duration;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ApplyTauntEffect")]
+    public class ApplyTauntEffect : Effect
     {
-        ApplyTauntGA applyTauntGA = new ApplyTauntGA(duration, targets, caster);
-        return applyTauntGA;
+        [SerializeField] private int duration;
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            ApplyTauntGA applyTauntGA = new ApplyTauntGA(duration, targets, caster);
+            return applyTauntGA;
+        }
     }
 }

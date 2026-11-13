@@ -1,26 +1,31 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Views;
 using System.Collections;
 using UnityEngine;
 
-[System.Serializable]
-public class TauntSystem : MonoBehaviour
+namespace PlushieOdyssey.Combat.Systems
 {
-    private void OnEnable()
+    [System.Serializable]
+    public class TauntSystem : MonoBehaviour
     {
-        ActionSystem.AttachPerformer<ApplyTauntGA>(ApplyTauntPerformer);
-    }
-
-    private void OnDisable()
-    {
-        ActionSystem.DetachPerformer<ApplyTauntGA>();
-    }
-
-    private IEnumerator ApplyTauntPerformer(ApplyTauntGA applyTauntGA)
-    {
-        foreach (CombatantView target in applyTauntGA.Targets)
+        private void OnEnable()
         {
-            target.ApplyTaunt(applyTauntGA.Duration);
+            ActionSystem.AttachPerformer<ApplyTauntGA>(ApplyTauntPerformer);
         }
-        
-        yield return null;
+
+        private void OnDisable()
+        {
+            ActionSystem.DetachPerformer<ApplyTauntGA>();
+        }
+
+        private IEnumerator ApplyTauntPerformer(ApplyTauntGA applyTauntGA)
+        {
+            foreach (CombatantView target in applyTauntGA.Targets)
+            {
+                target.ApplyTaunt(applyTauntGA.Duration);
+            }
+
+            yield return null;
+        }
     }
 }

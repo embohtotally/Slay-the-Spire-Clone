@@ -1,92 +1,99 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Core;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class DamageOverTimeSystem : Singleton<DamageOverTimeSystem>
+namespace PlushieOdyssey.Combat.Systems
 {
-    private List<DamageOverTimeData> activeDoTs = new();
-
-    public event Action StatusEffectsChanged;
-
-    public IReadOnlyList<DamageOverTimeData> ActiveDoTs => activeDoTs;
-
-    private void OnEnable()
+    [System.Serializable]
+    public class DamageOverTimeSystem : Singleton<DamageOverTimeSystem>
     {
-        ActionSystem.AttachPerformer<ApplyDoTGA>(ApplyDoTPerformer);
-        ActionSystem.SubscribeReaction<EnemyTurnGA>(OnEnemyTurnPreReaction, ReactionTiming.PRE);
-    }
+        private List<DamageOverTimeData> activeDoTs = new();
 
-    private void OnDisable()
-    {
-        ActionSystem.DetachPerformer<ApplyDoTGA>();
-        ActionSystem.UnsubscribeReaction<EnemyTurnGA>(OnEnemyTurnPreReaction, ReactionTiming.PRE);
-    }
+        public event Action StatusEffectsChanged;
 
-    private IEnumerator ApplyDoTPerformer(ApplyDoTGA applyDoTGA)
-    {
-        foreach (CombatantView target in applyDoTGA.Targets)
+        public IReadOnlyList<DamageOverTimeData> ActiveDoTs => activeDoTs;
+
+        private void OnEnable()
         {
-            // Check if target already has DoT from same caster? For simplicity, we just add it to the list.
-            // A more advanced system might stack durations or damage. We will stack damage for simplicity by adding multiple DoT instances.
-            DamageOverTimeData dot = new DamageOverTimeData(target, applyDoTGA.DamagePerTurn, applyDoTGA.Duration, applyDoTGA.Caster);
-            activeDoTs.Add(dot);
+            ActionSystem.AttachPerformer<ApplyDoTGA>(ApplyDoTPerformer);
+            ActionSystem.SubscribeReaction<EnemyTurnGA>(OnEnemyTurnPreReaction, ReactionTiming.PRE);
         }
-        NotifyStatusEffectsChanged();
-        yield return null;
-    }
 
-    private void OnEnemyTurnPreReaction(EnemyTurnGA enemyTurnGA)
-    {
-        // Trigger all active DoTs
-        List<DamageOverTimeData> expiredDoTs = new();
-
-        foreach (DamageOverTimeData dot in activeDoTs)
+        private void OnDisable()
         {
-            if (dot.Target != null && dot.Target.CurrentHealth > 0)
+            ActionSystem.DetachPerformer<ApplyDoTGA>();
+            ActionSystem.UnsubscribeReaction<EnemyTurnGA>(OnEnemyTurnPreReaction, ReactionTiming.PRE);
+        }
+
+        private IEnumerator ApplyDoTPerformer(ApplyDoTGA applyDoTGA)
+        {
+            foreach (CombatantView target in applyDoTGA.Targets)
             {
-                // Deal Damage
-                DealDamageGA dealDamageGA = new(dot.DamagePerTurn, new List<CombatantView> { dot.Target }, dot.Caster);
-                ActionSystem.Instance.AddReaction(dealDamageGA);
+                // Check if target already has DoT from same caster? For simplicity, we just add it to the list.
+                // A more advanced system might stack durations or damage. We will stack damage for simplicity by adding multiple DoT instances.
+                DamageOverTimeData dot = new DamageOverTimeData(target, applyDoTGA.DamagePerTurn, applyDoTGA.Duration, applyDoTGA.Caster);
+                activeDoTs.Add(dot);
             }
-
-            dot.DecrementDuration();
-            if (dot.RemainingTurns <= 0 || dot.Target == null || dot.Target.CurrentHealth <= 0)
-            {
-                expiredDoTs.Add(dot);
-            }
-        }
-
-        foreach (DamageOverTimeData dot in expiredDoTs)
-        {
-            activeDoTs.Remove(dot);
-        }
-
-        if (expiredDoTs.Count > 0)
-        {
             NotifyStatusEffectsChanged();
+            yield return null;
         }
-    }
 
-    public List<DamageOverTimeData> GetDoTsFor(CombatantView target)
-    {
-        List<DamageOverTimeData> results = new();
-        if (target == null) return results;
-
-        foreach (DamageOverTimeData dot in activeDoTs)
+        private void OnEnemyTurnPreReaction(EnemyTurnGA enemyTurnGA)
         {
-            if (dot.Target == target && dot.RemainingTurns > 0)
+            // Trigger all active DoTs
+            List<DamageOverTimeData> expiredDoTs = new();
+
+            foreach (DamageOverTimeData dot in activeDoTs)
             {
-                results.Add(dot);
+                if (dot.Target != null && dot.Target.CurrentHealth > 0)
+                {
+                    // Deal Damage
+                    DealDamageGA dealDamageGA = new(dot.DamagePerTurn, new List<CombatantView> { dot.Target }, dot.Caster);
+                    ActionSystem.Instance.AddReaction(dealDamageGA);
+                }
+
+                dot.DecrementDuration();
+                if (dot.RemainingTurns <= 0 || dot.Target == null || dot.Target.CurrentHealth <= 0)
+                {
+                    expiredDoTs.Add(dot);
+                }
+            }
+
+            foreach (DamageOverTimeData dot in expiredDoTs)
+            {
+                activeDoTs.Remove(dot);
+            }
+
+            if (expiredDoTs.Count > 0)
+            {
+                NotifyStatusEffectsChanged();
             }
         }
 
-        return results;
-    }
+        public List<DamageOverTimeData> GetDoTsFor(CombatantView target)
+        {
+            List<DamageOverTimeData> results = new();
+            if (target == null) return results;
 
-    private void NotifyStatusEffectsChanged()
-    {
-        StatusEffectsChanged?.Invoke();
+            foreach (DamageOverTimeData dot in activeDoTs)
+            {
+                if (dot.Target == target && dot.RemainingTurns > 0)
+                {
+                    results.Add(dot);
+                }
+            }
+
+            return results;
+        }
+
+        private void NotifyStatusEffectsChanged()
+        {
+            StatusEffectsChanged?.Invoke();
+        }
     }
 }

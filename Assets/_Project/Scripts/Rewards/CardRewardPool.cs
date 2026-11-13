@@ -1,106 +1,112 @@
+using PlushieOdyssey.Data;
+using PlushieOdyssey.Map.Merchant;
+using PlushieOdyssey.Run;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum CardRewardOptionType
+namespace PlushieOdyssey.Rewards
 {
-    NewCard,
-    UpgradeCard
-}
-
-public class CardRewardOption
-{
-    public CardRewardOptionType Type { get; }
-    public CardData Card { get; }
-    public CardUpgradeRecipe UpgradeRecipe { get; }
-
-    public CardData PreviewCard => Type == CardRewardOptionType.UpgradeCard ? UpgradeRecipe?.UpgradedCard : Card;
-
-    public CardRewardOption(CardData card)
+    public enum CardRewardOptionType
     {
-        Type = CardRewardOptionType.NewCard;
-        Card = card;
+        NewCard,
+        UpgradeCard
     }
 
-    public CardRewardOption(CardUpgradeRecipe upgradeRecipe)
+    public class CardRewardOption
     {
-        Type = CardRewardOptionType.UpgradeCard;
-        UpgradeRecipe = upgradeRecipe;
-    }
+        public CardRewardOptionType Type { get; }
+        public CardData Card { get; }
+        public CardUpgradeRecipe UpgradeRecipe { get; }
 
-    public string GetTitle()
-    {
-        if (Type == CardRewardOptionType.UpgradeCard)
+        public CardData PreviewCard => Type == CardRewardOptionType.UpgradeCard ? UpgradeRecipe?.UpgradedCard : Card;
+
+        public CardRewardOption(CardData card)
         {
-            if (!string.IsNullOrWhiteSpace(UpgradeRecipe?.DisplayNameOverride))
-            {
-                return UpgradeRecipe.DisplayNameOverride;
-            }
-
-            string from = UpgradeRecipe?.BaseCard != null ? UpgradeRecipe.BaseCard.Title : "Card";
-            string to = UpgradeRecipe?.UpgradedCard != null ? UpgradeRecipe.UpgradedCard.Title : "Upgrade";
-            return $"Upgrade: {from} -> {to}";
+            Type = CardRewardOptionType.NewCard;
+            Card = card;
         }
 
-        return PreviewCard != null ? PreviewCard.Title : "Empty";
-    }
-
-    public string GetDescription()
-    {
-        CardData preview = PreviewCard;
-        if (preview == null) return "No card assigned.";
-
-        string prefix = Type == CardRewardOptionType.UpgradeCard ? "Upgrade one card in your deck.\n" : "Add this card to your deck.\n";
-        return prefix + preview.Description;
-    }
-}
-
-[Serializable]
-public class CardRewardRequest
-{
-    [Min(1)] public int OptionCount = 3;
-    public bool IncludeNewCards = true;
-    public bool IncludeUpgrades;
-    public bool OnlyOfferNewCardsNotInDeck = true;
-    public bool AllowDuplicateOptions;
-}
-
-[CreateAssetMenu(menuName = "Data/Card Reward Pool")]
-public class CardRewardPool : ScriptableObject
-{
-    [Header("New Card Rewards")]
-    [SerializeField] private List<CardData> newCardRewards = new();
-
-    [Header("Upgrade Rewards")]
-    [SerializeField] private List<CardUpgradeRecipe> upgradeRewards = new();
-
-    public List<CardRewardOption> BuildCandidateRewards(RunDeckManager deckManager, CardRewardRequest request)
-    {
-        CardRewardRequest safeRequest = request ?? new CardRewardRequest();
-        List<CardRewardOption> candidates = new();
-
-        if (safeRequest.IncludeNewCards)
+        public CardRewardOption(CardUpgradeRecipe upgradeRecipe)
         {
-            foreach (CardData card in newCardRewards)
-            {
-                if (card == null) continue;
-                if (safeRequest.OnlyOfferNewCardsNotInDeck && deckManager != null && deckManager.Contains(card)) continue;
-
-                candidates.Add(new CardRewardOption(card));
-            }
+            Type = CardRewardOptionType.UpgradeCard;
+            UpgradeRecipe = upgradeRecipe;
         }
 
-        if (safeRequest.IncludeUpgrades && deckManager != null)
+        public string GetTitle()
         {
-            foreach (CardUpgradeRecipe recipe in upgradeRewards)
+            if (Type == CardRewardOptionType.UpgradeCard)
             {
-                if (recipe == null || recipe.BaseCard == null || recipe.UpgradedCard == null) continue;
-                if (!deckManager.Contains(recipe.BaseCard)) continue;
+                if (!string.IsNullOrWhiteSpace(UpgradeRecipe?.DisplayNameOverride))
+                {
+                    return UpgradeRecipe.DisplayNameOverride;
+                }
 
-                candidates.Add(new CardRewardOption(recipe));
+                string from = UpgradeRecipe?.BaseCard != null ? UpgradeRecipe.BaseCard.Title : "Card";
+                string to = UpgradeRecipe?.UpgradedCard != null ? UpgradeRecipe.UpgradedCard.Title : "Upgrade";
+                return $"Upgrade: {from} -> {to}";
             }
+
+            return PreviewCard != null ? PreviewCard.Title : "Empty";
         }
 
-        return candidates;
+        public string GetDescription()
+        {
+            CardData preview = PreviewCard;
+            if (preview == null) return "No card assigned.";
+
+            string prefix = Type == CardRewardOptionType.UpgradeCard ? "Upgrade one card in your deck.\n" : "Add this card to your deck.\n";
+            return prefix + preview.Description;
+        }
+    }
+
+    [Serializable]
+    public class CardRewardRequest
+    {
+        [Min(1)] public int OptionCount = 3;
+        public bool IncludeNewCards = true;
+        public bool IncludeUpgrades;
+        public bool OnlyOfferNewCardsNotInDeck = true;
+        public bool AllowDuplicateOptions;
+    }
+
+    [CreateAssetMenu(menuName = "Data/Card Reward Pool")]
+    public class CardRewardPool : ScriptableObject
+    {
+        [Header("New Card Rewards")]
+        [SerializeField] private List<CardData> newCardRewards = new();
+
+        [Header("Upgrade Rewards")]
+        [SerializeField] private List<CardUpgradeRecipe> upgradeRewards = new();
+
+        public List<CardRewardOption> BuildCandidateRewards(RunDeckManager deckManager, CardRewardRequest request)
+        {
+            CardRewardRequest safeRequest = request ?? new CardRewardRequest();
+            List<CardRewardOption> candidates = new();
+
+            if (safeRequest.IncludeNewCards)
+            {
+                foreach (CardData card in newCardRewards)
+                {
+                    if (card == null) continue;
+                    if (safeRequest.OnlyOfferNewCardsNotInDeck && deckManager != null && deckManager.Contains(card)) continue;
+
+                    candidates.Add(new CardRewardOption(card));
+                }
+            }
+
+            if (safeRequest.IncludeUpgrades && deckManager != null)
+            {
+                foreach (CardUpgradeRecipe recipe in upgradeRewards)
+                {
+                    if (recipe == null || recipe.BaseCard == null || recipe.UpgradedCard == null) continue;
+                    if (!deckManager.Contains(recipe.BaseCard)) continue;
+
+                    candidates.Add(new CardRewardOption(recipe));
+                }
+            }
+
+            return candidates;
+        }
     }
 }

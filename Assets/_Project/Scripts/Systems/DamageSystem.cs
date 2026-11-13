@@ -1,65 +1,72 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Core.Scenes;
+using PlushieOdyssey.Run;
 using System.Collections;
-using Gameseed26;
 using UnityEngine;
 
-[System.Serializable]
-public class DamageSystem : MonoBehaviour
+namespace PlushieOdyssey.Combat.Systems
 {
-    [SerializeField] private GameObject damageVFX;
-    [SerializeField] private float damageDuration;
-    [SerializeField] private string gameOverSceneName = "GameOver";
-    [SerializeField] private float gameOverDelay = 0.75f;
-
-    private WaitForSeconds damageWaitForSeconds;
-    private bool isLoadingGameOver;
-
-    private void Awake()
+    [System.Serializable]
+    public class DamageSystem : MonoBehaviour
     {
-        damageWaitForSeconds = new WaitForSeconds(damageDuration);
-    }
+        [SerializeField] private GameObject damageVFX;
+        [SerializeField] private float damageDuration;
+        [SerializeField] private string gameOverSceneName = "GameOver";
+        [SerializeField] private float gameOverDelay = 0.75f;
 
-    private void OnEnable()
-    {
-        ActionSystem.AttachPerformer<DealDamageGA>(DealDamagePerformer);
-    }
+        private WaitForSeconds damageWaitForSeconds;
+        private bool isLoadingGameOver;
 
-    private void OnDisable()
-    {
-        ActionSystem.DetachPerformer<DealDamageGA>();
-    }
-
-    private IEnumerator DealDamagePerformer(DealDamageGA dealDamageGA)
-    {
-        foreach (CombatantView target in dealDamageGA.Targets)
+        private void Awake()
         {
-            target.Damage(dealDamageGA.Amount);
-            if (damageVFX != null)
-            {
-                Instantiate(damageVFX, target.transform.position, Quaternion.identity);
-            }
-            
-            GameManager.GenerateFloatingText("-" + dealDamageGA.Amount.ToString(), target.transform);
-            
-            yield return damageWaitForSeconds;
+            damageWaitForSeconds = new WaitForSeconds(damageDuration);
+        }
 
-            if (target.CurrentHealth <= 0)
+        private void OnEnable()
+        {
+            ActionSystem.AttachPerformer<DealDamageGA>(DealDamagePerformer);
+        }
+
+        private void OnDisable()
+        {
+            ActionSystem.DetachPerformer<DealDamageGA>();
+        }
+
+        private IEnumerator DealDamagePerformer(DealDamageGA dealDamageGA)
+        {
+            foreach (CombatantView target in dealDamageGA.Targets)
             {
-                if (target is EnemyView enemyView)
+                target.Damage(dealDamageGA.Amount);
+                if (damageVFX != null)
                 {
-                    KillEnemyGA killEnemyGA = new(enemyView);
-                    ActionSystem.Instance.AddReaction(killEnemyGA);
+                    Instantiate(damageVFX, target.transform.position, Quaternion.identity);
                 }
-                else if (!isLoadingGameOver)
+
+                GameManager.GenerateFloatingText("-" + dealDamageGA.Amount.ToString(), target.transform);
+
+                yield return damageWaitForSeconds;
+
+                if (target.CurrentHealth <= 0)
                 {
-                    isLoadingGameOver = true;
-
-                    if (RunManager.Instance != null)
+                    if (target is EnemyView enemyView)
                     {
-                        RunManager.Instance.AbandonRun();
+                        KillEnemyGA killEnemyGA = new(enemyView);
+                        ActionSystem.Instance.AddReaction(killEnemyGA);
                     }
+                    else if (!isLoadingGameOver)
+                    {
+                        isLoadingGameOver = true;
 
-                    yield return new WaitForSeconds(gameOverDelay);
-                    SceneLoader.LoadScene(gameOverSceneName);
+                        if (RunManager.Instance != null)
+                        {
+                            RunManager.Instance.AbandonRun();
+                        }
+
+                        yield return new WaitForSeconds(gameOverDelay);
+                        SceneLoader.LoadScene(gameOverSceneName);
+                    }
                 }
             }
         }

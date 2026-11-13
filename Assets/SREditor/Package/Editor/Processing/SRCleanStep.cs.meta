@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 615b214edaae39949b8ad8b8d7e9b277
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297559
+  packageName: Serialize Reference Editor
+  packageVersion: 1.5.2
+  assetPath: Assets/SREditor/Package/Editor/Processing/SRCleanStep.cs
+  uploadId: 1033396

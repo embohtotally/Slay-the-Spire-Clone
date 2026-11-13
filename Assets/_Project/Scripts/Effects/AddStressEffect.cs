@@ -1,13 +1,20 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AddStressEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private int stressAmount;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "AddStressEffect")]
+    public class AddStressEffect : Effect
     {
-        AddStressGA addStressGA = new AddStressGA(stressAmount, targets, caster);
-        return addStressGA;
+        [SerializeField] private int stressAmount;
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            AddStressGA addStressGA = new AddStressGA(stressAmount, targets, caster);
+            return addStressGA;
+        }
     }
 }

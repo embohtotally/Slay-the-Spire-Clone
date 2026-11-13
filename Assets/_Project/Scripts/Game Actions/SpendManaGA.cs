@@ -3,12 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SpendManaGA : GameAction
+namespace PlushieOdyssey.Combat.Actions
 {
-    public int Amount { get; set; }
-
-    public SpendManaGA(int amount)
+    public class SpendManaGA : GameAction
     {
-        Amount = amount;
+        public int Amount { get; set; }
+
+        public SpendManaGA(int amount)
+        {
+            Amount = amount;
+        }
     }
 }

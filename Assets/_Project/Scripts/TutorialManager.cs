@@ -1,129 +1,154 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Systems;
+using PlushieOdyssey.Core.Events;
+using PlushieOdyssey.Dialogue;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Events;
 
-public enum TutorialPhase
+namespace PlushieOdyssey.Tutorials
 {
-    PlayCardDialogue,
-    PlayCard,
-    EndTurnDialogue,
-    EndTurn,
-    CompleteDialogue,
-    Complete
-}
-
-public class TutorialManager : MonoBehaviour
-{
-    public static TutorialManager Instance { get; private set; }
-
-    [SerializeField] private NPCInteraction npcInteraction;
-    
-    [SerializeField] private List<NPCDialogueLine> playCardDialogue;
-    [SerializeField] private List<NPCDialogueLine> endTurnDialogue;
-    [SerializeField] private List<NPCDialogueLine> completeDialogue;
-
-    [Header("Events")]
-    public UnityEvent<TutorialPhase> onPhaseChanged;
-    public UnityEvent onEndTurnDialogueStarted;
-
-    public TutorialPhase CurrentPhase { get; private set; } = TutorialPhase.PlayCardDialogue;
-
-    private void Awake()
+    public enum TutorialPhase
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        PlayCardDialogue,
+        PlayCard,
+        EndTurnDialogue,
+        EndTurn,
+        CompleteDialogue,
+        Complete
     }
 
-    private void Start()
+    public class TutorialManager : MonoBehaviour
     {
-        if (npcInteraction != null)
+        public static TutorialManager Instance { get; private set; }
+
+        [SerializeField] private NPCInteraction npcInteraction;
+
+        [SerializeField] private List<NPCDialogueLine> playCardDialogue;
+        [SerializeField] private List<NPCDialogueLine> endTurnDialogue;
+        [SerializeField] private List<NPCDialogueLine> completeDialogue;
+
+        [Header("Events")]
+        public UnityEvent<TutorialPhase> onPhaseChanged;
+        public UnityEvent onEndTurnDialogueStarted;
+
+        public TutorialPhase CurrentPhase { get; private set; } = TutorialPhase.PlayCardDialogue;
+
+        private void Awake()
         {
-            npcInteraction.onDialogueFinished.AddListener(OnDialogueFinished);
-            ChangePhase(TutorialPhase.PlayCardDialogue);
-            PlayDialogue(playCardDialogue);
-        }
-        else
-        {
-            // If no tutorial manager is fully set up, skip tutorial
-            ChangePhase(TutorialPhase.Complete);
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
 
-        ActionSystem.SubscribeReaction<PlayCardGA>(OnCardPlayed, ReactionTiming.POST);
-        ActionSystem.SubscribeReaction<EnemyTurnGA>(OnTurnEnded, ReactionTiming.POST);
-    }
-    
-    private void OnDestroy()
-    {
-        if (npcInteraction != null)
+        private void Start()
         {
-            npcInteraction.onDialogueFinished.RemoveListener(OnDialogueFinished);
-        }
-        ActionSystem.UnsubscribeReaction<PlayCardGA>(OnCardPlayed, ReactionTiming.POST);
-        ActionSystem.UnsubscribeReaction<EnemyTurnGA>(OnTurnEnded, ReactionTiming.POST);
-    }
+            if (npcInteraction != null)
+            {
+                npcInteraction.onDialogueFinished.AddListener(OnDialogueFinished);
+                ChangePhase(TutorialPhase.PlayCardDialogue);
+                PlayDialogue(playCardDialogue);
+            }
+            else
+            {
+                // If no tutorial manager is fully set up, skip tutorial
+                ChangePhase(TutorialPhase.Complete);
+            }
 
-    private void ChangePhase(TutorialPhase newPhase)
-    {
-        CurrentPhase = newPhase;
-        ModularEvents.EventBus.Broadcast($"TutorialPhase_{newPhase}");
-        onPhaseChanged?.Invoke(newPhase);
+            ActionSystem.SubscribeReaction<PlayCardGA>(OnCardPlayed, ReactionTiming.POST);
+            ActionSystem.SubscribeReaction<EnemyTurnGA>(OnTurnEnded, ReactionTiming.POST);
+        }
 
-        if (newPhase == TutorialPhase.EndTurnDialogue)
+        private void OnDestroy()
         {
-            onEndTurnDialogueStarted?.Invoke();
+            if (npcInteraction != null)
+            {
+                npcInteraction.onDialogueFinished.RemoveListener(OnDialogueFinished);
+            }
+            ActionSystem.UnsubscribeReaction<PlayCardGA>(OnCardPlayed, ReactionTiming.POST);
+            ActionSystem.UnsubscribeReaction<EnemyTurnGA>(OnTurnEnded, ReactionTiming.POST);
         }
-    }
 
-    private void PlayDialogue(List<NPCDialogueLine> lines)
-    {
-        if (lines != null && lines.Count > 0)
+        private void ChangePhase(TutorialPhase newPhase)
         {
-            npcInteraction.StartDialogue(lines);
-        }
-        else
-        {
-            // If lines missing, skip dialogue
-            OnDialogueFinished();
-        }
-    }
+            CurrentPhase = newPhase;
+            global::PlushieOdyssey.Core.Events.EventBus.Broadcast($"TutorialPhase_{newPhase}");
+            onPhaseChanged?.Invoke(newPhase);
 
-    private void OnDialogueFinished()
-    {
-        if (CurrentPhase == TutorialPhase.PlayCardDialogue)
-        {
-            ChangePhase(TutorialPhase.PlayCard);
+            if (newPhase == TutorialPhase.EndTurnDialogue)
+            {
+                onEndTurnDialogueStarted?.Invoke();
+            }
         }
-        else if (CurrentPhase == TutorialPhase.EndTurnDialogue)
-        {
-            ChangePhase(TutorialPhase.EndTurn);
-        }
-        else if (CurrentPhase == TutorialPhase.CompleteDialogue)
-        {
-            ChangePhase(TutorialPhase.Complete);
-            PlayerPrefs.SetInt("HasPlayedCardTutorial", 1);
-            PlayerPrefs.Save();
-        }
-    }
 
-    private void OnCardPlayed(PlayCardGA action)
-    {
-        if (CurrentPhase == TutorialPhase.PlayCardDialogue || CurrentPhase == TutorialPhase.PlayCard)
+        private void PlayDialogue(List<NPCDialogueLine> lines)
         {
-            // Move to PlayCard phase in case we were still in Dialogue phase
-            if (CurrentPhase != TutorialPhase.PlayCard)
+            if (lines != null && lines.Count > 0)
+            {
+                npcInteraction.StartDialogue(lines);
+            }
+            else
+            {
+                // If lines missing, skip dialogue
+                OnDialogueFinished();
+            }
+        }
+
+        private void OnDialogueFinished()
+        {
+            if (CurrentPhase == TutorialPhase.PlayCardDialogue)
             {
                 ChangePhase(TutorialPhase.PlayCard);
             }
+            else if (CurrentPhase == TutorialPhase.EndTurnDialogue)
+            {
+                ChangePhase(TutorialPhase.EndTurn);
+            }
+            else if (CurrentPhase == TutorialPhase.CompleteDialogue)
+            {
+                ChangePhase(TutorialPhase.Complete);
+                PlayerPrefs.SetInt("HasPlayedCardTutorial", 1);
+                PlayerPrefs.Save();
+            }
+        }
 
-            // Delay the check slightly to allow mana to be spent first, or we check it immediately if the performer has already subtracted mana.
-            // Since this is a POST reaction, Mana has already been spent.
-            if (!CardSystem.Instance.HasPlayableCards())
+        private void OnCardPlayed(PlayCardGA action)
+        {
+            if (CurrentPhase == TutorialPhase.PlayCardDialogue || CurrentPhase == TutorialPhase.PlayCard)
+            {
+                // Move to PlayCard phase in case we were still in Dialogue phase
+                if (CurrentPhase != TutorialPhase.PlayCard)
+                {
+                    ChangePhase(TutorialPhase.PlayCard);
+                }
+
+                // Delay the check slightly to allow mana to be spent first, or we check it immediately if the performer has already subtracted mana.
+                // Since this is a POST reaction, Mana has already been spent.
+                if (!CardSystem.Instance.HasPlayableCards())
+                {
+                    if (npcInteraction != null && npcInteraction.IsDialogueActive)
+                    {
+                        // Temporarily remove listener so ForceEndDialogue doesn't trigger OnDialogueFinished
+                        npcInteraction.onDialogueFinished.RemoveListener(OnDialogueFinished);
+                        npcInteraction.ForceEndDialogue();
+                        npcInteraction.onDialogueFinished.AddListener(OnDialogueFinished);
+                    }
+
+                    ChangePhase(TutorialPhase.EndTurnDialogue);
+                    PlayDialogue(endTurnDialogue);
+                }
+            }
+        }
+
+        private void OnTurnEnded(EnemyTurnGA action)
+        {
+            if (CurrentPhase == TutorialPhase.EndTurnDialogue || CurrentPhase == TutorialPhase.EndTurn)
             {
                 if (npcInteraction != null && npcInteraction.IsDialogueActive)
                 {
@@ -133,38 +158,21 @@ public class TutorialManager : MonoBehaviour
                     npcInteraction.onDialogueFinished.AddListener(OnDialogueFinished);
                 }
 
-                ChangePhase(TutorialPhase.EndTurnDialogue);
-                PlayDialogue(endTurnDialogue);
+                ChangePhase(TutorialPhase.CompleteDialogue);
+                PlayDialogue(completeDialogue);
             }
         }
-    }
 
-    private void OnTurnEnded(EnemyTurnGA action)
-    {
-        if (CurrentPhase == TutorialPhase.EndTurnDialogue || CurrentPhase == TutorialPhase.EndTurn)
+        public bool CanInteractWithCard(Card card)
         {
-            if (npcInteraction != null && npcInteraction.IsDialogueActive)
-            {
-                // Temporarily remove listener so ForceEndDialogue doesn't trigger OnDialogueFinished
-                npcInteraction.onDialogueFinished.RemoveListener(OnDialogueFinished);
-                npcInteraction.ForceEndDialogue();
-                npcInteraction.onDialogueFinished.AddListener(OnDialogueFinished);
-            }
-
-            ChangePhase(TutorialPhase.CompleteDialogue);
-            PlayDialogue(completeDialogue);
+            return true;
         }
-    }
 
-    public bool CanInteractWithCard(Card card)
-    {
-        return true;
-    }
+        public bool CanEndTurn()
+        {
+            if (CurrentPhase == TutorialPhase.Complete) return true;
 
-    public bool CanEndTurn()
-    {
-        if (CurrentPhase == TutorialPhase.Complete) return true;
-        
-        return CurrentPhase == TutorialPhase.EndTurnDialogue || CurrentPhase == TutorialPhase.EndTurn;
+            return CurrentPhase == TutorialPhase.EndTurnDialogue || CurrentPhase == TutorialPhase.EndTurn;
+        }
     }
 }

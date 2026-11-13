@@ -1,72 +1,79 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Core;
+using PlushieOdyssey.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class ManaSystem : Singleton<ManaSystem>
+namespace PlushieOdyssey.Combat.Systems
 {
-    [SerializeField] private ManaUI manaUI;
-
-    [SerializeField] int maxMana = 3;
-
-    private int currentMana;
-
-    protected override void Awake()
+    [System.Serializable]
+    public class ManaSystem : Singleton<ManaSystem>
     {
-        base.Awake();
-        currentMana = maxMana;
-        manaUI.UpdateManaText(currentMana);
-    }
+        [SerializeField] private ManaUI manaUI;
 
-    private void OnEnable()
-    {
-        ActionSystem.AttachPerformer<SpendManaGA>(SpendManaPerformer);
-        ActionSystem.AttachPerformer<RefillManaGA>(RefillManaPerformer);
-        ActionSystem.AttachPerformer<ModifyManaGA>(ModifyManaPerformer);
+        [SerializeField] int maxMana = 3;
 
-        ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
-    }
+        private int currentMana;
 
-    private void OnDisable()
-    {
-        ActionSystem.DetachPerformer<SpendManaGA>();
-        ActionSystem.DetachPerformer<RefillManaGA>();
-        ActionSystem.DetachPerformer<ModifyManaGA>();
-        ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
-    }
+        protected override void Awake()
+        {
+            base.Awake();
+            currentMana = maxMana;
+            manaUI.UpdateManaText(currentMana);
+        }
 
-    public bool HasEnoughMana(int mana)
-    {
-        return currentMana >= mana;
-    }
+        private void OnEnable()
+        {
+            ActionSystem.AttachPerformer<SpendManaGA>(SpendManaPerformer);
+            ActionSystem.AttachPerformer<RefillManaGA>(RefillManaPerformer);
+            ActionSystem.AttachPerformer<ModifyManaGA>(ModifyManaPerformer);
 
-    private IEnumerator SpendManaPerformer(SpendManaGA spendManaGA)
-    {
-        currentMana -= spendManaGA.Amount;
-        manaUI.UpdateManaText(currentMana);
-        yield return null;
-    }
+            ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
+        }
 
-    private IEnumerator RefillManaPerformer(RefillManaGA refillManaGA)
-    {
-        currentMana = maxMana;
-        manaUI.UpdateManaText(currentMana);
-        yield return null;
-    }
+        private void OnDisable()
+        {
+            ActionSystem.DetachPerformer<SpendManaGA>();
+            ActionSystem.DetachPerformer<RefillManaGA>();
+            ActionSystem.DetachPerformer<ModifyManaGA>();
+            ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
+        }
 
-    private IEnumerator ModifyManaPerformer(ModifyManaGA modifyManaGA)
-    {
-        currentMana = Mathf.Clamp(currentMana + modifyManaGA.Amount, 0, maxMana);
-        manaUI.UpdateManaText(currentMana);
-        yield return null;
-    }
+        public bool HasEnoughMana(int mana)
+        {
+            return currentMana >= mana;
+        }
 
-    private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
-    {
-        if (HeroSystem.Instance.HeroView.IsStunned) return;
+        private IEnumerator SpendManaPerformer(SpendManaGA spendManaGA)
+        {
+            currentMana -= spendManaGA.Amount;
+            manaUI.UpdateManaText(currentMana);
+            yield return null;
+        }
 
-        RefillManaGA refillManaGA = new();
-        ActionSystem.Instance.AddReaction(refillManaGA);
+        private IEnumerator RefillManaPerformer(RefillManaGA refillManaGA)
+        {
+            currentMana = maxMana;
+            manaUI.UpdateManaText(currentMana);
+            yield return null;
+        }
+
+        private IEnumerator ModifyManaPerformer(ModifyManaGA modifyManaGA)
+        {
+            currentMana = Mathf.Clamp(currentMana + modifyManaGA.Amount, 0, maxMana);
+            manaUI.UpdateManaText(currentMana);
+            yield return null;
+        }
+
+        private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
+        {
+            if (HeroSystem.Instance.HeroView.IsStunned) return;
+
+            RefillManaGA refillManaGA = new();
+            ActionSystem.Instance.AddReaction(refillManaGA);
+        }
     }
 }

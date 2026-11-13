@@ -1,7 +1,8 @@
+using PlushieOdyssey.Core.Scenes;
 using NaughtyAttributes;
 using UnityEngine;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Core
 {
     public class GameController : MonoBehaviour
     {

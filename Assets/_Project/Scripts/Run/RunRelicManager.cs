@@ -1,119 +1,123 @@
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Data;
 using System;
 using System.Collections.Generic;
-using Gameseed26;
 using UnityEngine;
 
-public class RunRelicManager : PersistentSingleton<RunRelicManager>
+namespace PlushieOdyssey.Run
 {
-    private readonly List<RelicData> currentRelics = new();
-
-    public IReadOnlyList<RelicData> CurrentRelics => currentRelics;
-    public bool HasRelics => currentRelics.Count > 0;
-    public event Action<IReadOnlyList<RelicData>> RelicsChanged;
-
-    public static RunRelicManager EnsureInstance()
+    public class RunRelicManager : PersistentSingleton<RunRelicManager>
     {
-        if (Instance != null) return Instance;
+        private readonly List<RelicData> currentRelics = new();
 
-        GameObject host = RunManager.Instance != null
-            ? RunManager.Instance.gameObject
-            : new GameObject("Run Relic Manager");
+        public IReadOnlyList<RelicData> CurrentRelics => currentRelics;
+        public bool HasRelics => currentRelics.Count > 0;
+        public event Action<IReadOnlyList<RelicData>> RelicsChanged;
 
-        RunRelicManager manager = host.GetComponent<RunRelicManager>();
-        if (manager == null)
+        public static RunRelicManager EnsureInstance()
         {
-            manager = host.AddComponent<RunRelicManager>();
-        }
+            if (Instance != null) return Instance;
 
-        return manager;
-    }
+            GameObject host = RunManager.Instance != null
+                ? RunManager.Instance.gameObject
+                : new GameObject("Run Relic Manager");
 
-    public List<RelicData> GetRelicsCopy()
-    {
-        return new List<RelicData>(currentRelics);
-    }
-
-    public void ResetRelics(IEnumerable<RelicData> startingRelics)
-    {
-        currentRelics.Clear();
-
-        if (startingRelics != null)
-        {
-            foreach (RelicData relic in startingRelics)
+            RunRelicManager manager = host.GetComponent<RunRelicManager>();
+            if (manager == null)
             {
-                AddRelicInternal(relic, false);
+                manager = host.AddComponent<RunRelicManager>();
             }
+
+            return manager;
         }
 
-        NotifyRelicsChanged();
-    }
-
-    public void ClearRelics()
-    {
-        if (currentRelics.Count == 0) return;
-
-        currentRelics.Clear();
-        NotifyRelicsChanged();
-    }
-
-    public bool Contains(RelicData relic)
-    {
-        return relic != null && currentRelics.Contains(relic);
-    }
-
-    public int Count(RelicData relic)
-    {
-        if (relic == null) return 0;
-
-        int count = 0;
-        foreach (RelicData currentRelic in currentRelics)
+        public List<RelicData> GetRelicsCopy()
         {
-            if (currentRelic == relic) count++;
+            return new List<RelicData>(currentRelics);
         }
 
-        return count;
-    }
-
-    public bool AddRelic(RelicData relic)
-    {
-        bool added = AddRelicInternal(relic, true);
-        if (added) NotifyRelicsChanged();
-        return added;
-    }
-
-    public bool RemoveRelic(RelicData relic)
-    {
-        if (relic == null) return false;
-
-        bool removed = currentRelics.Remove(relic);
-        if (removed)
+        public void ResetRelics(IEnumerable<RelicData> startingRelics)
         {
+            currentRelics.Clear();
+
+            if (startingRelics != null)
+            {
+                foreach (RelicData relic in startingRelics)
+                {
+                    AddRelicInternal(relic, false);
+                }
+            }
+
             NotifyRelicsChanged();
         }
 
-        return removed;
-    }
-
-    private bool AddRelicInternal(RelicData relic, bool logFailures)
-    {
-        if (relic == null)
+        public void ClearRelics()
         {
-            if (logFailures) Gameseed26.Logger.LogWarning("Tried to add a null relic to the run.");
-            return false;
+            if (currentRelics.Count == 0) return;
+
+            currentRelics.Clear();
+            NotifyRelicsChanged();
         }
 
-        if (relic.Unique && Contains(relic))
+        public bool Contains(RelicData relic)
         {
-            if (logFailures) Gameseed26.Logger.Log(this, $"Relic '{relic.Title}' is unique and already owned.");
-            return false;
+            return relic != null && currentRelics.Contains(relic);
         }
 
-        currentRelics.Add(relic);
-        return true;
-    }
+        public int Count(RelicData relic)
+        {
+            if (relic == null) return 0;
 
-    public void NotifyRelicsChanged()
-    {
-        RelicsChanged?.Invoke(CurrentRelics);
+            int count = 0;
+            foreach (RelicData currentRelic in currentRelics)
+            {
+                if (currentRelic == relic) count++;
+            }
+
+            return count;
+        }
+
+        public bool AddRelic(RelicData relic)
+        {
+            bool added = AddRelicInternal(relic, true);
+            if (added) NotifyRelicsChanged();
+            return added;
+        }
+
+        public bool RemoveRelic(RelicData relic)
+        {
+            if (relic == null) return false;
+
+            bool removed = currentRelics.Remove(relic);
+            if (removed)
+            {
+                NotifyRelicsChanged();
+            }
+
+            return removed;
+        }
+
+        private bool AddRelicInternal(RelicData relic, bool logFailures)
+        {
+            if (relic == null)
+            {
+                if (logFailures) global::PlushieOdyssey.Core.Logger.LogWarning("Tried to add a null relic to the run.");
+                return false;
+            }
+
+            if (relic.Unique && Contains(relic))
+            {
+                if (logFailures) global::PlushieOdyssey.Core.Logger.Log(this, $"Relic '{relic.Title}' is unique and already owned.");
+                return false;
+            }
+
+            currentRelics.Add(relic);
+            return true;
+        }
+
+        public void NotifyRelicsChanged()
+        {
+            RelicsChanged?.Invoke(CurrentRelics);
+        }
     }
 }

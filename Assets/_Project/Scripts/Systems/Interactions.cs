@@ -1,24 +1,29 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Core;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class Interactions : Singleton<Interactions>
+namespace PlushieOdyssey.Combat.Systems
 {
-    public bool PlayerIsDragging { get; set; } = false;
-
-    public bool PlayerCanInteract()
+    [System.Serializable]
+    public class Interactions : Singleton<Interactions>
     {
-        if (!ActionSystem.Instance.IsPerforming) return true;
+        public bool PlayerIsDragging { get; set; } = false;
 
-        return false;
-    }
+        public bool PlayerCanInteract()
+        {
+            if (!ActionSystem.Instance.IsPerforming) return true;
 
-    public bool PlayerCanHover()
-    {
-        if (PlayerIsDragging) return false;
+            return false;
+        }
 
-        return true;
+        public bool PlayerCanHover()
+        {
+            if (PlayerIsDragging) return false;
+
+            return true;
+        }
     }
 }

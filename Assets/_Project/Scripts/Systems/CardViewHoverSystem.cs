@@ -1,70 +1,76 @@
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Core;
 using UnityEngine;
 
-[System.Serializable]
-public class CardViewHoverSystem : Singleton<CardViewHoverSystem>
+namespace PlushieOdyssey.Combat.Systems
 {
-    [SerializeField] private CardView cardViewHover;
-
-    private Collider[] hoverColliders;
-    private Collider2D[] hoverColliders2D;
-
-    protected override void Awake()
+    [System.Serializable]
+    public class CardViewHoverSystem : Singleton<CardViewHoverSystem>
     {
-        base.Awake();
-        if (Instance != this) return;
-        PrepareHoverPreview();
-    }
+        [SerializeField] private CardView cardViewHover;
 
-    private void OnValidate()
-    {
-        PrepareHoverPreview();
-    }
+        private Collider[] hoverColliders;
+        private Collider2D[] hoverColliders2D;
 
-    public void Show(Card card, Vector3 position)
-    {
-        if (cardViewHover == null || card == null) return;
-
-        PrepareHoverPreview();
-        cardViewHover.gameObject.SetActive(true);
-        cardViewHover.Setup(card);
-        cardViewHover.transform.position = position;
-        SetHoverCollidersEnabled(false);
-    }
-
-    public void Hide()
-    {
-        if (cardViewHover == null) return;
-        cardViewHover.gameObject.SetActive(false);
-    }
-
-    private void PrepareHoverPreview()
-    {
-        if (cardViewHover == null) return;
-
-        cardViewHover.SetCombatInteractionsEnabled(false);
-        cardViewHover.SetCombatHoverPreviewEnabled(false);
-        cardViewHover.SetHoverJuiceEnabled(false);
-
-        hoverColliders = cardViewHover.GetComponentsInChildren<Collider>(true);
-        hoverColliders2D = cardViewHover.GetComponentsInChildren<Collider2D>(true);
-        SetHoverCollidersEnabled(false);
-    }
-
-    private void SetHoverCollidersEnabled(bool enabled)
-    {
-        if (hoverColliders != null)
+        protected override void Awake()
         {
-            foreach (Collider hoverCollider in hoverColliders)
-            {
-                if (hoverCollider != null) hoverCollider.enabled = enabled;
-            }
+            base.Awake();
+            if (Instance != this) return;
+            PrepareHoverPreview();
         }
 
-        if (hoverColliders2D != null)
+        private void OnValidate()
         {
-            foreach (Collider2D hoverCollider in hoverColliders2D)
+            PrepareHoverPreview();
+        }
+
+        public void Show(Card card, Vector3 position)
+        {
+            if (cardViewHover == null || card == null) return;
+
+            PrepareHoverPreview();
+            cardViewHover.gameObject.SetActive(true);
+            cardViewHover.Setup(card);
+            cardViewHover.transform.position = position;
+            SetHoverCollidersEnabled(false);
+        }
+
+        public void Hide()
+        {
+            if (cardViewHover == null) return;
+            cardViewHover.gameObject.SetActive(false);
+        }
+
+        private void PrepareHoverPreview()
+        {
+            if (cardViewHover == null) return;
+
+            cardViewHover.SetCombatInteractionsEnabled(false);
+            cardViewHover.SetCombatHoverPreviewEnabled(false);
+            cardViewHover.SetHoverJuiceEnabled(false);
+
+            hoverColliders = cardViewHover.GetComponentsInChildren<Collider>(true);
+            hoverColliders2D = cardViewHover.GetComponentsInChildren<Collider2D>(true);
+            SetHoverCollidersEnabled(false);
+        }
+
+        private void SetHoverCollidersEnabled(bool enabled)
+        {
+            if (hoverColliders != null)
             {
-                if (hoverCollider != null) hoverCollider.enabled = enabled;
+                foreach (Collider hoverCollider in hoverColliders)
+                {
+                    if (hoverCollider != null) hoverCollider.enabled = enabled;
+                }
+            }
+
+            if (hoverColliders2D != null)
+            {
+                foreach (Collider2D hoverCollider in hoverColliders2D)
+                {
+                    if (hoverCollider != null) hoverCollider.enabled = enabled;
+                }
             }
         }
     }

@@ -1,12 +1,19 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RedirectDamageEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private int duration;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RedirectDamageEffect")]
+    public class RedirectDamageEffect : Effect
     {
-        return new ApplyBuffGA(targets, BuffType.Redirect, 1, duration, caster);
+        [SerializeField] private int duration;
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            return new ApplyBuffGA(targets, BuffType.Redirect, 1, duration, caster);
+        }
     }
 }

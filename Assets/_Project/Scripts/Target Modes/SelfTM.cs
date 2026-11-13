@@ -1,10 +1,16 @@
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 
-public class SelfTM : TargetMode
+namespace PlushieOdyssey.Combat.Targeting
 {
-    public override List<CombatantView> GetTargets(CombatantView caster = null)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SelfTM")]
+    public class SelfTM : TargetMode
     {
-        if (caster == null) return new List<CombatantView>();
-        return new List<CombatantView>() { caster };
+        public override List<CombatantView> GetTargets(CombatantView caster = null)
+        {
+            if (caster == null) return new List<CombatantView>();
+            return new List<CombatantView>() { caster };
+        }
     }
 }

@@ -1,14 +1,21 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ApplyStatusEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private StatusType status;
-    [SerializeField] private int stacks;
-    [SerializeField] private int duration;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ApplyStatusEffect")]
+    public class ApplyStatusEffect : Effect
     {
-        return new ApplyStatusGA(targets, status, stacks, duration, caster);
+        [SerializeField] private StatusType status;
+        [SerializeField] private int stacks;
+        [SerializeField] private int duration;
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            return new ApplyStatusGA(targets, status, stacks, duration, caster);
+        }
     }
 }

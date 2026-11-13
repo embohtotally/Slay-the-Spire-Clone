@@ -1,3 +1,4 @@
+using PlushieOdyssey.Combat.Models;
 using DG.Tweening;
 using System;
 using System.Collections;
@@ -6,78 +7,81 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Splines;
 
-public class HandView : MonoBehaviour
+namespace PlushieOdyssey.Combat.Views
 {
-    [SerializeField] private SplineContainer splineContainer;
-    [SerializeField] private int maxHandSize = 10;
-    [SerializeField] private float doTweenUpdatePositionDuration = 0.15f;
-    [SerializeField] private float cardPositionOffset = 0.01f;
-
-    private WaitForSeconds updateCardPositionTime;
-
-    private List<CardView> cards = new();
-
-    private void Awake()
+    public class HandView : MonoBehaviour
     {
-        updateCardPositionTime = new WaitForSeconds(doTweenUpdatePositionDuration);
-    }
+        [SerializeField] private SplineContainer splineContainer;
+        [SerializeField] private int maxHandSize = 10;
+        [SerializeField] private float doTweenUpdatePositionDuration = 0.15f;
+        [SerializeField] private float cardPositionOffset = 0.01f;
 
-    public CardView RemoveCard(Card card)
-    {
-        CardView cardView = GetCardView(card);
+        private WaitForSeconds updateCardPositionTime;
 
-        if (cardView == null) return null;
+        private List<CardView> cards = new();
 
-        cards.Remove(cardView);
-        StartCoroutine(UpdateCardPositions(doTweenUpdatePositionDuration));
-        return cardView;
-    }
-
-    public IEnumerator AddCard(CardView cardView)
-    {
-        cards.Add(cardView);
-        yield return UpdateCardPositions(doTweenUpdatePositionDuration);
-    }
-
-    private IEnumerator UpdateCardPositions(float duration)
-    {
-        if (cards.Count == 0) yield break;
-
-        float cardSpacing = 1f / maxHandSize;
-        float firstCardPosition = 0.5f - (cards.Count - 1) * cardSpacing * 0.5f;
-        Spline spline = splineContainer.Spline;
-
-        for (int i = 0; i < cards.Count; i++)
+        private void Awake()
         {
-            float p = firstCardPosition + i * cardSpacing;
-            Vector3 splinePosition = spline.EvaluatePosition(p);
-            Vector3 forward = spline.EvaluateTangent(p);
-            Vector3 up = spline.EvaluateUpVector(p);
-            Quaternion rotation = Quaternion.LookRotation(-up, Vector3.Cross(-up, forward).normalized);
-            cards[i].transform.DOMove(splinePosition + transform.position + cardPositionOffset * i * Vector3.forward, duration);
-            cards[i].transform.DORotate(rotation.eulerAngles, duration);
+            updateCardPositionTime = new WaitForSeconds(doTweenUpdatePositionDuration);
         }
 
-        yield return updateCardPositionTime;
-    }
-
-    public void RefreshCardPositions()
-    {
-        if (cards.Count > 0)
+        public CardView RemoveCard(Card card)
         {
+            CardView cardView = GetCardView(card);
+
+            if (cardView == null) return null;
+
+            cards.Remove(cardView);
             StartCoroutine(UpdateCardPositions(doTweenUpdatePositionDuration));
+            return cardView;
         }
-    }
 
-    private CardView GetCardView(Card card)
-    {
-        for (int i = 0; i < cards.Count; i++)
+        public IEnumerator AddCard(CardView cardView)
         {
-            if (cards[i] != null && cards[i].Card == card)
+            cards.Add(cardView);
+            yield return UpdateCardPositions(doTweenUpdatePositionDuration);
+        }
+
+        private IEnumerator UpdateCardPositions(float duration)
+        {
+            if (cards.Count == 0) yield break;
+
+            float cardSpacing = 1f / maxHandSize;
+            float firstCardPosition = 0.5f - (cards.Count - 1) * cardSpacing * 0.5f;
+            Spline spline = splineContainer.Spline;
+
+            for (int i = 0; i < cards.Count; i++)
             {
-                return cards[i];
+                float p = firstCardPosition + i * cardSpacing;
+                Vector3 splinePosition = spline.EvaluatePosition(p);
+                Vector3 forward = spline.EvaluateTangent(p);
+                Vector3 up = spline.EvaluateUpVector(p);
+                Quaternion rotation = Quaternion.LookRotation(-up, Vector3.Cross(-up, forward).normalized);
+                cards[i].transform.DOMove(splinePosition + transform.position + cardPositionOffset * i * Vector3.forward, duration);
+                cards[i].transform.DORotate(rotation.eulerAngles, duration);
+            }
+
+            yield return updateCardPositionTime;
+        }
+
+        public void RefreshCardPositions()
+        {
+            if (cards.Count > 0)
+            {
+                StartCoroutine(UpdateCardPositions(doTweenUpdatePositionDuration));
             }
         }
-        return null;
+
+        private CardView GetCardView(Card card)
+        {
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (cards[i] != null && cards[i].Card == card)
+                {
+                    return cards[i];
+                }
+            }
+            return null;
+        }
     }
 }

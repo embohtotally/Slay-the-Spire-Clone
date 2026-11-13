@@ -1,4 +1,8 @@
-public interface IHaveCaster
+using PlushieOdyssey.Combat.Views;
+namespace PlushieOdyssey.Combat
 {
-    public CombatantView Caster { get; }
+    public interface IHaveCaster
+    {
+        public CombatantView Caster { get; }
+    }
 }

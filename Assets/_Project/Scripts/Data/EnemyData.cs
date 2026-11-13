@@ -1,14 +1,18 @@
+using PlushieOdyssey.Combat.Models;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Data/Enemy")]
-public class EnemyData : ScriptableObject
+namespace PlushieOdyssey.Data
 {
-    [field: SerializeField] public Sprite Image { get; private set; }
-    [field: SerializeField] public int Health { get; private set; }
-    [field: SerializeField] public List<EnemyIntent> Intents { get; private set; }
-    [field: SerializeField] public AIAttackPattern AttackPattern { get; private set; }
-    [field: SerializeField, Tooltip("Offset applied to the sprite position")] public Vector3 SpriteOffset { get; private set; }
+    [CreateAssetMenu(menuName = "Data/Enemy")]
+    public class EnemyData : ScriptableObject
+    {
+        [field: SerializeField] public Sprite Image { get; private set; }
+        [field: SerializeField] public int Health { get; private set; }
+        [field: SerializeField] public List<EnemyIntent> Intents { get; private set; }
+        [field: SerializeField] public AIAttackPattern AttackPattern { get; private set; }
+        [field: SerializeField, Tooltip("Offset applied to the sprite position")] public Vector3 SpriteOffset { get; private set; }
+    }
 }

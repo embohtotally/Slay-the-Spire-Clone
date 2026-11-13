@@ -1,9 +1,11 @@
+using PlushieOdyssey.Core;
+using Logger = PlushieOdyssey.Core.Logger;
 using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Audio
 {
     public partial class Tune
     {

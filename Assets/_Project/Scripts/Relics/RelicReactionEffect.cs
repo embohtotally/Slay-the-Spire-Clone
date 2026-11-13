@@ -1,125 +1,138 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Systems;
+using PlushieOdyssey.Combat.Views;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum RelicReactionTargetSelection
+namespace PlushieOdyssey.Relics
 {
-    Hero,
-    OriginalCaster,
-    OriginalTargets,
-    AllEnemies
-}
-
-[Serializable]
-public abstract class RelicReactionEffect
-{
-    public abstract GameAction CreateGameAction(RelicTriggerContext context);
-
-    protected static CombatantView GetHero()
+    public enum RelicReactionTargetSelection
     {
-        return HeroSystem.Instance != null ? HeroSystem.Instance.HeroView : null;
+        Hero,
+        OriginalCaster,
+        OriginalTargets,
+        AllEnemies
     }
 
-    protected static List<CombatantView> ResolveTargets(RelicTriggerContext context, RelicReactionTargetSelection targetSelection)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "PlushieOdyssey", sourceAssembly: "Assembly-CSharp", sourceClassName: "RelicReactionEffect")]
+    [Serializable]
+    public abstract class RelicReactionEffect
     {
-        List<CombatantView> targets = new();
+        public abstract GameAction CreateGameAction(RelicTriggerContext context);
 
-        switch (targetSelection)
+        protected static CombatantView GetHero()
         {
-            case RelicReactionTargetSelection.Hero:
-                AddIfNotNull(targets, GetHero());
-                break;
-            case RelicReactionTargetSelection.OriginalCaster:
-                AddIfNotNull(targets, context?.Caster);
-                break;
-            case RelicReactionTargetSelection.OriginalTargets:
-                if (context?.Targets != null)
-                {
-                    foreach (CombatantView target in context.Targets)
-                    {
-                        AddIfNotNull(targets, target);
-                    }
-                }
-                break;
-            case RelicReactionTargetSelection.AllEnemies:
-                if (EnemySystem.Instance != null && EnemySystem.Instance.Enemies != null)
-                {
-                    foreach (EnemyView enemy in EnemySystem.Instance.Enemies)
-                    {
-                        AddIfNotNull(targets, enemy);
-                    }
-                }
-                break;
+            return HeroSystem.Instance != null ? HeroSystem.Instance.HeroView : null;
         }
 
-        return targets;
+        protected static List<CombatantView> ResolveTargets(RelicTriggerContext context, RelicReactionTargetSelection targetSelection)
+        {
+            List<CombatantView> targets = new();
+
+            switch (targetSelection)
+            {
+                case RelicReactionTargetSelection.Hero:
+                    AddIfNotNull(targets, GetHero());
+                    break;
+                case RelicReactionTargetSelection.OriginalCaster:
+                    AddIfNotNull(targets, context?.Caster);
+                    break;
+                case RelicReactionTargetSelection.OriginalTargets:
+                    if (context?.Targets != null)
+                    {
+                        foreach (CombatantView target in context.Targets)
+                        {
+                            AddIfNotNull(targets, target);
+                        }
+                    }
+                    break;
+                case RelicReactionTargetSelection.AllEnemies:
+                    if (EnemySystem.Instance != null && EnemySystem.Instance.Enemies != null)
+                    {
+                        foreach (EnemyView enemy in EnemySystem.Instance.Enemies)
+                        {
+                            AddIfNotNull(targets, enemy);
+                        }
+                    }
+                    break;
+            }
+
+            return targets;
+        }
+
+        private static void AddIfNotNull(List<CombatantView> targets, CombatantView target)
+        {
+            if (target != null) targets.Add(target);
+        }
     }
 
-    private static void AddIfNotNull(List<CombatantView> targets, CombatantView target)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RelicDrawCardsReactionEffect")]
+    [Serializable]
+    public class RelicDrawCardsReactionEffect : RelicReactionEffect
     {
-        if (target != null) targets.Add(target);
+        [SerializeField, Min(1)] private int amount = 1;
+
+        public override GameAction CreateGameAction(RelicTriggerContext context)
+        {
+            return new DrawCardsGA(amount);
+        }
     }
-}
 
-[Serializable]
-public class RelicDrawCardsReactionEffect : RelicReactionEffect
-{
-    [SerializeField, Min(1)] private int amount = 1;
-
-    public override GameAction CreateGameAction(RelicTriggerContext context)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "PlushieOdyssey", sourceAssembly: "Assembly-CSharp", sourceClassName: "RelicModifyManaReactionEffect")]
+    [Serializable]
+    public class RelicModifyManaReactionEffect : RelicReactionEffect
     {
-        return new DrawCardsGA(amount);
+        [SerializeField] private int amount = 1;
+
+        public override GameAction CreateGameAction(RelicTriggerContext context)
+        {
+            return new ModifyManaGA(amount, GetHero());
+        }
     }
-}
 
-[Serializable]
-public class RelicModifyManaReactionEffect : RelicReactionEffect
-{
-    [SerializeField] private int amount = 1;
-
-    public override GameAction CreateGameAction(RelicTriggerContext context)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "PlushieOdyssey", sourceAssembly: "Assembly-CSharp", sourceClassName: "RelicHealReactionEffect")]
+    [Serializable]
+    public class RelicHealReactionEffect : RelicReactionEffect
     {
-        return new ModifyManaGA(amount, GetHero());
+        [SerializeField, Min(1)] private int amount = 1;
+        [SerializeField] private RelicReactionTargetSelection targetSelection = RelicReactionTargetSelection.Hero;
+
+        public override GameAction CreateGameAction(RelicTriggerContext context)
+        {
+            List<CombatantView> targets = ResolveTargets(context, targetSelection);
+            return targets.Count > 0 ? new HealGA(amount, targets, GetHero()) : null;
+        }
     }
-}
 
-[Serializable]
-public class RelicHealReactionEffect : RelicReactionEffect
-{
-    [SerializeField, Min(1)] private int amount = 1;
-    [SerializeField] private RelicReactionTargetSelection targetSelection = RelicReactionTargetSelection.Hero;
-
-    public override GameAction CreateGameAction(RelicTriggerContext context)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "PlushieOdyssey", sourceAssembly: "Assembly-CSharp", sourceClassName: "RelicGainShieldReactionEffect")]
+    [Serializable]
+    public class RelicGainShieldReactionEffect : RelicReactionEffect
     {
-        List<CombatantView> targets = ResolveTargets(context, targetSelection);
-        return targets.Count > 0 ? new HealGA(amount, targets, GetHero()) : null;
+        [SerializeField, Min(1)] private int amount = 1;
+        [SerializeField] private RelicReactionTargetSelection targetSelection = RelicReactionTargetSelection.Hero;
+
+        public override GameAction CreateGameAction(RelicTriggerContext context)
+        {
+            List<CombatantView> targets = ResolveTargets(context, targetSelection);
+            return targets.Count > 0 ? new GainShieldGA(amount, targets, GetHero()) : null;
+        }
     }
-}
 
-[Serializable]
-public class RelicGainShieldReactionEffect : RelicReactionEffect
-{
-    [SerializeField, Min(1)] private int amount = 1;
-    [SerializeField] private RelicReactionTargetSelection targetSelection = RelicReactionTargetSelection.Hero;
-
-    public override GameAction CreateGameAction(RelicTriggerContext context)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "PlushieOdyssey", sourceAssembly: "Assembly-CSharp", sourceClassName: "RelicApplyBuffReactionEffect")]
+    [Serializable]
+    public class RelicApplyBuffReactionEffect : RelicReactionEffect
     {
-        List<CombatantView> targets = ResolveTargets(context, targetSelection);
-        return targets.Count > 0 ? new GainShieldGA(amount, targets, GetHero()) : null;
-    }
-}
+        [SerializeField] private BuffType buffType = BuffType.Strength;
+        [SerializeField] private int value = 1;
+        [SerializeField, Min(1)] private int duration = 1;
+        [SerializeField] private RelicReactionTargetSelection targetSelection = RelicReactionTargetSelection.Hero;
 
-[Serializable]
-public class RelicApplyBuffReactionEffect : RelicReactionEffect
-{
-    [SerializeField] private BuffType buffType = BuffType.Strength;
-    [SerializeField] private int value = 1;
-    [SerializeField, Min(1)] private int duration = 1;
-    [SerializeField] private RelicReactionTargetSelection targetSelection = RelicReactionTargetSelection.Hero;
-
-    public override GameAction CreateGameAction(RelicTriggerContext context)
-    {
-        List<CombatantView> targets = ResolveTargets(context, targetSelection);
-        return targets.Count > 0 ? new ApplyBuffGA(targets, buffType, value, duration, GetHero()) : null;
+        public override GameAction CreateGameAction(RelicTriggerContext context)
+        {
+            List<CombatantView> targets = ResolveTargets(context, targetSelection);
+            return targets.Count > 0 ? new ApplyBuffGA(targets, buffType, value, duration, GetHero()) : null;
+        }
     }
 }

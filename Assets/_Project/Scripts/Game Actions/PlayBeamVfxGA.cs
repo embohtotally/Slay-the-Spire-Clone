@@ -1,3 +1,6 @@
+using PlushieOdyssey.Combat;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Vfx;
 using System.Collections.Generic;
 
 /// <summary>
@@ -5,21 +8,24 @@ using System.Collections.Generic;
 /// gates the game state: each ImpactPayloads[i] is queued (AddReaction) on the exact
 /// frame the beam head passes Targets[i]. Follows the DealDamageGA/IHaveCaster pattern.
 /// </summary>
-public class PlayBeamVfxGA : GameAction, IHaveCaster
+namespace PlushieOdyssey.Combat.Actions
 {
-    public CombatantView Caster { get; }
-    public IReadOnlyList<CombatantView> Targets { get; }
-    public IReadOnlyList<GameAction> ImpactPayloads { get; }
-    public BeamVfxConfig Config { get; }
-
-    public PlayBeamVfxGA(CombatantView caster,
-                         List<CombatantView> targets,
-                         BeamVfxConfig config,
-                         List<GameAction> impactPayloads)
+    public class PlayBeamVfxGA : GameAction, IHaveCaster
     {
-        Caster = caster;
-        Targets = targets ?? new List<CombatantView>();
-        Config = config;
-        ImpactPayloads = impactPayloads ?? new List<GameAction>();
+        public CombatantView Caster { get; }
+        public IReadOnlyList<CombatantView> Targets { get; }
+        public IReadOnlyList<GameAction> ImpactPayloads { get; }
+        public BeamVfxConfig Config { get; }
+
+        public PlayBeamVfxGA(CombatantView caster,
+                             List<CombatantView> targets,
+                             BeamVfxConfig config,
+                             List<GameAction> impactPayloads)
+        {
+            Caster = caster;
+            Targets = targets ?? new List<CombatantView>();
+            Config = config;
+            ImpactPayloads = impactPayloads ?? new List<GameAction>();
+        }
     }
 }

@@ -2,7 +2,7 @@ using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.Audio;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Audio
 {
     /// <summary>
     /// Audio data for SFXs.

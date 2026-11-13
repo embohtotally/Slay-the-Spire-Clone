@@ -1,46 +1,54 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Run;
 using System.Collections.Generic;
 using SerializeReferenceEditor;
 using UnityEngine;
 
-public class ScalingEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeReference, SR] private Effect baseEffect;
-    [SerializeReference, SR] private Effect scalingEffect;
-    [SerializeField] private int step;
-    [SerializeField] private string counterKey;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ScalingEffect")]
+    public class ScalingEffect : Effect
     {
-        int count = 0;
-        if (RunManager.Instance != null && RunManager.Instance.Counters.ContainsKey(counterKey))
-        {
-            count = RunManager.Instance.Counters[counterKey];
-        }
+        [SerializeReference, SR] private Effect baseEffect;
+        [SerializeReference, SR] private Effect scalingEffect;
+        [SerializeField] private int step;
+        [SerializeField] private string counterKey;
 
-        List<GameAction> actions = new();
-
-        if (baseEffect != null)
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
-            actions.Add(baseEffect.GetGameAction(targets, caster));
-        }
-
-        if (scalingEffect != null && count > 0)
-        {
-            for (int i = 0; i < count; i++)
+            int count = 0;
+            if (RunManager.Instance != null && RunManager.Instance.Counters.ContainsKey(counterKey))
             {
-                actions.Add(scalingEffect.GetGameAction(targets, caster));
+                count = RunManager.Instance.Counters[counterKey];
             }
-        }
 
-        if (RunManager.Instance != null)
-        {
-            if (!RunManager.Instance.Counters.ContainsKey(counterKey))
+            List<GameAction> actions = new();
+
+            if (baseEffect != null)
             {
-                RunManager.Instance.Counters[counterKey] = 0;
+                actions.Add(baseEffect.GetGameAction(targets, caster));
             }
-            RunManager.Instance.Counters[counterKey] += step;
-        }
 
-        return new SequentialGameAction(actions);
+            if (scalingEffect != null && count > 0)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    actions.Add(scalingEffect.GetGameAction(targets, caster));
+                }
+            }
+
+            if (RunManager.Instance != null)
+            {
+                if (!RunManager.Instance.Counters.ContainsKey(counterKey))
+                {
+                    RunManager.Instance.Counters[counterKey] = 0;
+                }
+                RunManager.Instance.Counters[counterKey] += step;
+            }
+
+            return new SequentialGameAction(actions);
+        }
     }
 }

@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using UnityEngine;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Core
 {
     /// <summary>
     /// UnityEngine.Debug Wrapper so it only compiled in Unity Editor.

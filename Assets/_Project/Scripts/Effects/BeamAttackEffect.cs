@@ -1,3 +1,8 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Targeting;
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Vfx;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,28 +12,32 @@ using UnityEngine;
 /// Produces one DealDamageGA payload per target, delivered on each target's impact frame.
 /// Also safe as an EnemyIntent effect: EffectSystem passes the attacking EnemyView as caster.
 /// </summary>
-[System.Serializable]
-public class BeamAttackEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private int damageAmount = 6;
-    [SerializeField] private BeamVfxConfig beamConfig;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "BeamAttackEffect")]
+    [System.Serializable]
+    public class BeamAttackEffect : Effect
     {
-        List<CombatantView> list = targets ?? new List<CombatantView>();
+        [SerializeField] private int damageAmount = 6;
+        [SerializeField] private BeamVfxConfig beamConfig;
 
-        // Graceful degradation: no config configured -> plain damage, no beam.
-        if (beamConfig == null)
-            return new DealDamageGA(damageAmount, list, caster);
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            List<CombatantView> list = targets ?? new List<CombatantView>();
 
-        // Manual-target pierce: expand the single clicked enemy into the geometric line.
-        if (beamConfig.ExpandSingleTargetToLine && list.Count == 1 && caster != null)
-            list = BeamTargetQuery.ExpandToLine(caster, list[0], beamConfig.LineMaxAngle, beamConfig.LineMaxTargets);
+            // Graceful degradation: no config configured -> plain damage, no beam.
+            if (beamConfig == null)
+                return new DealDamageGA(damageAmount, list, caster);
 
-        List<GameAction> payloads = new(list.Count);
-        foreach (CombatantView target in list)
-            payloads.Add(new DealDamageGA(damageAmount, new List<CombatantView> { target }, caster));
+            // Manual-target pierce: expand the single clicked enemy into the geometric line.
+            if (beamConfig.ExpandSingleTargetToLine && list.Count == 1 && caster != null)
+                list = BeamTargetQuery.ExpandToLine(caster, list[0], beamConfig.LineMaxAngle, beamConfig.LineMaxTargets);
 
-        return new PlayBeamVfxGA(caster, list, beamConfig, payloads);
+            List<GameAction> payloads = new(list.Count);
+            foreach (CombatantView target in list)
+                payloads.Add(new DealDamageGA(damageAmount, new List<CombatantView> { target }, caster));
+
+            return new PlayBeamVfxGA(caster, list, beamConfig, payloads);
+        }
     }
 }

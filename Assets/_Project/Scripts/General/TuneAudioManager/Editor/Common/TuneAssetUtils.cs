@@ -1,6 +1,6 @@
 using UnityEditor;
 
-namespace Gameseed26.Editor
+namespace PlushieOdyssey.Editor.Audio
 {
     public static class TuneAssetUtils
     {

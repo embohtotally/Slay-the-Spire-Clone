@@ -1,91 +1,99 @@
+using PlushieOdyssey.Audio;
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Data;
+using PlushieOdyssey.Run;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class MatchSetupSystem : MonoBehaviour
+namespace PlushieOdyssey.Combat.Systems
 {
-    [SerializeField] private List<HeroData> heroTeam;
-    [SerializeField] private List<EnemyData> enemyDataList;
-    [SerializeField] private bool forceInspectorEnemies = false;
-    [SerializeField] private int startingHandSize = 5;
-    [SerializeField] private Gameseed26.SfxID yourTurnSfx = Gameseed26.SfxID.YourTurn;
+    [System.Serializable]
+    public class MatchSetupSystem : MonoBehaviour
+    {
+        [SerializeField] private List<HeroData> heroTeam;
+        [SerializeField] private List<EnemyData> enemyDataList;
+        [SerializeField] private bool forceInspectorEnemies = false;
+        [SerializeField] private int startingHandSize = 5;
+        [SerializeField] private global::PlushieOdyssey.Audio.SfxID yourTurnSfx = global::PlushieOdyssey.Audio.SfxID.YourTurn;
 
 #if UNITY_EDITOR
-    [Header("Developer Playtest Overrides (Editor Only, Zero Launch Impact)")]
-    [Tooltip("If enabled, these test cards are prepended to the opening deck only when running in the Unity Editor.")]
-    [SerializeField] private bool enableEditorTestCards = false;
-    [SerializeField] private List<CardData> editorTestCards = new();
+        [Header("Developer Playtest Overrides (Editor Only, Zero Launch Impact)")]
+        [Tooltip("If enabled, these test cards are prepended to the opening deck only when running in the Unity Editor.")]
+        [SerializeField] private bool enableEditorTestCards = false;
+        [SerializeField] private List<CardData> editorTestCards = new();
 #endif
 
-    private void Start()
-    {
-        HeroSystem.Instance.Setup(heroTeam);
-
-        List<EnemyData> enemiesForThisMatch = enemyDataList;
-        if (!forceInspectorEnemies && RunManager.Instance != null && RunManager.Instance.SelectedEncounter != null)
+        private void Start()
         {
-            enemiesForThisMatch = RunManager.Instance.SelectedEncounter.Enemies;
-        }
+            HeroSystem.Instance.Setup(heroTeam);
 
-        EnemySystem.Instance.Setup(enemiesForThisMatch);
-
-        List<CardData> combinedDeck = BuildStartingDeck();
-        EnsureRunDeckManagerExists();
-        RunDeckManager.Instance.InitializeIfEmpty(combinedDeck);
-        CardSystem.Instance.Setup(RunDeckManager.Instance.GetDeckCopy());
-
-        foreach (var hero in heroTeam)
-        {
-            if (hero.StartingPerks != null)
+            List<EnemyData> enemiesForThisMatch = enemyDataList;
+            if (!forceInspectorEnemies && RunManager.Instance != null && RunManager.Instance.SelectedEncounter != null)
             {
-                foreach (PerkData perkData in hero.StartingPerks)
+                enemiesForThisMatch = RunManager.Instance.SelectedEncounter.Enemies;
+            }
+
+            EnemySystem.Instance.Setup(enemiesForThisMatch);
+
+            List<CardData> combinedDeck = BuildStartingDeck();
+            EnsureRunDeckManagerExists();
+            RunDeckManager.Instance.InitializeIfEmpty(combinedDeck);
+            CardSystem.Instance.Setup(RunDeckManager.Instance.GetDeckCopy());
+
+            foreach (var hero in heroTeam)
+            {
+                if (hero.StartingPerks != null)
                 {
-                    PerkSystem.Instance.AddPerk(new Perk(perkData));
+                    foreach (PerkData perkData in hero.StartingPerks)
+                    {
+                        PerkSystem.Instance.AddPerk(new Perk(perkData));
+                    }
                 }
             }
+            ActionSystem.Instance.Perform(new CombatStartedGA(), DrawStartingHand);
         }
-        ActionSystem.Instance.Perform(new CombatStartedGA(), DrawStartingHand);
-    }
 
-    private void DrawStartingHand()
-    {
-        if (yourTurnSfx != Gameseed26.SfxID.None) Gameseed26.Tune.SFX(yourTurnSfx);
-        DrawCardsGA drawCardsGA = new(startingHandSize);
-        ActionSystem.Instance.Perform(drawCardsGA);
-    }
+        private void DrawStartingHand()
+        {
+            if (yourTurnSfx != global::PlushieOdyssey.Audio.SfxID.None) global::PlushieOdyssey.Audio.Tune.SFX(yourTurnSfx);
+            DrawCardsGA drawCardsGA = new(startingHandSize);
+            ActionSystem.Instance.Perform(drawCardsGA);
+        }
 
-    private List<CardData> BuildStartingDeck()
-    {
-        List<CardData> combinedDeck = new();
+        private List<CardData> BuildStartingDeck()
+        {
+            List<CardData> combinedDeck = new();
 
 #if UNITY_EDITOR
-        if (enableEditorTestCards && editorTestCards != null)
-        {
-            foreach (CardData card in editorTestCards)
+            if (enableEditorTestCards && editorTestCards != null)
             {
-                if (card != null) combinedDeck.Add(card);
+                foreach (CardData card in editorTestCards)
+                {
+                    if (card != null) combinedDeck.Add(card);
+                }
             }
-        }
 #endif
 
-        foreach (HeroData hero in heroTeam)
-        {
-            if (hero != null && hero.Deck != null)
+            foreach (HeroData hero in heroTeam)
             {
-                combinedDeck.AddRange(hero.Deck);
+                if (hero != null && hero.Deck != null)
+                {
+                    combinedDeck.AddRange(hero.Deck);
+                }
             }
+
+            return combinedDeck;
         }
 
-        return combinedDeck;
-    }
+        private static void EnsureRunDeckManagerExists()
+        {
+            if (RunDeckManager.Instance != null) return;
 
-    private static void EnsureRunDeckManagerExists()
-    {
-        if (RunDeckManager.Instance != null) return;
-
-        GameObject deckManagerObject = new("Run Deck Manager");
-        deckManagerObject.AddComponent<RunDeckManager>();
+            GameObject deckManagerObject = new("Run Deck Manager");
+            deckManagerObject.AddComponent<RunDeckManager>();
+        }
     }
 }

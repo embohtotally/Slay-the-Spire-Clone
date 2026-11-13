@@ -1,13 +1,20 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ApplyStunEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private int duration;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ApplyStunEffect")]
+    public class ApplyStunEffect : Effect
     {
-        ApplyStunGA applyStunGA = new ApplyStunGA(duration, targets, caster);
-        return applyStunGA;
+        [SerializeField] private int duration;
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            ApplyStunGA applyStunGA = new ApplyStunGA(duration, targets, caster);
+            return applyStunGA;
+        }
     }
 }

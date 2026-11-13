@@ -1,29 +1,34 @@
-public class UsePotionGA : GameAction
+using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Data;
+namespace PlushieOdyssey.Combat.Actions
 {
-    public int PotionIndex { get; }
-    public PotionData Potion { get; }
-    public CombatantView ManualTarget { get; }
-    public bool ConsumeOnUse { get; }
-    public bool WasSuccessful { get; private set; }
-    public string FailureReason { get; private set; }
-
-    public UsePotionGA(int potionIndex, PotionData potion, CombatantView manualTarget = null, bool consumeOnUse = true)
+    public class UsePotionGA : GameAction
     {
-        PotionIndex = potionIndex;
-        Potion = potion;
-        ManualTarget = manualTarget;
-        ConsumeOnUse = consumeOnUse;
-    }
+        public int PotionIndex { get; }
+        public PotionData Potion { get; }
+        public CombatantView ManualTarget { get; }
+        public bool ConsumeOnUse { get; }
+        public bool WasSuccessful { get; private set; }
+        public string FailureReason { get; private set; }
 
-    public void MarkSuccessful()
-    {
-        WasSuccessful = true;
-        FailureReason = string.Empty;
-    }
+        public UsePotionGA(int potionIndex, PotionData potion, CombatantView manualTarget = null, bool consumeOnUse = true)
+        {
+            PotionIndex = potionIndex;
+            Potion = potion;
+            ManualTarget = manualTarget;
+            ConsumeOnUse = consumeOnUse;
+        }
 
-    public void MarkFailed(string reason)
-    {
-        WasSuccessful = false;
-        FailureReason = reason;
+        public void MarkSuccessful()
+        {
+            WasSuccessful = true;
+            FailureReason = string.Empty;
+        }
+
+        public void MarkFailed(string reason)
+        {
+            WasSuccessful = false;
+            FailureReason = reason;
+        }
     }
 }

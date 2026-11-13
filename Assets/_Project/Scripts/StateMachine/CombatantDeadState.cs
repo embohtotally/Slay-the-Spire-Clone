@@ -1,19 +1,23 @@
+using PlushieOdyssey.Combat.Views;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CombatantDeadState : CombatantState
+namespace PlushieOdyssey.Combat.States
 {
-    public CombatantDeadState(CombatantView combatant, Action onComplete = null) : base(combatant, onComplete) { }
-
-    public override void Enter()
+    public class CombatantDeadState : CombatantState
     {
-        if (combatant.HasAnimator && !string.IsNullOrEmpty(combatant.DeadAnimationTrigger))
-        {
-            combatant.SetAnimationTrigger(combatant.DeadAnimationTrigger);
-        }
+        public CombatantDeadState(CombatantView combatant, Action onComplete = null) : base(combatant, onComplete) { }
 
-        onComplete?.Invoke();
+        public override void Enter()
+        {
+            if (combatant.HasAnimator && !string.IsNullOrEmpty(combatant.DeadAnimationTrigger))
+            {
+                combatant.SetAnimationTrigger(combatant.DeadAnimationTrigger);
+            }
+
+            onComplete?.Invoke();
+        }
     }
 }

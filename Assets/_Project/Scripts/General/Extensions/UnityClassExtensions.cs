@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Core.Extensions
 {
     public static class UnityClassExtensions
     {

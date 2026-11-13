@@ -2,7 +2,10 @@
 // You can remove this component from your Systems object.
 using UnityEngine;
 
-[System.Serializable]
-public class StressSystem : MonoBehaviour
+namespace PlushieOdyssey.Combat.Systems
 {
+    [System.Serializable]
+    public class StressSystem : MonoBehaviour
+    {
+    }
 }

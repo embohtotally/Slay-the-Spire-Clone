@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Core
 {
     public static class GameBootstrap
     {

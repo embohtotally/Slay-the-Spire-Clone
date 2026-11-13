@@ -1,12 +1,17 @@
+using PlushieOdyssey.Combat.Actions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class PerkCondition
+namespace PlushieOdyssey.Combat.Models
 {
-    [SerializeField] protected ReactionTiming reactionTiming;
-    public abstract void SubscribeCondition(Action<GameAction> reaction);
-    public abstract void UnsubscribeCondition(Action<GameAction> reaction);
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PerkCondition")]
+    public abstract class PerkCondition
+    {
+        [SerializeField] protected ReactionTiming reactionTiming;
+        public abstract void SubscribeCondition(Action<GameAction> reaction);
+        public abstract void UnsubscribeCondition(Action<GameAction> reaction);
 
-    public abstract bool SubConditionIsMet(GameAction gameAction);
+        public abstract bool SubConditionIsMet(GameAction gameAction);
+    }
 }

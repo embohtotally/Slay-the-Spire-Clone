@@ -3,7 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DiscardAllCardsGA : GameAction
+namespace PlushieOdyssey.Combat.Actions
 {
-    
+    public class DiscardAllCardsGA : GameAction
+    {
+
+    }
 }

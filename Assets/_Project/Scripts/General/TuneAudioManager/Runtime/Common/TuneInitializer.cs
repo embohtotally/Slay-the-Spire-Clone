@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Audio
 {
     /*
         Static class to call generated prefab in specific path ("Resource/Tunes/Tune.prefab"),

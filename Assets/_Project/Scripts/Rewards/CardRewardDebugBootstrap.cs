@@ -1,131 +1,137 @@
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Data;
+using PlushieOdyssey.Run;
+using PlushieOdyssey.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Gameseed26;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-[DisallowMultipleComponent]
-public class CardRewardDebugBootstrap : MonoBehaviour
+namespace PlushieOdyssey.Rewards
 {
-    [Header("Safety")]
-    [SerializeField] private bool enableDebugBootstrap = true;
-    [Tooltip("Keep this on so the debug deck/reward setup only runs when CardReward is opened directly, not when loaded additively from RunRewards/Event/Treasure.")]
-    [SerializeField] private bool standaloneSceneOnly = true;
-    [SerializeField, Min(0)] private int waitFramesBeforeSetup = 1;
-
-    [Header("Debug Deck")]
-    [SerializeField] private bool createRunDeckManagerIfMissing = true;
-    [SerializeField] private bool resetDeckOnStart = true;
-    [SerializeField] private List<HeroData> heroesToReadDeckFrom = new();
-    [SerializeField] private List<CardData> extraStartingCards = new();
-
-    [Header("Debug UI")]
-    [SerializeField] private bool openCardRewardAfterSetup = true;
-    [SerializeField] private bool openDeckPanelAfterSetup = true;
-    [SerializeField] private CardRewardController cardRewardController;
-    [SerializeField] private RunDeckPanelController runDeckPanel;
-
-    private IEnumerator Start()
+    [DisallowMultipleComponent]
+    public class CardRewardDebugBootstrap : MonoBehaviour
     {
-        if (!enableDebugBootstrap) yield break;
-        if (standaloneSceneOnly && SceneManager.sceneCount > 1) yield break;
+        [Header("Safety")]
+        [SerializeField] private bool enableDebugBootstrap = true;
+        [Tooltip("Keep this on so the debug deck/reward setup only runs when CardReward is opened directly, not when loaded additively from RunRewards/Event/Treasure.")]
+        [SerializeField] private bool standaloneSceneOnly = true;
+        [SerializeField, Min(0)] private int waitFramesBeforeSetup = 1;
 
-        for (int i = 0; i < waitFramesBeforeSetup; i++)
+        [Header("Debug Deck")]
+        [SerializeField] private bool createRunDeckManagerIfMissing = true;
+        [SerializeField] private bool resetDeckOnStart = true;
+        [SerializeField] private List<HeroData> heroesToReadDeckFrom = new();
+        [SerializeField] private List<CardData> extraStartingCards = new();
+
+        [Header("Debug UI")]
+        [SerializeField] private bool openCardRewardAfterSetup = true;
+        [SerializeField] private bool openDeckPanelAfterSetup = true;
+        [SerializeField] private CardRewardController cardRewardController;
+        [SerializeField] private RunDeckPanelController runDeckPanel;
+
+        private IEnumerator Start()
         {
-            yield return null;
+            if (!enableDebugBootstrap) yield break;
+            if (standaloneSceneOnly && SceneManager.sceneCount > 1) yield break;
+
+            for (int i = 0; i < waitFramesBeforeSetup; i++)
+            {
+                yield return null;
+            }
+
+            EnsureRunDeckManagerIfWanted();
+            InitializeDebugDeck();
+            ResolveSceneReferences();
+
+            if (openCardRewardAfterSetup && cardRewardController != null)
+            {
+                cardRewardController.OpenReward();
+            }
+
+            if (openDeckPanelAfterSetup && runDeckPanel != null)
+            {
+                runDeckPanel.OpenPanel();
+            }
+            else if (runDeckPanel != null)
+            {
+                runDeckPanel.RefreshDeckView();
+            }
         }
 
-        EnsureRunDeckManagerIfWanted();
-        InitializeDebugDeck();
-        ResolveSceneReferences();
-
-        if (openCardRewardAfterSetup && cardRewardController != null)
+        [NaughtyAttributes.Button("Run Debug Bootstrap", NaughtyAttributes.EButtonEnableMode.Playmode)]
+        public void RunDebugBootstrapNow()
         {
-            cardRewardController.OpenReward();
+            if (!enableDebugBootstrap) return;
+            EnsureRunDeckManagerIfWanted();
+            InitializeDebugDeck();
+            ResolveSceneReferences();
+            if (cardRewardController != null) cardRewardController.OpenReward();
+            if (runDeckPanel != null) runDeckPanel.OpenPanel();
         }
 
-        if (openDeckPanelAfterSetup && runDeckPanel != null)
+        private void InitializeDebugDeck()
         {
-            runDeckPanel.OpenPanel();
-        }
-        else if (runDeckPanel != null)
-        {
-            runDeckPanel.RefreshDeckView();
-        }
-    }
+            RunDeckManager deckManager = RunDeckManager.Instance;
+            if (deckManager == null)
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning(this, "CardRewardDebugBootstrap could not find or create a RunDeckManager.");
+                return;
+            }
 
-    [NaughtyAttributes.Button("Run Debug Bootstrap", NaughtyAttributes.EButtonEnableMode.Playmode)]
-    public void RunDebugBootstrapNow()
-    {
-        if (!enableDebugBootstrap) return;
-        EnsureRunDeckManagerIfWanted();
-        InitializeDebugDeck();
-        ResolveSceneReferences();
-        if (cardRewardController != null) cardRewardController.OpenReward();
-        if (runDeckPanel != null) runDeckPanel.OpenPanel();
-    }
+            List<CardData> debugDeck = BuildDebugDeck();
+            if (debugDeck.Count == 0)
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning(this, "CardRewardDebugBootstrap has no debug cards. Assign Heroes To Read Deck From or Extra Starting Cards.");
+                return;
+            }
 
-    private void InitializeDebugDeck()
-    {
-        RunDeckManager deckManager = RunDeckManager.Instance;
-        if (deckManager == null)
-        {
-            Gameseed26.Logger.LogWarning(this, "CardRewardDebugBootstrap could not find or create a RunDeckManager.");
-            return;
-        }
+            if (resetDeckOnStart)
+            {
+                deckManager.ResetDeck(debugDeck);
+            }
+            else
+            {
+                deckManager.InitializeIfEmpty(debugDeck);
+            }
 
-        List<CardData> debugDeck = BuildDebugDeck();
-        if (debugDeck.Count == 0)
-        {
-            Gameseed26.Logger.LogWarning(this, "CardRewardDebugBootstrap has no debug cards. Assign Heroes To Read Deck From or Extra Starting Cards.");
-            return;
+            deckManager.NotifyDeckChanged();
+            global::PlushieOdyssey.Core.Logger.Log(this, $"CardReward debug deck ready: {deckManager.CurrentDeck.Count} cards.");
         }
 
-        if (resetDeckOnStart)
+        private List<CardData> BuildDebugDeck()
         {
-            deckManager.ResetDeck(debugDeck);
-        }
-        else
-        {
-            deckManager.InitializeIfEmpty(debugDeck);
-        }
+            List<CardData> debugDeck = new();
+            foreach (HeroData hero in heroesToReadDeckFrom)
+            {
+                if (hero?.Deck == null) continue;
+                debugDeck.AddRange(hero.Deck.Where(card => card != null));
+            }
 
-        deckManager.NotifyDeckChanged();
-        Gameseed26.Logger.Log(this, $"CardReward debug deck ready: {deckManager.CurrentDeck.Count} cards.");
-    }
-
-    private List<CardData> BuildDebugDeck()
-    {
-        List<CardData> debugDeck = new();
-        foreach (HeroData hero in heroesToReadDeckFrom)
-        {
-            if (hero?.Deck == null) continue;
-            debugDeck.AddRange(hero.Deck.Where(card => card != null));
+            debugDeck.AddRange(extraStartingCards.Where(card => card != null));
+            return debugDeck;
         }
 
-        debugDeck.AddRange(extraStartingCards.Where(card => card != null));
-        return debugDeck;
-    }
-
-    private void ResolveSceneReferences()
-    {
-        if (cardRewardController == null)
+        private void ResolveSceneReferences()
         {
-            cardRewardController = FindFirstObjectByType<CardRewardController>(FindObjectsInactive.Include);
+            if (cardRewardController == null)
+            {
+                cardRewardController = FindFirstObjectByType<CardRewardController>(FindObjectsInactive.Include);
+            }
+
+            if (runDeckPanel == null)
+            {
+                runDeckPanel = FindFirstObjectByType<RunDeckPanelController>(FindObjectsInactive.Include);
+            }
         }
 
-        if (runDeckPanel == null)
+        private void EnsureRunDeckManagerIfWanted()
         {
-            runDeckPanel = FindFirstObjectByType<RunDeckPanelController>(FindObjectsInactive.Include);
+            if (!createRunDeckManagerIfMissing || RunDeckManager.Instance != null) return;
+
+            GameObject deckManagerObject = new("Run Deck Manager");
+            deckManagerObject.AddComponent<RunDeckManager>();
         }
-    }
-
-    private void EnsureRunDeckManagerIfWanted()
-    {
-        if (!createRunDeckManagerIfMissing || RunDeckManager.Instance != null) return;
-
-        GameObject deckManagerObject = new("Run Deck Manager");
-        deckManagerObject.AddComponent<RunDeckManager>();
     }
 }

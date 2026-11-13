@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: d2e7bb0a1d734824c9e9342e728e7c33
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297559
+  packageName: Serialize Reference Editor
+  packageVersion: 1.5.2
+  assetPath: Assets/SREditor/Package/Editor/Processing/TypeReplace/SRFileScanner.cs
+  uploadId: 1033396

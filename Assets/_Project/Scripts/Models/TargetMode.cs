@@ -1,7 +1,12 @@
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 
-[System.Serializable]
-public abstract class TargetMode
+namespace PlushieOdyssey.Combat.Models
 {
-    public abstract List<CombatantView> GetTargets(CombatantView caster = null);
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "TargetMode")]
+    [System.Serializable]
+    public abstract class TargetMode
+    {
+        public abstract List<CombatantView> GetTargets(CombatantView caster = null);
+    }
 }

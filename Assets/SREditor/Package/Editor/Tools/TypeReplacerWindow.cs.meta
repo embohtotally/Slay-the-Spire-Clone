@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: fb0c8ef3674cf364388e27cb08ac97ca
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297559
+  packageName: Serialize Reference Editor
+  packageVersion: 1.5.2
+  assetPath: Assets/SREditor/Package/Editor/Tools/TypeReplacerWindow.cs
+  uploadId: 1033396

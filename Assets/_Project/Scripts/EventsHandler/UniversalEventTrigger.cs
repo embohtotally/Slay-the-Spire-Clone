@@ -1,3 +1,4 @@
+using PlushieOdyssey.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,8 +9,7 @@ using UnityEngine.Events;
 using UnityEditor;
 #endif
 
-using Gameseed26;
-namespace ModularEvents
+namespace PlushieOdyssey.Core.Events
 {
     // ============================================================
     // 0. SHARED SAFE-INVOKE UTILITY
@@ -24,7 +24,7 @@ namespace ModularEvents
             foreach (var d in action.GetInvocationList())
             {
                 try { ((Action)d)(); }
-                catch (Exception e) { Gameseed26.Logger.LogException(e); }
+                catch (Exception e) { global::PlushieOdyssey.Core.Logger.LogException(e); }
             }
         }
 
@@ -34,7 +34,7 @@ namespace ModularEvents
             foreach (var d in action.GetInvocationList())
             {
                 try { ((Action<T>)d)(arg); }
-                catch (Exception e) { Gameseed26.Logger.LogException(e); }
+                catch (Exception e) { global::PlushieOdyssey.Core.Logger.LogException(e); }
             }
         }
     }
@@ -110,7 +110,7 @@ namespace ModularEvents
         public static void Broadcast(string eventName)
         {
             if (string.IsNullOrEmpty(eventName)) return;
-            if (DebugLogging) Gameseed26.Logger.Log($"[EventBus] Broadcast: {eventName}");
+            if (DebugLogging) global::PlushieOdyssey.Core.Logger.Log($"[EventBus] Broadcast: {eventName}");
             if (parameterless.TryGetValue(eventName, out var action))
                 EventBusUtility.SafeInvoke(action);
         }
@@ -118,7 +118,7 @@ namespace ModularEvents
         public static void Broadcast(string eventName, object payload)
         {
             if (string.IsNullOrEmpty(eventName)) return;
-            if (DebugLogging) Gameseed26.Logger.Log($"[EventBus] Broadcast: {eventName} (payload: {payload})");
+            if (DebugLogging) global::PlushieOdyssey.Core.Logger.Log($"[EventBus] Broadcast: {eventName} (payload: {payload})");
             if (withPayload.TryGetValue(eventName, out var action))
                 EventBusUtility.SafeInvoke(action, payload);
         }
@@ -371,7 +371,7 @@ namespace ModularEvents
         public void Subscribe()
         {
             if (target == null || string.IsNullOrEmpty(eventName)) return;
-            
+
             Component[] comps;
             if (target is GameObject go) comps = go.GetComponents<Component>();
             else if (target is Component c) comps = new Component[] { c };
@@ -385,7 +385,7 @@ namespace ModularEvents
             {
                 if (comp == null) continue;
                 var type = comp.GetType();
-                
+
                 if (targetCompName != null && type.Name != targetCompName) continue;
 
                 var field = type.GetField(targetEventName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
@@ -399,7 +399,7 @@ namespace ModularEvents
                         return;
                     }
                 }
-                
+
                 var prop = type.GetProperty(targetEventName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
                 if (prop != null && typeof(UnityEventBase).IsAssignableFrom(prop.PropertyType))
                 {
@@ -491,7 +491,7 @@ namespace ModularEvents
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
-            
+
             var targetProp = property.FindPropertyRelative("target");
             var eventName = property.FindPropertyRelative("eventName");
             var onEventTriggered = property.FindPropertyRelative("onEventTriggered");
@@ -516,11 +516,11 @@ namespace ModularEvents
                     if (comp == null) continue;
                     var type = comp.GetType();
                     string prefix = type.Name + "/";
-                    
+
                     var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
                         .Where(f => typeof(UnityEventBase).IsAssignableFrom(f.FieldType))
                         .Select(f => prefix + f.Name);
-                    
+
                     var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
                         .Where(p => typeof(UnityEventBase).IsAssignableFrom(p.PropertyType))
                         .Select(p => prefix + p.Name);

@@ -1,7 +1,10 @@
+using PlushieOdyssey.Audio;
+using PlushieOdyssey.Core;
+using Logger = PlushieOdyssey.Core.Logger;
 using UnityEditor;
 using UnityEngine;
 
-namespace Gameseed26.Editor
+namespace PlushieOdyssey.Editor.Audio
 {
     public class TunePrefabGenerator : EditorWindow
     {

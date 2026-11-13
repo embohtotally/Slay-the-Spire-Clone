@@ -1,16 +1,21 @@
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Data;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyViewCreator : Singleton<EnemyViewCreator>
+namespace PlushieOdyssey.Combat.Views
 {
-    [SerializeField] private EnemyView enemyViewPrefab;
-
-    public EnemyView CreateEnemyView(EnemyData enemyData, Vector3 position, Quaternion rotation)
+    public class EnemyViewCreator : Singleton<EnemyViewCreator>
     {
-        EnemyView enemyView = Instantiate(enemyViewPrefab, position, rotation);
-        enemyView.Setup(enemyData);
-        return enemyView;
+        [SerializeField] private EnemyView enemyViewPrefab;
+
+        public EnemyView CreateEnemyView(EnemyData enemyData, Vector3 position, Quaternion rotation)
+        {
+            EnemyView enemyView = Instantiate(enemyViewPrefab, position, rotation);
+            enemyView.Setup(enemyData);
+            return enemyView;
+        }
     }
 }

@@ -1,9 +1,13 @@
-public class OpenCardRewardGA : GameAction
+using PlushieOdyssey.Rewards;
+namespace PlushieOdyssey.Combat.Actions
 {
-    public CardRewardRequest Request { get; }
-
-    public OpenCardRewardGA(CardRewardRequest request = null)
+    public class OpenCardRewardGA : GameAction
     {
-        Request = request;
+        public CardRewardRequest Request { get; }
+
+        public OpenCardRewardGA(CardRewardRequest request = null)
+        {
+            Request = request;
+        }
     }
 }

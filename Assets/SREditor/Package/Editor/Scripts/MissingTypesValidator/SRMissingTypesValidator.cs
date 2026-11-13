@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using SerializeReferenceEditor.Editor.MissingTypesValidator.ReportFormats;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace SerializeReferenceEditor.Editor.MissingTypesValidator
 {
+    [Obsolete("SRMissingTypesValidator is deprecated. Use Tools/SREditor/Log MissingTypes instead.")]
     public class SRMissingTypesValidator
     {
-        [MenuItem("Tools/SREditor/Check MissingTypes")]
+        [MenuItem("Tools/SREditor/Check MissingTypes [Deprecated]")]
         public static void Check()
         {
             var configs = Resources.FindObjectsOfTypeAll<SRMissingTypesValidatorConfig>();

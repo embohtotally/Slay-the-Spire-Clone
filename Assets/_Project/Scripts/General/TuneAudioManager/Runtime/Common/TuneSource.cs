@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Audio
 {
     /// <summary>
     /// Runtime data for played Audio.

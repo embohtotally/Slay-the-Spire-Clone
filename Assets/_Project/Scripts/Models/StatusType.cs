@@ -1,6 +1,9 @@
-public enum StatusType
+namespace PlushieOdyssey.Combat.Models
 {
-    Vulnerable,
-    Weakness,
-    Poison
+    public enum StatusType
+    {
+        Vulnerable,
+        Weakness,
+        Poison
+    }
 }

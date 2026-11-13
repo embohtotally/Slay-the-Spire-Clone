@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Core.Scenes
 {
     public class LoadingView : MonoBehaviour
     {

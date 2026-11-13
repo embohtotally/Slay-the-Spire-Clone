@@ -1,22 +1,27 @@
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayCardGA : GameAction
+namespace PlushieOdyssey.Combat.Actions
 {
-    public CombatantView ManualTarget { get; private set; }
-    public Card Card { get; set; }
-
-    public PlayCardGA(Card card)
+    public class PlayCardGA : GameAction
     {
-        Card = card;
-        ManualTarget = null;
-    }
+        public CombatantView ManualTarget { get; private set; }
+        public Card Card { get; set; }
 
-    public PlayCardGA(Card card, CombatantView target)
-    {
-        Card = card;
-        ManualTarget = target;
+        public PlayCardGA(Card card)
+        {
+            Card = card;
+            ManualTarget = null;
+        }
+
+        public PlayCardGA(Card card, CombatantView target)
+        {
+            Card = card;
+            ManualTarget = target;
+        }
     }
 }

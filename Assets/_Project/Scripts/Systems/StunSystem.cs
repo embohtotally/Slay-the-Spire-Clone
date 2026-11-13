@@ -1,39 +1,44 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Views;
 using System.Collections;
 using UnityEngine;
 
-[System.Serializable]
-public class StunSystem : MonoBehaviour
+namespace PlushieOdyssey.Combat.Systems
 {
-    private void OnEnable()
+    [System.Serializable]
+    public class StunSystem : MonoBehaviour
     {
-        ActionSystem.AttachPerformer<ApplyStunGA>(ApplyStunPerformer);
-        ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
-    }
-
-    private void OnDisable()
-    {
-        ActionSystem.DetachPerformer<ApplyStunGA>();
-        ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
-    }
-
-    private IEnumerator ApplyStunPerformer(ApplyStunGA applyStunGA)
-    {
-        foreach (CombatantView target in applyStunGA.Targets)
+        private void OnEnable()
         {
-            target.ApplyStun(applyStunGA.Duration);
+            ActionSystem.AttachPerformer<ApplyStunGA>(ApplyStunPerformer);
+            ActionSystem.SubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
         }
-        
-        yield return null;
-    }
 
-    private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
-    {
-        if (HeroSystem.Instance.HeroView.IsStunned)
+        private void OnDisable()
         {
-            HeroSystem.Instance.HeroView.DecreaseStun();
-            // Start enemy turn again to simulate skipping player turn
-            EnemyTurnGA newEnemyTurnGA = new();
-            ActionSystem.Instance.AddReaction(newEnemyTurnGA);
+            ActionSystem.DetachPerformer<ApplyStunGA>();
+            ActionSystem.UnsubscribeReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
+        }
+
+        private IEnumerator ApplyStunPerformer(ApplyStunGA applyStunGA)
+        {
+            foreach (CombatantView target in applyStunGA.Targets)
+            {
+                target.ApplyStun(applyStunGA.Duration);
+            }
+
+            yield return null;
+        }
+
+        private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
+        {
+            if (HeroSystem.Instance.HeroView.IsStunned)
+            {
+                HeroSystem.Instance.HeroView.DecreaseStun();
+                // Start enemy turn again to simulate skipping player turn
+                EnemyTurnGA newEnemyTurnGA = new();
+                ActionSystem.Instance.AddReaction(newEnemyTurnGA);
+            }
         }
     }
 }

@@ -1,17 +1,24 @@
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Systems;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class SingleEnemyTargetMode : TargetMode
+namespace PlushieOdyssey.Combat.Targeting
 {
-    public override List<CombatantView> GetTargets(CombatantView caster = null)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SingleEnemyTargetMode")]
+    [System.Serializable]
+    public class SingleEnemyTargetMode : TargetMode
     {
-        List<CombatantView> targets = new();
-        if (EnemySystem.Instance != null && EnemySystem.Instance.Enemies.Count > 0)
+        public override List<CombatantView> GetTargets(CombatantView caster = null)
         {
-            var enemies = EnemySystem.Instance.Enemies;
-            targets.Add(enemies[Random.Range(0, enemies.Count)]);
+            List<CombatantView> targets = new();
+            if (EnemySystem.Instance != null && EnemySystem.Instance.Enemies.Count > 0)
+            {
+                var enemies = EnemySystem.Instance.Enemies;
+                targets.Add(enemies[Random.Range(0, enemies.Count)]);
+            }
+            return targets;
         }
-        return targets;
     }
 }

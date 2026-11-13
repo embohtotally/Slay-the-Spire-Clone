@@ -1,7 +1,7 @@
 // This is an auto-generated file via Hermes audio setup / Tune enum generation.
 // Do not modify directly.
 
-namespace Gameseed26
+namespace PlushieOdyssey.Audio
 {
 
 	public enum SfxID

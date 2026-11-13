@@ -1,7 +1,10 @@
-public enum AIAttackPattern
+namespace PlushieOdyssey.Combat.Models
 {
-    Random,
-    SequentialLoop,
-    SequentialStop,
-    RandomNoRepeat
+    public enum AIAttackPattern
+    {
+        Random,
+        SequentialLoop,
+        SequentialStop,
+        RandomNoRepeat
+    }
 }

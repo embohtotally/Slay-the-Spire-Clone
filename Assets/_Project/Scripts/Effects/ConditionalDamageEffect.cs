@@ -1,35 +1,42 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ConditionalDamageEffect : Effect
+namespace PlushieOdyssey.Combat.Effects
 {
-    [SerializeField] private int baseDamage;
-    [SerializeField] private int bonusDamage;
-    [SerializeField] private ConditionType condition;
-    [SerializeField] private int threshold;
-
-    public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ConditionalDamageEffect")]
+    public class ConditionalDamageEffect : Effect
     {
-        int totalDamage = baseDamage;
-        bool conditionMet = false;
+        [SerializeField] private int baseDamage;
+        [SerializeField] private int bonusDamage;
+        [SerializeField] private ConditionType condition;
+        [SerializeField] private int threshold;
 
-        switch (condition)
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
-            case ConditionType.CasterFearAtLeast:
-                if (caster is HeroView heroView)
-                {
-                    if (heroView.CurrentStress >= threshold) conditionMet = true;
-                }
-                break;
-            case ConditionType.TargetHasStatus:
-                break;
-        }
+            int totalDamage = baseDamage;
+            bool conditionMet = false;
 
-        if (conditionMet)
-        {
-            totalDamage += bonusDamage;
-        }
+            switch (condition)
+            {
+                case ConditionType.CasterFearAtLeast:
+                    if (caster is HeroView heroView)
+                    {
+                        if (heroView.CurrentStress >= threshold) conditionMet = true;
+                    }
+                    break;
+                case ConditionType.TargetHasStatus:
+                    break;
+            }
 
-        return new DealDamageGA(totalDamage, targets, caster);
+            if (conditionMet)
+            {
+                totalDamage += bonusDamage;
+            }
+
+            return new DealDamageGA(totalDamage, targets, caster);
+        }
     }
 }

@@ -3,7 +3,7 @@ using NaughtyAttributes;
 using TMPro;
 using UnityEngine;
 
-namespace Gameseed26
+namespace PlushieOdyssey.Core
 {
     public class GameManager : PersistentSingleton<GameManager>
     {

@@ -1,5 +1,8 @@
-public enum ReactionTiming
+namespace PlushieOdyssey.Combat.Actions
 {
-    PRE,
-    POST
+    public enum ReactionTiming
+    {
+        PRE,
+        POST
+    }
 }

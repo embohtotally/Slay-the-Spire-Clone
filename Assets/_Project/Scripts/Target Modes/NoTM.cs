@@ -1,12 +1,18 @@
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NoTM : TargetMode
+namespace PlushieOdyssey.Combat.Targeting
 {
-    public override List<CombatantView> GetTargets(CombatantView caster = null)
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "NoTM")]
+    public class NoTM : TargetMode
     {
-        return null;
+        public override List<CombatantView> GetTargets(CombatantView caster = null)
+        {
+            return null;
+        }
     }
 }

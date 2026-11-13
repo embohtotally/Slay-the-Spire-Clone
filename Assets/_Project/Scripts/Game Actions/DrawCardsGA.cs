@@ -3,12 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DrawCardsGA : GameAction
+namespace PlushieOdyssey.Combat.Actions
 {
-    public int Amount {  get; set; }
-
-    public DrawCardsGA(int amount)
+    public class DrawCardsGA : GameAction
     {
-        Amount = amount;
+        public int Amount {  get; set; }
+
+        public DrawCardsGA(int amount)
+        {
+            Amount = amount;
+        }
     }
 }

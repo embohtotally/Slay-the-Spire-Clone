@@ -1,15 +1,20 @@
+using PlushieOdyssey.Combat;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 
-public class AddStressGA : GameAction, IHaveCaster
+namespace PlushieOdyssey.Combat.Actions
 {
-    public List<CombatantView> Targets { get; private set; }
-    public int Amount { get; private set; }
-    public CombatantView Caster { get; private set; }
-
-    public AddStressGA(int amount, List<CombatantView> targets, CombatantView caster)
+    public class AddStressGA : GameAction, IHaveCaster
     {
-        Amount = amount;
-        Targets = targets;
-        Caster = caster;
+        public List<CombatantView> Targets { get; private set; }
+        public int Amount { get; private set; }
+        public CombatantView Caster { get; private set; }
+
+        public AddStressGA(int amount, List<CombatantView> targets, CombatantView caster)
+        {
+            Amount = amount;
+            Targets = targets;
+            Caster = caster;
+        }
     }
 }

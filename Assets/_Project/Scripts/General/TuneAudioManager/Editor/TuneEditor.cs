@@ -1,10 +1,13 @@
+using PlushieOdyssey.Audio;
+using PlushieOdyssey.Core;
+using Logger = PlushieOdyssey.Core.Logger;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using NaughtyAttributes.Editor;
 using UnityEditor;
 
-namespace Gameseed26.Editor
+namespace PlushieOdyssey.Editor.Audio
 {
     [CustomEditor(typeof(Tune))]
     public class TuneEditor : NaughtyInspector
@@ -77,7 +80,7 @@ namespace Gameseed26.Editor
             sb.AppendLine();
 
             // Generate namespace
-            sb.AppendLine("namespace Gameseed26");
+            sb.AppendLine("namespace PlushieOdyssey.Audio");
             sb.AppendLine("{");
 
             sb.AppendLine();

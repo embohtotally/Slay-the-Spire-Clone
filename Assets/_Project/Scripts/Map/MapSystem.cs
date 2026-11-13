@@ -1,75 +1,80 @@
-using Gameseed26;
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Core.Scenes;
+using PlushieOdyssey.Run;
 using UnityEngine;
 
-public class MapSystem : MonoBehaviour
+namespace PlushieOdyssey.Map
 {
-    [SerializeField] private MapGeneratorConfig generatorConfig;
-    [SerializeField] private MapEncounterPool encounterPool;
-    [SerializeField] private MapView mapView;
-    [SerializeField] private string combatSceneName = "Game";
-
-    private MapGraph graph;
-
-    private void Start()
+    public class MapSystem : MonoBehaviour
     {
-        if (RunManager.Instance == null)
+        [SerializeField] private MapGeneratorConfig generatorConfig;
+        [SerializeField] private MapEncounterPool encounterPool;
+        [SerializeField] private MapView mapView;
+        [SerializeField] private string combatSceneName = "Game";
+
+        private MapGraph graph;
+
+        private void Start()
         {
-            Gameseed26.Logger.LogError("MapSystem could not find RunManager. Keep persistent run systems on Resources/GameManager.");
-            return;
+            if (RunManager.Instance == null)
+            {
+                global::PlushieOdyssey.Core.Logger.LogError("MapSystem could not find RunManager. Keep persistent run systems on Resources/GameManager.");
+                return;
+            }
+
+            if (!RunManager.Instance.HasActiveRun)
+            {
+                RunManager.Instance.StartNewRun(ProceduralMapGenerator.Generate(generatorConfig, encounterPool));
+            }
+
+            graph = RunManager.Instance.CurrentMap;
+            graph.RefreshAvailability(RunManager.Instance.CurrentMapNodeId);
+            mapView.ShowMap(graph, this);
         }
 
-        if (!RunManager.Instance.HasActiveRun)
+        public void SelectNode(MapNode selectedNode)
+        {
+            if (selectedNode == null || graph == null) return;
+            if (!selectedNode.IsAvailable || selectedNode.IsVisited) return;
+
+            selectedNode.IsVisited = true;
+            RunManager.Instance.SelectMapNode(selectedNode);
+            graph.RefreshAvailability(selectedNode.Id);
+            mapView.Refresh(graph, this);
+
+            HandleNode(selectedNode);
+        }
+
+        public void StartNewRun()
         {
             RunManager.Instance.StartNewRun(ProceduralMapGenerator.Generate(generatorConfig, encounterPool));
+            graph = RunManager.Instance.CurrentMap;
+            graph.RefreshAvailability(null);
+            mapView.Refresh(graph, this);
         }
 
-        graph = RunManager.Instance.CurrentMap;
-        graph.RefreshAvailability(RunManager.Instance.CurrentMapNodeId);
-        mapView.ShowMap(graph, this);
-    }
-
-    public void SelectNode(MapNode selectedNode)
-    {
-        if (selectedNode == null || graph == null) return;
-        if (!selectedNode.IsAvailable || selectedNode.IsVisited) return;
-
-        selectedNode.IsVisited = true;
-        RunManager.Instance.SelectMapNode(selectedNode);
-        graph.RefreshAvailability(selectedNode.Id);
-        mapView.Refresh(graph, this);
-
-        HandleNode(selectedNode);
-    }
-
-    public void StartNewRun()
-    {
-        RunManager.Instance.StartNewRun(ProceduralMapGenerator.Generate(generatorConfig, encounterPool));
-        graph = RunManager.Instance.CurrentMap;
-        graph.RefreshAvailability(null);
-        mapView.Refresh(graph, this);
-    }
-
-    private void HandleNode(MapNode node)
-    {
-        if (node.StartsCombat)
+        private void HandleNode(MapNode node)
         {
-            if (node.Encounter == null)
+            if (node.StartsCombat)
             {
-                Gameseed26.Logger.LogWarning($"Map node {node.Id} ({node.Type}) has no EncounterData. Combat will use MatchSetupSystem fallback enemies.");
+                if (node.Encounter == null)
+                {
+                    global::PlushieOdyssey.Core.Logger.LogWarning($"Map node {node.Id} ({node.Type}) has no EncounterData. Combat will use MatchSetupSystem fallback enemies.");
+                }
+
+                string sceneToLoad = combatSceneName;
+                if (PlayerPrefs.GetInt("HasPlayedCardTutorial", 0) == 0)
+                {
+                    sceneToLoad = "GameTutorial";
+                }
+
+                SceneLoader.LoadScene(sceneToLoad);
+                return;
             }
 
-            string sceneToLoad = combatSceneName;
-            if (PlayerPrefs.GetInt("HasPlayedCardTutorial", 0) == 0)
-            {
-                sceneToLoad = "GameTutorial";
-            }
-
-            SceneLoader.LoadScene(sceneToLoad);
-            return;
+            global::PlushieOdyssey.Core.Logger.Log($"Resolved non-combat map node: {node.Type}. Placeholder reward/event screen not implemented yet; path advanced on map.");
+            RunManager.Instance.ClearSelectedEncounter();
         }
 
-        Gameseed26.Logger.Log($"Resolved non-combat map node: {node.Type}. Placeholder reward/event screen not implemented yet; path advanced on map.");
-        RunManager.Instance.ClearSelectedEncounter();
     }
-
 }

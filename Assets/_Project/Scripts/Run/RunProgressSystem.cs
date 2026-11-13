@@ -1,59 +1,64 @@
+using PlushieOdyssey.Combat.Actions;
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Core.Scenes;
 using System.Collections;
-using Gameseed26;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class RunProgressSystem : MonoBehaviour
+namespace PlushieOdyssey.Run
 {
-    [Header("Scene Flow")]
-    [SerializeField] private string mapSceneName = "Map";
-    [SerializeField] private float returnToMapDelay = 0.75f;
-
-    [Header("Combat Win Rewards")]
-    [SerializeField] private bool openRewardSceneAfterCombatWin = true;
-    [SerializeField] private string rewardSceneName = "RunRewards";
-    [SerializeField] private bool loadRewardSceneAdditive = true;
-    public UnityEvent OnCombatWon;
-
-    private void OnEnable()
+    public class RunProgressSystem : MonoBehaviour
     {
-        ActionSystem.AttachPerformer<CombatWonGA>(CombatWonPerformer);
-    }
+        [Header("Scene Flow")]
+        [SerializeField] private string mapSceneName = "Map";
+        [SerializeField] private float returnToMapDelay = 0.75f;
 
-    private void OnDisable()
-    {
-        ActionSystem.DetachPerformer<CombatWonGA>();
-    }
+        [Header("Combat Win Rewards")]
+        [SerializeField] private bool openRewardSceneAfterCombatWin = true;
+        [SerializeField] private string rewardSceneName = "RunRewards";
+        [SerializeField] private bool loadRewardSceneAdditive = true;
+        public UnityEvent OnCombatWon;
 
-    private IEnumerator CombatWonPerformer(CombatWonGA combatWonGA)
-    {
-        if (RunManager.Instance == null || !RunManager.Instance.HasActiveRun)
+        private void OnEnable()
         {
-            Gameseed26.Logger.Log("Combat won. No active run exists, so staying in combat scene for direct-scene testing.");
-            yield break;
+            ActionSystem.AttachPerformer<CombatWonGA>(CombatWonPerformer);
         }
 
-        RunManager.Instance.CompleteCurrentEncounter();
-        OnCombatWon?.Invoke();
-
-        yield return new WaitForSeconds(returnToMapDelay);
-
-        if (openRewardSceneAfterCombatWin && !string.IsNullOrWhiteSpace(rewardSceneName))
+        private void OnDisable()
         {
-            Gameseed26.Logger.Log($"Combat won. Opening reward scene: {rewardSceneName}.");
-            if (loadRewardSceneAdditive)
-            {
-                SceneLoader.LoadSceneAdditive(rewardSceneName);
-            }
-            else
-            {
-                SceneLoader.LoadScene(rewardSceneName);
-            }
-
-            yield break;
+            ActionSystem.DetachPerformer<CombatWonGA>();
         }
 
-        Gameseed26.Logger.Log("Combat won. Returning to map.");
-        SceneLoader.LoadScene(mapSceneName);
+        private IEnumerator CombatWonPerformer(CombatWonGA combatWonGA)
+        {
+            if (RunManager.Instance == null || !RunManager.Instance.HasActiveRun)
+            {
+                global::PlushieOdyssey.Core.Logger.Log("Combat won. No active run exists, so staying in combat scene for direct-scene testing.");
+                yield break;
+            }
+
+            RunManager.Instance.CompleteCurrentEncounter();
+            OnCombatWon?.Invoke();
+
+            yield return new WaitForSeconds(returnToMapDelay);
+
+            if (openRewardSceneAfterCombatWin && !string.IsNullOrWhiteSpace(rewardSceneName))
+            {
+                global::PlushieOdyssey.Core.Logger.Log($"Combat won. Opening reward scene: {rewardSceneName}.");
+                if (loadRewardSceneAdditive)
+                {
+                    SceneLoader.LoadSceneAdditive(rewardSceneName);
+                }
+                else
+                {
+                    SceneLoader.LoadScene(rewardSceneName);
+                }
+
+                yield break;
+            }
+
+            global::PlushieOdyssey.Core.Logger.Log("Combat won. Returning to map.");
+            SceneLoader.LoadScene(mapSceneName);
+        }
     }
 }

@@ -1,3 +1,8 @@
+using PlushieOdyssey.Audio;
+using PlushieOdyssey.Combat.States;
+using PlushieOdyssey.Core;
+using PlushieOdyssey.Core.StateMachines;
+using PlushieOdyssey.Vfx;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,441 +12,443 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-using Gameseed26;
-public class CombatantView : MonoBehaviour
+namespace PlushieOdyssey.Combat.Views
 {
-    [Header("Health Visual")]
-    [SerializeField] private bool useSlider;
-    [SerializeField, HideIf("useSlider")] private TMP_Text healthText;
-    [SerializeField, ShowIf("useSlider")] private Slider healthSlider;
-    [SerializeField, ShowIf("useSlider")] private Slider blockedSlider;
-    [SerializeField, ShowIf("useSlider")] private Slider shieldSlider;
-
-    [Header("Others")]
-    [SerializeField] protected SpriteRenderer spriteRenderer;
-    [SerializeField] private List<SpriteRenderer> additionalSpriteRenderers = new();
-    [SerializeField] private Animator animator;
-    [SerializeField] private List<Animator> additionalAnimators = new();
-    [SerializeField] private string hurtAnimationTrigger = "Hurt";
-    [SerializeField] private string deadAnimationTrigger = "Die";
-    [SerializeField] private float shakeDuration;
-    [SerializeField] private float shakeStrength;
-    [SerializeField] private Gameseed26.SfxID hitSfx = Gameseed26.SfxID.Hit;
-    [SerializeField] private Gameseed26.SfxID healSfx = Gameseed26.SfxID.Heal;
-    [SerializeField] private Gameseed26.SfxID shieldSfx = Gameseed26.SfxID.Shield;
-
-    public Animator Animator => animator;
-    public List<Animator> AdditionalAnimators => additionalAnimators;
-    public string HurtAnimationTrigger => hurtAnimationTrigger;
-    public string DeadAnimationTrigger => deadAnimationTrigger;
-    public SpriteRenderer SpriteRenderer => spriteRenderer;
-    public List<SpriteRenderer> AdditionalSpriteRenderers => additionalSpriteRenderers;
-
-    public bool HasAnimator => animator != null || (additionalAnimators != null && additionalAnimators.Count > 0);
-
-    public int MaxHealth { get; private set; }
-    public int CurrentHealth { get; private set; }
-    public int HealthPenalty { get; protected set; }
-    public int EffectiveMaxHealth => Mathf.Max(1, MaxHealth - HealthPenalty);
-
-    public int StunDuration { get; private set; }
-    public bool IsStunned => StunDuration > 0;
-
-    public int CurrentShield { get; private set; }
-
-    public int TauntDuration { get; private set; }
-    public bool IsTaunted => TauntDuration > 0;
-
-    public float ShakeDuration => shakeDuration;
-    public float ShakeStrength => shakeStrength;
-
-    private bool hasHealthVisual;
-    private Canvas combatantCanvas;
-
-    // === Frieren Shield VFX (auto-attached by FrierenShieldSystem) ===
-    private FrierenShieldController shieldVfx;
-
-    private void NotifyShieldDeployed(int amount)
+    public class CombatantView : MonoBehaviour
     {
-        if (shieldVfx == null && FrierenShieldSystem.Instance != null)
-            shieldVfx = FrierenShieldSystem.Instance.Attach(this);
-        if (shieldVfx != null) shieldVfx.Deploy(amount);
-    }
+        [Header("Health Visual")]
+        [SerializeField] private bool useSlider;
+        [SerializeField, HideIf("useSlider")] private TMP_Text healthText;
+        [SerializeField, ShowIf("useSlider")] private Slider healthSlider;
+        [SerializeField, ShowIf("useSlider")] private Slider blockedSlider;
+        [SerializeField, ShowIf("useSlider")] private Slider shieldSlider;
 
-    private void NotifyShieldHit(int absorbed)
-    {
-        if (shieldVfx == null) return;
-        shieldVfx.OnHit(absorbed, FrierenShieldSystem.ResolveHitPosition(this));
-    }
+        [Header("Others")]
+        [SerializeField] protected SpriteRenderer spriteRenderer;
+        [SerializeField] private List<SpriteRenderer> additionalSpriteRenderers = new();
+        [SerializeField] private Animator animator;
+        [SerializeField] private List<Animator> additionalAnimators = new();
+        [SerializeField] private string hurtAnimationTrigger = "Hurt";
+        [SerializeField] private string deadAnimationTrigger = "Die";
+        [SerializeField] private float shakeDuration;
+        [SerializeField] private float shakeStrength;
+        [SerializeField] private global::PlushieOdyssey.Audio.SfxID hitSfx = global::PlushieOdyssey.Audio.SfxID.Hit;
+        [SerializeField] private global::PlushieOdyssey.Audio.SfxID healSfx = global::PlushieOdyssey.Audio.SfxID.Heal;
+        [SerializeField] private global::PlushieOdyssey.Audio.SfxID shieldSfx = global::PlushieOdyssey.Audio.SfxID.Shield;
 
-    private void NotifyShieldBroken()
-    {
-        if (shieldVfx != null) shieldVfx.Shatter();
-    }
+        public Animator Animator => animator;
+        public List<Animator> AdditionalAnimators => additionalAnimators;
+        public string HurtAnimationTrigger => hurtAnimationTrigger;
+        public string DeadAnimationTrigger => deadAnimationTrigger;
+        public SpriteRenderer SpriteRenderer => spriteRenderer;
+        public List<SpriteRenderer> AdditionalSpriteRenderers => additionalSpriteRenderers;
 
-    private void NotifyShieldCleared()
-    {
-        if (shieldVfx != null) shieldVfx.Dissolve();
-    }
+        public bool HasAnimator => animator != null || (additionalAnimators != null && additionalAnimators.Count > 0);
 
-    public StateMachine StateMachine { get; private set; }
+        public int MaxHealth { get; private set; }
+        public int CurrentHealth { get; private set; }
+        public int HealthPenalty { get; protected set; }
+        public int EffectiveMaxHealth => Mathf.Max(1, MaxHealth - HealthPenalty);
 
-    public event Action StatusEffectsChanged;
+        public int StunDuration { get; private set; }
+        public bool IsStunned => StunDuration > 0;
 
-    protected void SetupBase(int maxHealth, Sprite image)
-    {
-        MaxHealth = CurrentHealth = maxHealth;
-        spriteRenderer.sprite = image;
+        public int CurrentShield { get; private set; }
 
-        StateMachine = new StateMachine();
-        StateMachine.Initialize(new CombatantIdleState(this));
+        public int TauntDuration { get; private set; }
+        public bool IsTaunted => TauntDuration > 0;
 
-        SetupHealthVisual();
-        UpdateHealthVisual(true);
-    }
+        public float ShakeDuration => shakeDuration;
+        public float ShakeStrength => shakeStrength;
 
-    public void SetCurrentHealth(int health)
-    {
-        CurrentHealth = Mathf.Clamp(health, 0, EffectiveMaxHealth);
-        UpdateHealthVisual();
-    }
+        private bool hasHealthVisual;
+        private Canvas combatantCanvas;
 
-    public virtual void ClearStats()
-    {
-        CurrentShield = 0;
-        StunDuration = 0;
-        TauntDuration = 0;
-        HealthPenalty = 0;
-        UpdateHealthVisual();
-        NotifyShieldCleared();
-        NotifyStatusEffectsChanged();
-    }
+        // === Frieren Shield VFX (auto-attached by FrierenShieldSystem) ===
+        private FrierenShieldController shieldVfx;
 
-    private void Update()
-    {
-        StateMachine?.Update();
-    }
-
-    private void LateUpdate()
-    {
-        if (combatantCanvas != null)
+        private void NotifyShieldDeployed(int amount)
         {
-            // Lock the canvas rotation so health bars don't fill backwards when the enemy is rotated to face the player
-            combatantCanvas.transform.rotation = Quaternion.identity;
-        }
-    }
-
-    public virtual void Damage(int damageAmount)
-    {
-        if (damageAmount > 0 && hitSfx != Gameseed26.SfxID.None)
-        {
-            Gameseed26.Tune.SFX(hitSfx);
+            if (shieldVfx == null && FrierenShieldSystem.Instance != null)
+                shieldVfx = FrierenShieldSystem.Instance.Attach(this);
+            if (shieldVfx != null) shieldVfx.Deploy(amount);
         }
 
-        int absorbedByShield = 0;
-        if (CurrentShield >= damageAmount)
+        private void NotifyShieldHit(int absorbed)
         {
-            absorbedByShield = damageAmount;
-            CurrentShield -= damageAmount;
-            damageAmount = 0;
+            if (shieldVfx == null) return;
+            shieldVfx.OnHit(absorbed, FrierenShieldSystem.ResolveHitPosition(this));
         }
-        else
+
+        private void NotifyShieldBroken()
         {
-            absorbedByShield = CurrentShield;
-            damageAmount -= CurrentShield;
+            if (shieldVfx != null) shieldVfx.Shatter();
+        }
+
+        private void NotifyShieldCleared()
+        {
+            if (shieldVfx != null) shieldVfx.Dissolve();
+        }
+
+        public StateMachine StateMachine { get; private set; }
+
+        public event Action StatusEffectsChanged;
+
+        protected void SetupBase(int maxHealth, Sprite image)
+        {
+            MaxHealth = CurrentHealth = maxHealth;
+            spriteRenderer.sprite = image;
+
+            StateMachine = new StateMachine();
+            StateMachine.Initialize(new CombatantIdleState(this));
+
+            SetupHealthVisual();
+            UpdateHealthVisual(true);
+        }
+
+        public void SetCurrentHealth(int health)
+        {
+            CurrentHealth = Mathf.Clamp(health, 0, EffectiveMaxHealth);
+            UpdateHealthVisual();
+        }
+
+        public virtual void ClearStats()
+        {
             CurrentShield = 0;
-        }
-
-        if (absorbedByShield > 0)
-        {
-            NotifyShieldHit(absorbedByShield);
-            if (CurrentShield <= 0) NotifyShieldBroken();
-        }
-
-        if (damageAmount > 0)
-        {
-            ReduceHealth(damageAmount);
-        }
-        else
-        {
+            StunDuration = 0;
+            TauntDuration = 0;
+            HealthPenalty = 0;
             UpdateHealthVisual();
-        }
-    }
-
-    protected void ReduceHealth(int amount)
-    {
-        CurrentHealth -= amount;
-
-        if (CurrentHealth <= 0)
-        {
-            CurrentHealth = 0;
-            UpdateHealthVisual();
-            StateMachine.ChangeState(new CombatantDeadState(this));
-        }
-        else
-        {
-            UpdateHealthVisual();
-            StateMachine.ChangeState(new CombatantHurtState(this, shakeDuration, shakeStrength));
-        }
-    }
-
-    public void Heal(int healAmount)
-    {
-        if (healAmount > 0 && healSfx != Gameseed26.SfxID.None)
-        {
-            Gameseed26.Tune.SFX(healSfx);
-        }
-
-        CurrentHealth += healAmount;
-        if (CurrentHealth > EffectiveMaxHealth)
-        {
-            CurrentHealth = EffectiveMaxHealth;
-        }
-        UpdateHealthVisual();
-
-        StateMachine.ChangeState(new CombatantHealState(this));
-    }
-
-    public void ApplyHealthPenalty(int amount)
-    {
-        HealthPenalty += amount;
-        if (HealthPenalty >= MaxHealth) HealthPenalty = MaxHealth - 1; // Always keep at least 1 max HP
-
-        if (CurrentHealth > EffectiveMaxHealth)
-        {
-            CurrentHealth = EffectiveMaxHealth;
-        }
-        UpdateHealthVisual();
-    }
-
-    public void ApplyStun(int duration)
-    {
-        StunDuration += duration;
-        NotifyStatusEffectsChanged();
-    }
-
-    public void DecreaseStun()
-    {
-        if (StunDuration > 0)
-        {
-            StunDuration--;
+            NotifyShieldCleared();
             NotifyStatusEffectsChanged();
         }
-    }
 
-    public void AddShield(int amount)
-    {
-        if (amount > 0 && shieldSfx != Gameseed26.SfxID.None)
+        private void Update()
         {
-            Gameseed26.Tune.SFX(shieldSfx);
+            StateMachine?.Update();
         }
 
-        CurrentShield += amount;
-        UpdateHealthVisual();
-        NotifyShieldDeployed(amount);
-    }
-
-    public void ClearShield()
-    {
-        bool hadShield = CurrentShield > 0;
-        CurrentShield = 0;
-        UpdateHealthVisual();
-        if (hadShield) NotifyShieldCleared();
-    }
-
-    public void ApplyTaunt(int duration)
-    {
-        TauntDuration += duration;
-        NotifyStatusEffectsChanged();
-    }
-
-    public void DecreaseTaunt()
-    {
-        if (TauntDuration > 0)
+        private void LateUpdate()
         {
-            TauntDuration--;
+            if (combatantCanvas != null)
+            {
+                // Lock the canvas rotation so health bars don't fill backwards when the enemy is rotated to face the player
+                combatantCanvas.transform.rotation = Quaternion.identity;
+            }
+        }
+
+        public virtual void Damage(int damageAmount)
+        {
+            if (damageAmount > 0 && hitSfx != global::PlushieOdyssey.Audio.SfxID.None)
+            {
+                global::PlushieOdyssey.Audio.Tune.SFX(hitSfx);
+            }
+
+            int absorbedByShield = 0;
+            if (CurrentShield >= damageAmount)
+            {
+                absorbedByShield = damageAmount;
+                CurrentShield -= damageAmount;
+                damageAmount = 0;
+            }
+            else
+            {
+                absorbedByShield = CurrentShield;
+                damageAmount -= CurrentShield;
+                CurrentShield = 0;
+            }
+
+            if (absorbedByShield > 0)
+            {
+                NotifyShieldHit(absorbedByShield);
+                if (CurrentShield <= 0) NotifyShieldBroken();
+            }
+
+            if (damageAmount > 0)
+            {
+                ReduceHealth(damageAmount);
+            }
+            else
+            {
+                UpdateHealthVisual();
+            }
+        }
+
+        protected void ReduceHealth(int amount)
+        {
+            CurrentHealth -= amount;
+
+            if (CurrentHealth <= 0)
+            {
+                CurrentHealth = 0;
+                UpdateHealthVisual();
+                StateMachine.ChangeState(new CombatantDeadState(this));
+            }
+            else
+            {
+                UpdateHealthVisual();
+                StateMachine.ChangeState(new CombatantHurtState(this, shakeDuration, shakeStrength));
+            }
+        }
+
+        public void Heal(int healAmount)
+        {
+            if (healAmount > 0 && healSfx != global::PlushieOdyssey.Audio.SfxID.None)
+            {
+                global::PlushieOdyssey.Audio.Tune.SFX(healSfx);
+            }
+
+            CurrentHealth += healAmount;
+            if (CurrentHealth > EffectiveMaxHealth)
+            {
+                CurrentHealth = EffectiveMaxHealth;
+            }
+            UpdateHealthVisual();
+
+            StateMachine.ChangeState(new CombatantHealState(this));
+        }
+
+        public void ApplyHealthPenalty(int amount)
+        {
+            HealthPenalty += amount;
+            if (HealthPenalty >= MaxHealth) HealthPenalty = MaxHealth - 1; // Always keep at least 1 max HP
+
+            if (CurrentHealth > EffectiveMaxHealth)
+            {
+                CurrentHealth = EffectiveMaxHealth;
+            }
+            UpdateHealthVisual();
+        }
+
+        public void ApplyStun(int duration)
+        {
+            StunDuration += duration;
             NotifyStatusEffectsChanged();
         }
-    }
 
-    public virtual void AddStress(int amount) { }
-
-    protected void NotifyStatusEffectsChanged()
-    {
-        StatusEffectsChanged?.Invoke();
-    }
-
-    public void SetAnimationTrigger(string trigger)
-    {
-        if (string.IsNullOrEmpty(trigger)) return;
-
-        if (animator != null)
+        public void DecreaseStun()
         {
-            animator.SetTrigger(trigger);
-        }
-
-        if (additionalAnimators != null)
-        {
-            foreach (var additionalAnimator in additionalAnimators)
+            if (StunDuration > 0)
             {
-                if (additionalAnimator != null)
-                {
-                    additionalAnimator.SetTrigger(trigger);
-                }
+                StunDuration--;
+                NotifyStatusEffectsChanged();
             }
         }
-    }
 
-    public void DoHurtFlash(float duration = 0.2f)
-    {
-        if (spriteRenderer != null)
+        public void AddShield(int amount)
         {
-            spriteRenderer.DOKill();
-            spriteRenderer.color = Color.red;
-            spriteRenderer.DOColor(Color.white, duration);
+            if (amount > 0 && shieldSfx != global::PlushieOdyssey.Audio.SfxID.None)
+            {
+                global::PlushieOdyssey.Audio.Tune.SFX(shieldSfx);
+            }
+
+            CurrentShield += amount;
+            UpdateHealthVisual();
+            NotifyShieldDeployed(amount);
         }
 
-        if (additionalSpriteRenderers != null)
+        public void ClearShield()
         {
-            foreach (var sr in additionalSpriteRenderers)
+            bool hadShield = CurrentShield > 0;
+            CurrentShield = 0;
+            UpdateHealthVisual();
+            if (hadShield) NotifyShieldCleared();
+        }
+
+        public void ApplyTaunt(int duration)
+        {
+            TauntDuration += duration;
+            NotifyStatusEffectsChanged();
+        }
+
+        public void DecreaseTaunt()
+        {
+            if (TauntDuration > 0)
             {
-                if (sr != null)
-                {
-                    sr.DOKill();
-                    sr.color = Color.red;
-                    sr.DOColor(Color.white, duration);
-                }
+                TauntDuration--;
+                NotifyStatusEffectsChanged();
             }
         }
-    }
 
-    protected virtual void SetupHealthVisual()
-    {
-        combatantCanvas = GetComponentInChildren<Canvas>();
-        hasHealthVisual = !HealthObjectIsNull();
-        if (!hasHealthVisual) return;
+        public virtual void AddStress(int amount) { }
 
-        if (healthText != null) healthText.gameObject.SetActive(!useSlider);
-
-        List<Slider> sliders = new() { healthSlider, blockedSlider, shieldSlider };
-        foreach (var slider in sliders)
+        protected void NotifyStatusEffectsChanged()
         {
-            if (slider == null) continue;
-            slider.gameObject.SetActive(useSlider);
+            StatusEffectsChanged?.Invoke();
         }
-    }
 
-    protected virtual void UpdateHealthVisual(bool instant = false)
-    {
-        if (!hasHealthVisual) return;
-
-        if (useSlider)
+        public void SetAnimationTrigger(string trigger)
         {
-            float targetHealth = Mathf.Clamp01((float)CurrentHealth / MaxHealth);
-            healthSlider.DOKill();
-            if (instant) healthSlider.value = targetHealth;
-            else healthSlider.DOValue(targetHealth, 0.3f);
+            if (string.IsNullOrEmpty(trigger)) return;
 
-            float targetBlocked = Mathf.Clamp01((float)HealthPenalty / MaxHealth);
-            if (blockedSlider != null)
+            if (animator != null)
             {
-                blockedSlider.DOKill();
-                if (instant) blockedSlider.value = targetBlocked;
+                animator.SetTrigger(trigger);
+            }
 
-                if (blockedSlider.fillRect != null)
+            if (additionalAnimators != null)
+            {
+                foreach (var additionalAnimator in additionalAnimators)
                 {
-                    if (HealthPenalty > 0)
+                    if (additionalAnimator != null)
                     {
-                        blockedSlider.fillRect.gameObject.SetActive(true);
-                        if (!instant) blockedSlider.DOValue(targetBlocked, 0.3f);
+                        additionalAnimator.SetTrigger(trigger);
                     }
-                    else
+                }
+            }
+        }
+
+        public void DoHurtFlash(float duration = 0.2f)
+        {
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.DOKill();
+                spriteRenderer.color = Color.red;
+                spriteRenderer.DOColor(Color.white, duration);
+            }
+
+            if (additionalSpriteRenderers != null)
+            {
+                foreach (var sr in additionalSpriteRenderers)
+                {
+                    if (sr != null)
                     {
-                        if (instant || blockedSlider.value <= 0.001f)
+                        sr.DOKill();
+                        sr.color = Color.red;
+                        sr.DOColor(Color.white, duration);
+                    }
+                }
+            }
+        }
+
+        protected virtual void SetupHealthVisual()
+        {
+            combatantCanvas = GetComponentInChildren<Canvas>();
+            hasHealthVisual = !HealthObjectIsNull();
+            if (!hasHealthVisual) return;
+
+            if (healthText != null) healthText.gameObject.SetActive(!useSlider);
+
+            List<Slider> sliders = new() { healthSlider, blockedSlider, shieldSlider };
+            foreach (var slider in sliders)
+            {
+                if (slider == null) continue;
+                slider.gameObject.SetActive(useSlider);
+            }
+        }
+
+        protected virtual void UpdateHealthVisual(bool instant = false)
+        {
+            if (!hasHealthVisual) return;
+
+            if (useSlider)
+            {
+                float targetHealth = Mathf.Clamp01((float)CurrentHealth / MaxHealth);
+                healthSlider.DOKill();
+                if (instant) healthSlider.value = targetHealth;
+                else healthSlider.DOValue(targetHealth, 0.3f);
+
+                float targetBlocked = Mathf.Clamp01((float)HealthPenalty / MaxHealth);
+                if (blockedSlider != null)
+                {
+                    blockedSlider.DOKill();
+                    if (instant) blockedSlider.value = targetBlocked;
+
+                    if (blockedSlider.fillRect != null)
+                    {
+                        if (HealthPenalty > 0)
                         {
-                            blockedSlider.value = 0f;
-                            blockedSlider.fillRect.gameObject.SetActive(false);
+                            blockedSlider.fillRect.gameObject.SetActive(true);
+                            if (!instant) blockedSlider.DOValue(targetBlocked, 0.3f);
                         }
                         else
                         {
-                            blockedSlider.DOValue(0f, 0.3f).OnComplete(() => 
+                            if (instant || blockedSlider.value <= 0.001f)
                             {
-                                if (blockedSlider != null && blockedSlider.fillRect != null && blockedSlider.value <= 0.001f)
-                                    blockedSlider.fillRect.gameObject.SetActive(false);
-                            });
+                                blockedSlider.value = 0f;
+                                blockedSlider.fillRect.gameObject.SetActive(false);
+                            }
+                            else
+                            {
+                                blockedSlider.DOValue(0f, 0.3f).OnComplete(() =>
+                                {
+                                    if (blockedSlider != null && blockedSlider.fillRect != null && blockedSlider.value <= 0.001f)
+                                        blockedSlider.fillRect.gameObject.SetActive(false);
+                                });
+                            }
                         }
                     }
-                }
-                else if (!instant)
-                {
-                    blockedSlider.DOValue(targetBlocked, 0.3f);
-                }
-            }
-
-            float targetShield = Mathf.Clamp01((float)CurrentShield / MaxHealth);
-            if (shieldSlider != null)
-            {
-                shieldSlider.DOKill();
-                if (instant) shieldSlider.value = targetShield;
-
-                if (shieldSlider.fillRect != null)
-                {
-                    if (CurrentShield > 0)
+                    else if (!instant)
                     {
-                        shieldSlider.fillRect.gameObject.SetActive(true);
-                        if (!instant) shieldSlider.DOValue(targetShield, 0.3f);
+                        blockedSlider.DOValue(targetBlocked, 0.3f);
                     }
-                    else
+                }
+
+                float targetShield = Mathf.Clamp01((float)CurrentShield / MaxHealth);
+                if (shieldSlider != null)
+                {
+                    shieldSlider.DOKill();
+                    if (instant) shieldSlider.value = targetShield;
+
+                    if (shieldSlider.fillRect != null)
                     {
-                        if (instant || shieldSlider.value <= 0.001f)
+                        if (CurrentShield > 0)
                         {
-                            shieldSlider.value = 0f;
-                            shieldSlider.fillRect.gameObject.SetActive(false);
+                            shieldSlider.fillRect.gameObject.SetActive(true);
+                            if (!instant) shieldSlider.DOValue(targetShield, 0.3f);
                         }
                         else
                         {
-                            shieldSlider.DOValue(0f, 0.3f).OnComplete(() => 
+                            if (instant || shieldSlider.value <= 0.001f)
                             {
-                                if (shieldSlider != null && shieldSlider.fillRect != null && shieldSlider.value <= 0.001f)
-                                    shieldSlider.fillRect.gameObject.SetActive(false);
-                            });
+                                shieldSlider.value = 0f;
+                                shieldSlider.fillRect.gameObject.SetActive(false);
+                            }
+                            else
+                            {
+                                shieldSlider.DOValue(0f, 0.3f).OnComplete(() =>
+                                {
+                                    if (shieldSlider != null && shieldSlider.fillRect != null && shieldSlider.value <= 0.001f)
+                                        shieldSlider.fillRect.gameObject.SetActive(false);
+                                });
+                            }
                         }
                     }
+                    else if (!instant)
+                    {
+                        shieldSlider.DOValue(targetShield, 0.3f);
+                    }
                 }
-                else if (!instant)
+            }
+            else
+            {
+                string shieldText = CurrentShield > 0 ? $" [+{CurrentShield}]" : "";
+                string penaltyText = HealthPenalty > 0 ? $" (Blocked: {HealthPenalty})" : "";
+                healthText.text = $"HP: {CurrentHealth}/{EffectiveMaxHealth}{shieldText}{penaltyText}";
+            }
+
+        }
+
+        protected bool HealthObjectIsNull()
+        {
+            if (useSlider)
+            {
+                if (healthSlider == null)
                 {
-                    shieldSlider.DOValue(targetShield, 0.3f);
+                    global::PlushieOdyssey.Core.Logger.LogError(this, $"[{name}] Health slider is not assigned or null!");
+                    return true;
                 }
             }
-        }
-        else
-        {
-            string shieldText = CurrentShield > 0 ? $" [+{CurrentShield}]" : "";
-            string penaltyText = HealthPenalty > 0 ? $" (Blocked: {HealthPenalty})" : "";
-            healthText.text = $"HP: {CurrentHealth}/{EffectiveMaxHealth}{shieldText}{penaltyText}";
-        }
-
-    }
-
-    protected bool HealthObjectIsNull()
-    {
-        if (useSlider)
-        {
-            if (healthSlider == null)
+            else
             {
-                Gameseed26.Logger.LogError(this, $"[{name}] Health slider is not assigned or null!");
-                return true;
+                if (healthText == null)
+                {
+                    global::PlushieOdyssey.Core.Logger.LogError(this, $"[{name}] Any slider is not assigned or null!");
+                    return true;
+                }
             }
-        }
-        else
-        {
-            if (healthText == null)
-            {
-                Gameseed26.Logger.LogError(this, $"[{name}] Any slider is not assigned or null!");
-                return true;
-            }
-        }
 
-        return false;
+            return false;
+        }
     }
 }

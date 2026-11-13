@@ -1,44 +1,48 @@
+using PlushieOdyssey.Combat.Views;
 using DG.Tweening;
 using System;
 using UnityEngine;
 
-public class CombatantHealState : CombatantState
+namespace PlushieOdyssey.Combat.States
 {
-    private float animationDuration;
-    private bool isComplete;
-
-    public CombatantHealState(CombatantView combatant, float animationDuration = 0.4f, Action onComplete = null) 
-        : base(combatant, onComplete)
+    public class CombatantHealState : CombatantState
     {
-        this.animationDuration = animationDuration;
-    }
+        private float animationDuration;
+        private bool isComplete;
 
-    public override void Enter()
-    {
-        isComplete = false;
-
-        if (combatant.SpriteRenderer != null)
+        public CombatantHealState(CombatantView combatant, float animationDuration = 0.4f, Action onComplete = null)
+            : base(combatant, onComplete)
         {
-            combatant.SpriteRenderer.DOKill();
-            combatant.SpriteRenderer.color = Color.green;
-            combatant.SpriteRenderer.DOColor(Color.white, animationDuration);
-            
-            combatant.transform.DOKill();
-            combatant.transform.DOPunchScale(Vector3.one * 0.15f, animationDuration, 1, 0.5f)
-                .OnComplete(CompleteHeal);
+            this.animationDuration = animationDuration;
         }
-        else
+
+        public override void Enter()
         {
-            CompleteHeal();
+            isComplete = false;
+
+            if (combatant.SpriteRenderer != null)
+            {
+                combatant.SpriteRenderer.DOKill();
+                combatant.SpriteRenderer.color = Color.green;
+                combatant.SpriteRenderer.DOColor(Color.white, animationDuration);
+
+                combatant.transform.DOKill();
+                combatant.transform.DOPunchScale(Vector3.one * 0.15f, animationDuration, 1, 0.5f)
+                    .OnComplete(CompleteHeal);
+            }
+            else
+            {
+                CompleteHeal();
+            }
         }
-    }
 
-    private void CompleteHeal()
-    {
-        if (isComplete) return;
-        isComplete = true;
+        private void CompleteHeal()
+        {
+            if (isComplete) return;
+            isComplete = true;
 
-        onComplete?.Invoke();
-        combatant.StateMachine.ChangeState(new CombatantIdleState(combatant));
+            onComplete?.Invoke();
+            combatant.StateMachine.ChangeState(new CombatantIdleState(combatant));
+        }
     }
 }

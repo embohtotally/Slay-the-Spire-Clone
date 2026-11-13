@@ -1,14 +1,18 @@
+using PlushieOdyssey.Combat.Views;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class KillEnemyGA : GameAction
+namespace PlushieOdyssey.Combat.Actions
 {
-    public EnemyView EnemyView { get; private set; }
-
-    public KillEnemyGA(EnemyView enemyView)
+    public class KillEnemyGA : GameAction
     {
-        EnemyView = enemyView;
+        public EnemyView EnemyView { get; private set; }
+
+        public KillEnemyGA(EnemyView enemyView)
+        {
+            EnemyView = enemyView;
+        }
     }
 }

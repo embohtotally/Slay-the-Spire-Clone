@@ -1,11 +1,14 @@
-public enum BuffType
+namespace PlushieOdyssey.Combat.Models
 {
-    DamageReduction,
-    Vulnerable,
-    Weak,
-    Strength,
-    DamageReductionPercentage,
-    FearImmunity,
-    Redirect,
-    Poison
+    public enum BuffType
+    {
+        DamageReduction,
+        Vulnerable,
+        Weak,
+        Strength,
+        DamageReductionPercentage,
+        FearImmunity,
+        Redirect,
+        Poison
+    }
 }

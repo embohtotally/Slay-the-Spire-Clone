@@ -1,5 +1,8 @@
-public enum ConditionType
+namespace PlushieOdyssey.Combat.Models
 {
-    CasterFearAtLeast,
-    TargetHasStatus
+    public enum ConditionType
+    {
+        CasterFearAtLeast,
+        TargetHasStatus
+    }
 }

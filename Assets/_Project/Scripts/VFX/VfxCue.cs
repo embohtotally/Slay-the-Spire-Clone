@@ -1,57 +1,61 @@
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class VfxCue
+namespace PlushieOdyssey.Vfx
 {
-    [SerializeField] private GameObject prefab;
-    [SerializeField] private Vector3 offset;
-    [SerializeField] private Vector3 rotationEuler;
-    [SerializeField] private Vector3 scaleMultiplier = Vector3.one;
-    [SerializeField] private bool parentToTarget;
-    [SerializeField, Min(0f)] private float destroyAfter = 3f;
-
-    public GameObject Prefab => prefab;
-    public bool HasPrefab => prefab != null;
-
-    public GameObject Play(Transform target)
+    [System.Serializable]
+    public class VfxCue
     {
-        if (prefab == null) return null;
+        [SerializeField] private GameObject prefab;
+        [SerializeField] private Vector3 offset;
+        [SerializeField] private Vector3 rotationEuler;
+        [SerializeField] private Vector3 scaleMultiplier = Vector3.one;
+        [SerializeField] private bool parentToTarget;
+        [SerializeField, Min(0f)] private float destroyAfter = 3f;
 
-        Vector3 position = target != null ? target.position : Vector3.zero;
-        Quaternion rotation = Quaternion.Euler(rotationEuler);
-        GameObject instance = Object.Instantiate(prefab, position + offset, rotation);
+        public GameObject Prefab => prefab;
+        public bool HasPrefab => prefab != null;
 
-        if (parentToTarget && target != null)
+        public GameObject Play(Transform target)
         {
-            instance.transform.SetParent(target, true);
+            if (prefab == null) return null;
+
+            Vector3 position = target != null ? target.position : Vector3.zero;
+            Quaternion rotation = Quaternion.Euler(rotationEuler);
+            GameObject instance = Object.Instantiate(prefab, position + offset, rotation);
+
+            if (parentToTarget && target != null)
+            {
+                instance.transform.SetParent(target, true);
+            }
+
+            if (scaleMultiplier != Vector3.zero)
+            {
+                instance.transform.localScale = Vector3.Scale(instance.transform.localScale, scaleMultiplier);
+            }
+
+            if (destroyAfter > 0f)
+            {
+                Object.Destroy(instance, destroyAfter);
+            }
+
+            return instance;
         }
 
-        if (scaleMultiplier != Vector3.zero)
+        public void Play(CombatantView target)
         {
-            instance.transform.localScale = Vector3.Scale(instance.transform.localScale, scaleMultiplier);
+            Play(target != null ? target.transform : null);
         }
 
-        if (destroyAfter > 0f)
+        public void Play(IEnumerable<CombatantView> targets)
         {
-            Object.Destroy(instance, destroyAfter);
-        }
+            if (targets == null) return;
 
-        return instance;
-    }
-
-    public void Play(CombatantView target)
-    {
-        Play(target != null ? target.transform : null);
-    }
-
-    public void Play(IEnumerable<CombatantView> targets)
-    {
-        if (targets == null) return;
-
-        foreach (CombatantView target in targets)
-        {
-            Play(target);
+            foreach (CombatantView target in targets)
+            {
+                Play(target);
+            }
         }
     }
 }

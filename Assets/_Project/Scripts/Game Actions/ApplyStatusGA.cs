@@ -1,19 +1,25 @@
+using PlushieOdyssey.Combat;
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 
-public class ApplyStatusGA : GameAction, IHaveCaster
+namespace PlushieOdyssey.Combat.Actions
 {
-    public List<CombatantView> Targets { get; private set; }
-    public StatusType Status { get; private set; }
-    public int Stacks { get; private set; }
-    public int Duration { get; private set; }
-    public CombatantView Caster { get; private set; }
-
-    public ApplyStatusGA(List<CombatantView> targets, StatusType status, int stacks, int duration, CombatantView caster)
+    public class ApplyStatusGA : GameAction, IHaveCaster
     {
-        Targets = targets;
-        Status = status;
-        Stacks = stacks;
-        Duration = duration;
-        Caster = caster;
+        public List<CombatantView> Targets { get; private set; }
+        public StatusType Status { get; private set; }
+        public int Stacks { get; private set; }
+        public int Duration { get; private set; }
+        public CombatantView Caster { get; private set; }
+
+        public ApplyStatusGA(List<CombatantView> targets, StatusType status, int stacks, int duration, CombatantView caster)
+        {
+            Targets = targets;
+            Status = status;
+            Stacks = stacks;
+            Duration = duration;
+            Caster = caster;
+        }
     }
 }

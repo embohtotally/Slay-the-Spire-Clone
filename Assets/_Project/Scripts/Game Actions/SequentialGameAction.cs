@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 
-public class SequentialGameAction : GameAction
+namespace PlushieOdyssey.Combat.Actions
 {
-    public List<GameAction> Actions { get; private set; }
-
-    public SequentialGameAction(List<GameAction> actions)
+    public class SequentialGameAction : GameAction
     {
-        Actions = actions;
+        public List<GameAction> Actions { get; private set; }
+
+        public SequentialGameAction(List<GameAction> actions)
+        {
+            Actions = actions;
+        }
     }
 }

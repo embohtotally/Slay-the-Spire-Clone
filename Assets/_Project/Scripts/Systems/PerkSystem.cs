@@ -1,24 +1,30 @@
+using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Core;
+using PlushieOdyssey.UI;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class PerkSystem : Singleton<PerkSystem>
+namespace PlushieOdyssey.Combat.Systems
 {
-    [SerializeField] private PerksUI perksUI;
-
-    private readonly List<Perk> perks = new();
-
-    public void AddPerk(Perk perk)
+    [System.Serializable]
+    public class PerkSystem : Singleton<PerkSystem>
     {
-        perks.Add(perk);
-        perksUI.AddPerkUI(perk);
-        perk.OnAdd();
-    }
+        [SerializeField] private PerksUI perksUI;
 
-    public void RemovePerk(Perk perk)
-    {
-        perks.Remove(perk);
-        perksUI.RemovePerkUI(perk);
-        perk.OnRemove();
+        private readonly List<Perk> perks = new();
+
+        public void AddPerk(Perk perk)
+        {
+            perks.Add(perk);
+            perksUI.AddPerkUI(perk);
+            perk.OnAdd();
+        }
+
+        public void RemovePerk(Perk perk)
+        {
+            perks.Remove(perk);
+            perksUI.RemovePerkUI(perk);
+            perk.OnRemove();
+        }
     }
 }

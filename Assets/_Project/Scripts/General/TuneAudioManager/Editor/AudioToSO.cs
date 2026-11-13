@@ -1,9 +1,12 @@
+using PlushieOdyssey.Audio;
+using PlushieOdyssey.Core;
+using Logger = PlushieOdyssey.Core.Logger;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace Gameseed26.Editor
+namespace PlushieOdyssey.Editor.Audio
 {
     public class AudioToSO : UnityEditor.Editor
     {
