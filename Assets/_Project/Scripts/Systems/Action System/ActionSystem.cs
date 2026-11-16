@@ -11,6 +11,7 @@ namespace PlushieOdyssey.Combat.Actions
     public class ActionSystem : Singleton<ActionSystem>
     {
         public bool IsPerforming { get; private set; } = false;
+        public event Action<bool> BusyChanged;
 
         protected override void Awake()
         {
@@ -100,10 +101,12 @@ namespace PlushieOdyssey.Combat.Actions
             if (IsPerforming) return false;
 
             IsPerforming = true;
+            BusyChanged?.Invoke(true);
 
             StartCoroutine(Flow(action, () =>
             {
                 IsPerforming = false;
+                BusyChanged?.Invoke(false);
                 OnPerformFinished?.Invoke();
             }));
 

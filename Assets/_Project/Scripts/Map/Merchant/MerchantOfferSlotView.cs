@@ -51,27 +51,23 @@ namespace PlushieOdyssey.Map.Merchant
         private Color baseTintColor = Color.white;
         private bool hasBaseTintColor;
 
-        protected override void Awake()
+        private void Awake()
         {
-            base.Awake();
             CacheFeedbackReferences();
         }
 
-        protected override void OnEnable()
+        private void OnEnable()
         {
-            base.OnEnable();
             CacheFeedbackReferences();
         }
 
-        protected override void OnDisable()
+        private void OnDisable()
         {
             KillFeedbackTweens();
-            base.OnDisable();
         }
 
-        protected override void OnValidate()
+        private void OnValidate()
         {
-            base.OnValidate();
             CacheFeedbackReferences();
         }
 
@@ -79,7 +75,6 @@ namespace PlushieOdyssey.Map.Merchant
         {
             merchantController = controller;
             offer = newOffer;
-            CacheReferences();
             CacheFeedbackReferences();
 
             if (button != null)

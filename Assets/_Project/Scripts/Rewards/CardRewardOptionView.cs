@@ -20,17 +20,11 @@ namespace PlushieOdyssey.Rewards
         public CardRewardOption Option => option;
         public RectTransform RectTransform => transform as RectTransform;
 
-        protected override void Awake()
-        {
-            base.Awake();
-        }
-
         public void Setup(CardRewardController controller, CardRewardOption newOption)
         {
             gameObject.SetActive(true);
             rewardController = controller;
             option = newOption;
-            CacheReferences();
 
             if (button != null)
             {

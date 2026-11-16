@@ -1,28 +1,54 @@
-using PlushieOdyssey.Combat.Models;
-using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using DG.Tweening;
+using NaughtyAttributes;
+using PlushieOdyssey.Combat.Models;
 using UnityEngine;
-using UnityEngine.Splines;
 
 namespace PlushieOdyssey.Combat.Views
 {
     public class HandView : MonoBehaviour
     {
-        [SerializeField] private SplineContainer splineContainer;
-        [SerializeField] private int maxHandSize = 10;
-        [SerializeField] private float doTweenUpdatePositionDuration = 0.15f;
-        [SerializeField] private float cardPositionOffset = 0.01f;
+        [SerializeField] private CardFanLayout _fanLayout;
+        [Tooltip("Card count that fills the fan width; this is not a hand limit.")]
+        [SerializeField, Min(1)] private int maxHandSize = 10;
+        [SerializeField, Min(0f)] private float doTweenUpdatePositionDuration = 0.15f;
 
-        private WaitForSeconds updateCardPositionTime;
+        private Sequence _layoutTween;
+        private CardView _suspendedCard;
+        private bool _refreshOnEnable;
 
+        [SerializeField, ReadOnly]
         private List<CardView> cards = new();
+
+        public IReadOnlyList<CardView> Cards => cards;
+        public event Action<CardView> CardAdded;
+        public event Action<CardView> CardRemoved;
 
         private void Awake()
         {
-            updateCardPositionTime = new WaitForSeconds(doTweenUpdatePositionDuration);
+            if (_fanLayout == null) _fanLayout = GetComponent<CardFanLayout>();
+        }
+
+        private void OnEnable()
+        {
+            _refreshOnEnable = true;
+        }
+
+        private void LateUpdate()
+        {
+            if (!_refreshOnEnable) return;
+            _refreshOnEnable = false;
+            if (cards.Count > 0) RefreshCardPositions();
+        }
+
+        private void OnDisable()
+        {
+            _layoutTween?.Kill();
+            _layoutTween = null;
+            _suspendedCard = null;
+            _refreshOnEnable = false;
         }
 
         public CardView RemoveCard(Card card)
@@ -32,44 +58,163 @@ namespace PlushieOdyssey.Combat.Views
             if (cardView == null) return null;
 
             cards.Remove(cardView);
-            StartCoroutine(UpdateCardPositions(doTweenUpdatePositionDuration));
+            if (_suspendedCard == cardView) _suspendedCard = null;
+            CardRemoved?.Invoke(cardView);
+            RefreshCardPositions();
             return cardView;
         }
 
         public IEnumerator AddCard(CardView cardView)
         {
+            if (cardView == null || cards.Contains(cardView)) yield break;
+            if (!TryGetLayout()) yield break;
+
+            if (cardView.transform is not RectTransform cardRect)
+            {
+                Debug.LogWarning("HandView requires a Canvas card prefab with a RectTransform.", this);
+                yield break;
+            }
+
+            cardRect.SetParent(_fanLayout.RectTransform, false);
+            Vector3 localPosition = cardRect.localPosition;
+            cardRect.anchorMin = cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRect.localPosition = localPosition;
             cards.Add(cardView);
-            yield return UpdateCardPositions(doTweenUpdatePositionDuration);
+            CardAdded?.Invoke(cardView);
+            Tween tween = UpdateCardPositions(doTweenUpdatePositionDuration);
+            if (tween != null) yield return tween.WaitForCompletion();
         }
 
-        private IEnumerator UpdateCardPositions(float duration)
+        private Tween UpdateCardPositions(float duration)
         {
-            if (cards.Count == 0) yield break;
+            _layoutTween?.Kill();
+            _layoutTween = null;
+            cards.RemoveAll(card => card == null);
 
-            float cardSpacing = 1f / maxHandSize;
-            float firstCardPosition = 0.5f - (cards.Count - 1) * cardSpacing * 0.5f;
-            Spline spline = splineContainer.Spline;
+            if (!isActiveAndEnabled || !gameObject.activeInHierarchy ||
+                cards.Count == 0 || !TryGetLayout() || !_fanLayout.gameObject.activeInHierarchy)
+                return null;
+
+            duration = Mathf.Max(0f, duration);
 
             for (int i = 0; i < cards.Count; i++)
             {
-                float p = firstCardPosition + i * cardSpacing;
-                Vector3 splinePosition = spline.EvaluatePosition(p);
-                Vector3 forward = spline.EvaluateTangent(p);
-                Vector3 up = spline.EvaluateUpVector(p);
-                Quaternion rotation = Quaternion.LookRotation(-up, Vector3.Cross(-up, forward).normalized);
-                cards[i].transform.DOMove(splinePosition + transform.position + cardPositionOffset * i * Vector3.forward, duration);
-                cards[i].transform.DORotate(rotation.eulerAngles, duration);
+                if (cards[i] == _suspendedCard) continue;
+                if (cards[i].transform is not RectTransform cardRect) continue;
+
+                _fanLayout.GetCardPose(i, cards.Count, maxHandSize, out Vector2 position, out float angle);
+                Vector3 anchoredPosition = new Vector3(position.x, position.y, 0f);
+                Vector3 rotation = new Vector3(0f, 0f, angle);
+                cardRect.SetSiblingIndex(i);
+
+                if (duration == 0f)
+                {
+                    cardRect.anchoredPosition3D = anchoredPosition;
+                    cardRect.localRotation = Quaternion.Euler(rotation);
+                    continue;
+                }
+
+                if (_layoutTween == null)
+                {
+                    _layoutTween = DOTween.Sequence()
+                        .SetAutoKill(true)
+                        .SetRecyclable(false)
+                        .OnKill(() => _layoutTween = null);
+                }
+                _layoutTween.Join(cardRect.DOAnchorPos3D(anchoredPosition, duration).SetEase(Ease.OutQuad));
+                _layoutTween.Join(cardRect.DOLocalRotate(rotation, duration).SetEase(Ease.OutQuad));
             }
 
-            yield return updateCardPositionTime;
+            return _layoutTween;
         }
 
+        [Button(enabledMode: EButtonEnableMode.Playmode)]
         public void RefreshCardPositions()
         {
-            if (cards.Count > 0)
+            UpdateCardPositions(doTweenUpdatePositionDuration);
+        }
+
+        public void SuspendCardLayout(CardView cardView)
+        {
+            if (!cards.Contains(cardView)) return;
+            _suspendedCard = cardView;
+            RefreshCardPositions();
+        }
+
+        public void ResumeCardLayout(CardView cardView)
+        {
+            if (_suspendedCard == cardView) _suspendedCard = null;
+            RefreshCardPositions();
+        }
+
+        public void RefreshCardOrder()
+        {
+            if (!isActiveAndEnabled || !gameObject.activeInHierarchy ||
+                _fanLayout == null || !_fanLayout.gameObject.activeInHierarchy) return;
+            for (int i = 0; i < cards.Count; i++)
             {
-                StartCoroutine(UpdateCardPositions(doTweenUpdatePositionDuration));
+                CardView cardView = cards[i];
+                if (cardView != null && cardView != _suspendedCard &&
+                    cardView.transform.parent == _fanLayout.transform)
+                {
+                    cardView.transform.SetSiblingIndex(i);
+                }
             }
+        }
+
+#if UNITY_EDITOR
+        [Button("Preview Child Cards", EButtonEnableMode.Editor)]
+        private void PreviewChildCards()
+        {
+            if (Application.isPlaying) return;
+
+            CardFanLayout layout = _fanLayout != null ? _fanLayout : GetComponent<CardFanLayout>();
+            if (layout == null)
+            {
+                Debug.LogWarning("Assign a CardFanLayout to HandView.", this);
+                return;
+            }
+
+            var previewCards = new List<RectTransform>();
+            foreach (Transform child in layout.RectTransform)
+            {
+                if (child is RectTransform cardRect && child.TryGetComponent<CardView>(out _))
+                {
+                    previewCards.Add(cardRect);
+                }
+            }
+
+            if (previewCards.Count == 0) return;
+
+            UnityEditor.Undo.RecordObjects(previewCards.ToArray(), "Preview Child Cards");
+            for (int i = 0; i < previewCards.Count; i++)
+            {
+                RectTransform cardRect = previewCards[i];
+                layout.GetCardPose(i, previewCards.Count, maxHandSize, out Vector2 position, out float angle);
+                cardRect.anchorMin = cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+                cardRect.anchoredPosition3D = new Vector3(position.x, position.y, 0f);
+                cardRect.localRotation = Quaternion.Euler(0f, 0f, angle);
+                UnityEditor.PrefabUtility.RecordPrefabInstancePropertyModifications(cardRect);
+            }
+
+            if (layout.gameObject.scene.IsValid())
+            {
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(layout.gameObject.scene);
+            }
+            UnityEditor.SceneView.RepaintAll();
+        }
+#endif
+
+        private bool TryGetLayout()
+        {
+            if (_fanLayout == null) _fanLayout = GetComponent<CardFanLayout>();
+            if (_fanLayout == null)
+            {
+                Debug.LogWarning("Assign a CardFanLayout to HandView.", this);
+                return false;
+            }
+
+            return true;
         }
 
         private CardView GetCardView(Card card)

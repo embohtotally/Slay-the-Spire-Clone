@@ -22,35 +22,26 @@ namespace PlushieOdyssey.UI
 
         [Header("Optional Selection")]
         [SerializeField] private Button selectButton;
-        [SerializeField] private bool enableInventoryHoverJuice;
-        [SerializeField] private bool enableInventoryPointerAudio;
         public CardDataUnityEvent OnCardClicked;
 
-        protected override void Awake()
+        private void Awake()
         {
-            base.Awake();
             CacheSelectionButton();
-            ApplyInventoryInteractionSettings();
         }
 
-        protected override void OnValidate()
+        private void OnValidate()
         {
-            base.OnValidate();
             CacheSelectionButton();
-            ApplyInventoryInteractionSettings();
         }
 
-        protected override void OnEnable()
+        private void OnEnable()
         {
-            base.OnEnable();
-            ApplyInventoryInteractionSettings();
             RegisterSelectionButton();
         }
 
-        protected override void OnDisable()
+        private void OnDisable()
         {
             UnregisterSelectionButton();
-            base.OnDisable();
         }
 
         public void Setup(CardData newCardData, int copyCount, int displayIndex)
@@ -82,14 +73,6 @@ namespace PlushieOdyssey.UI
         private void CacheSelectionButton()
         {
             if (selectButton == null) selectButton = GetComponentInChildren<Button>(true);
-        }
-
-        private void ApplyInventoryInteractionSettings()
-        {
-            SetCombatInteractionsEnabled(false);
-            SetCombatHoverPreviewEnabled(false);
-            SetHoverJuiceEnabled(enableInventoryHoverJuice);
-            SetPointerAudioEnabled(enableInventoryPointerAudio);
         }
 
         private void RegisterSelectionButton()

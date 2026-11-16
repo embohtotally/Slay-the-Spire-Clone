@@ -38,6 +38,20 @@ namespace PlushieOdyssey.Combat.Systems
         private readonly List<Card> discardPile = new();
         private readonly List<Card> hand = new();
 
+        public bool ContainsCard(Card card) => card != null && hand.Contains(card);
+
+        public int GetEffectiveManaCost(Card card)
+        {
+            if (card == null) return 0;
+            int cost = card.Mana;
+            if (RunManager.Instance != null &&
+                RunManager.Instance.CardCostModifiers.TryGetValue(card.Title, out int modifier))
+            {
+                cost -= modifier;
+            }
+            return Mathf.Max(0, cost);
+        }
+
         private void OnEnable()
         {
             ActionSystem.AttachPerformer<DrawCardsGA>(DrawCardsPerformer);
@@ -273,11 +287,7 @@ namespace PlushieOdyssey.Combat.Systems
 
         private void SpendMana(PlayCardGA playCardGA)
         {
-            int cost = playCardGA.Card.Mana;
-            if (RunManager.Instance != null && RunManager.Instance.CardCostModifiers.TryGetValue(playCardGA.Card.Title, out int modifier))
-            {
-                cost = Mathf.Max(0, cost - modifier);
-            }
+            int cost = GetEffectiveManaCost(playCardGA.Card);
             SpendManaGA spendManaGA = new(cost);
             ActionSystem.Instance.AddReaction(spendManaGA);
         }
@@ -311,11 +321,7 @@ namespace PlushieOdyssey.Combat.Systems
         {
             foreach (Card card in hand)
             {
-                int cost = card.Mana;
-                if (RunManager.Instance != null && RunManager.Instance.CardCostModifiers.TryGetValue(card.Title, out int modifier))
-                {
-                    cost = Mathf.Max(0, cost - modifier);
-                }
+                int cost = GetEffectiveManaCost(card);
 
                 if (ManaSystem.Instance.HasEnoughMana(cost))
                 {
