@@ -8,17 +8,23 @@ Complete log of all engineering, scene wiring, combat mechanics, UI/UX, audio, a
 
 ## Table of Contents
 
-1. [Documentation & Architecture Planning](#1-documentation--architecture-planning)
-2. [Playable `Game.unity` Migration & P0 Bug Fixes](#2-playable-gameunity-migration--p0-bug-fixes)
-3. [P1 Combat Mechanics, Status Effects, Keywords & Live Intents](#3-p1-combat-mechanics-status-effects-keywords--live-intents)
-4. [Enemy Target Selection Indicator & Modern Card Hand Feel + SFX](#4-enemy-target-selection-indicator--modern-card-hand-feel--sfx)
-5. [Figma Combat Top Bar, 3 Character Portraits & Will System](#5-figma-combat-top-bar-3-character-portraits--will-system)
-6. [Top-Middle 5-Slot Relic Bar & Full-Slots Drag-and-Drop Swap Modal](#6-top-middle-5-slot-relic-bar--full-slots-drag-and-drop-swap-modal)
-7. [Enemy Intent Icon Templates, Hover Tooltips, Turn Timing & Procedural Animations](#7-enemy-intent-icon-templates-hover-tooltips-turn-timing--procedural-animations)
-8. [Dynamic Stacked Buff/Debuff Icons (Hero & Enemy) & Status Tooltips](#8-dynamic-stacked-buffdebuff-icons-hero--enemy--status-tooltips)
-9. [Slay-the-Spire Procedural Left-to-Right Map (`Map.unity`) & In-Combat Map Overlay (`Game.unity`)](#9-slay-the-spire-procedural-left-to-right-map-mapunity--in-combat-map-overlay-gameunity)
-10. [File Change Inventory](#10-file-change-inventory)
-11. [Verification Summary](#11-verification-summary)
+- [Development Summary — 2026-11-19](#development-summary--2026-11-19)
+  - [Table of Contents](#table-of-contents)
+  - [1. Documentation \& Architecture Planning](#1-documentation--architecture-planning)
+  - [2. Playable `Game.unity` Migration \& P0 Bug Fixes](#2-playable-gameunity-migration--p0-bug-fixes)
+  - [3. P1 Combat Mechanics, Status Effects, Keywords \& Live Intents](#3-p1-combat-mechanics-status-effects-keywords--live-intents)
+  - [4. Enemy Target Selection Indicator \& Modern Card Hand Feel + SFX](#4-enemy-target-selection-indicator--modern-card-hand-feel--sfx)
+  - [5. Figma Combat Top Bar, 3 Character Portraits \& Will System](#5-figma-combat-top-bar-3-character-portraits--will-system)
+  - [6. Top-Middle 5-Slot Relic Bar \& Full-Slots Drag-and-Drop Swap Modal](#6-top-middle-5-slot-relic-bar--full-slots-drag-and-drop-swap-modal)
+  - [7. Enemy Intent Icon Templates, Hover Tooltips, Turn Timing \& Procedural Animations](#7-enemy-intent-icon-templates-hover-tooltips-turn-timing--procedural-animations)
+  - [8. Dynamic Stacked Buff/Debuff Icons (Hero \& Enemy) \& Status Tooltips](#8-dynamic-stacked-buffdebuff-icons-hero--enemy--status-tooltips)
+  - [9. Slay-the-Spire Procedural Left-to-Right Map (`Map.unity`) \& In-Combat Map Overlay (`Game.unity`)](#9-slay-the-spire-procedural-left-to-right-map-mapunity--in-combat-map-overlay-gameunity)
+  - [10. File Change Inventory](#10-file-change-inventory)
+    - [New Scripts](#new-scripts)
+    - [New Art Templates](#new-art-templates)
+    - [Modified Scenes, Prefabs \& Settings](#modified-scenes-prefabs--settings)
+    - [Modified Scripts \& Docs](#modified-scripts--docs)
+  - [11. Verification Summary](#11-verification-summary)
 
 ---
 
