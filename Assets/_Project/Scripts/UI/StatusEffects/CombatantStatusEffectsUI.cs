@@ -243,7 +243,7 @@ namespace PlushieOdyssey.UI.StatusEffects
 
         private static bool IsDebuff(BuffType type)
         {
-            return type == BuffType.Vulnerable || type == BuffType.Weak || type == BuffType.Poison;
+            return type == BuffType.Vulnerable || type == BuffType.Weak || type == BuffType.Poison || type == BuffType.Frail;
         }
 
         private void EnsureTargetReference()

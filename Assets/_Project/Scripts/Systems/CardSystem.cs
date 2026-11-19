@@ -25,8 +25,10 @@ namespace PlushieOdyssey.Combat.Systems
         [SerializeField] private float doTweenScaleDuration = 0.15f;
         [SerializeField] private float doTweenMoveDuration = 0.15f;
         [SerializeField] private int enemyDrawCardsAmount = 5;
+        [SerializeField, Min(1)] private int maxHandSize = 10;
         [SerializeField] private TMP_Text drawPileText;
         [SerializeField] private TMP_Text discardPileText;
+        [SerializeField] private TMP_Text exhaustPileText;
 
         [Header("SFX")]
         [SerializeField] private global::PlushieOdyssey.Audio.SfxID playCardSfx = global::PlushieOdyssey.Audio.SfxID.PlayCard;
@@ -36,7 +38,18 @@ namespace PlushieOdyssey.Combat.Systems
 
         private readonly List<Card> drawPile = new();
         private readonly List<Card> discardPile = new();
+        private readonly List<Card> exhaustPile = new();
         private readonly List<Card> hand = new();
+        private bool prioritizeInnateOnOpeningDraw;
+
+        public IReadOnlyList<Card> DrawPile => drawPile;
+        public IReadOnlyList<Card> DiscardPile => discardPile;
+        public IReadOnlyList<Card> ExhaustPile => exhaustPile;
+        public IReadOnlyList<Card> Hand => hand;
+        public int MaxHandSize => Mathf.Max(1, maxHandSize);
+
+        public event Action PilesChanged;
+        public event Action HandFullRejected;
 
         public bool ContainsCard(Card card) => card != null && hand.Contains(card);
 
@@ -78,7 +91,9 @@ namespace PlushieOdyssey.Combat.Systems
         {
             drawPile.Clear();
             discardPile.Clear();
+            exhaustPile.Clear();
             hand.Clear();
+            prioritizeInnateOnOpeningDraw = true;
 
             if (deckData == null)
             {
@@ -100,35 +115,58 @@ namespace PlushieOdyssey.Combat.Systems
     #region Performers
         private IEnumerator DrawCardsPerformer(DrawCardsGA drawCardsGA)
         {
-            int actualAmount = Mathf.Min(drawCardsGA.Amount, drawPile.Count);
-            int notDrawnAmount = drawCardsGA.Amount - actualAmount;
+            int remainingToDraw = drawCardsGA.Amount;
 
-            for (int i = 0; i < actualAmount; i++)
+            for (int i = 0; i < remainingToDraw; i++)
             {
+                if (hand.Count >= MaxHandSize)
+                {
+                    HandFullRejected?.Invoke();
+                    break;
+                }
+
+                if (drawPile.Count == 0)
+                {
+                    if (discardPile.Count == 0) break;
+                    RefillDeck();
+                }
+
+                if (drawPile.Count == 0) break;
                 yield return DrawCard();
             }
 
-            if (notDrawnAmount > 0)
-            {
-                RefillDeck();
-
-                int remainingAmount = Mathf.Min(notDrawnAmount, drawPile.Count);
-                for (int i = 0; i < remainingAmount; i++)
-                {
-                    yield return DrawCard();
-                }
-            }
+            prioritizeInnateOnOpeningDraw = false;
         }
 
         private IEnumerator DiscardAllCardsPerformer(DiscardAllCardsGA discardAllCardsGA)
         {
-            foreach (Card card in hand)
+            List<Card> retained = new();
+            List<Card> toProcess = new(hand);
+
+            foreach (Card card in toProcess)
             {
+                if (card == null) continue;
+
+                if (card.HasKeyword(CardKeywords.Retain))
+                {
+                    retained.Add(card);
+                    continue;
+                }
+
                 CardView cardView = handView.RemoveCard(card);
-                yield return DiscardCard(cardView);
+                if (card.HasKeyword(CardKeywords.Ethereal))
+                {
+                    yield return ExhaustCard(cardView, card);
+                }
+                else
+                {
+                    yield return DiscardCard(cardView, card);
+                }
             }
 
             hand.Clear();
+            hand.AddRange(retained);
+            UpdatePileTexts();
         }
 
         private IEnumerator PlayCardPerformer(PlayCardGA playCardGA)
@@ -187,6 +225,7 @@ namespace PlushieOdyssey.Combat.Systems
         {
             drawPile.Clear();
             discardPile.Clear();
+            exhaustPile.Clear();
             UpdatePileTexts();
         }
     #endregion
@@ -196,33 +235,68 @@ namespace PlushieOdyssey.Combat.Systems
         {
             if (cardView == null) yield break;
 
-            discardPile.Add(cardView.Card);
+            bool exhaustOnPlay = cardView.Card != null && cardView.Card.HasKeyword(CardKeywords.Exhaust);
+            if (exhaustOnPlay)
+                exhaustPile.Add(cardView.Card);
+            else if (cardView.Card != null)
+                discardPile.Add(cardView.Card);
             UpdatePileTexts();
 
-            cardView.transform.DOMove(new Vector3(0, 0, -1f), doTweenMoveDuration);
+            Canvas rootCanvas = GetCardRootCanvas(cardView);
+            PrepareCardForExitAnimation(cardView, rootCanvas);
+
+            Vector3 playCenter = GetPlayCenterPosition(rootCanvas);
+            Vector3 exitPos = exhaustOnPlay ? playCenter : GetDiscardPosition(rootCanvas, playCenter);
+            float playScale = rootCanvas != null ? 1.25f : 1.5f;
+
+            cardView.transform.DOMove(playCenter, doTweenMoveDuration);
             cardView.transform.DORotate(Vector3.zero, doTweenMoveDuration);
-            Tween scaleTween = cardView.transform.DOScale(Vector3.one * 1.5f, doTweenScaleDuration);
+            Tween scaleTween = cardView.transform.DOScale(Vector3.one * playScale, doTweenScaleDuration);
             yield return scaleTween.WaitForCompletion();
 
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(0.18f);
 
             cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
-            Tween moveTween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
+            Tween moveTween = cardView.transform.DOMove(exitPos, doTweenMoveDuration);
             yield return moveTween.WaitForCompletion();
 
             cardView.transform.DOKill();
             Destroy(cardView.gameObject);
         }
 
-        private IEnumerator DiscardCard(CardView cardView)
+        private IEnumerator DiscardCard(CardView cardView, Card fallbackCard = null)
         {
+            Card card = cardView != null ? cardView.Card : fallbackCard;
+            if (card != null) discardPile.Add(card);
+            UpdatePileTexts();
+
             if (cardView == null) yield break;
 
-            discardPile.Add(cardView.Card);
-            UpdatePileTexts();
+            Canvas rootCanvas = GetCardRootCanvas(cardView);
+            PrepareCardForExitAnimation(cardView, rootCanvas);
+            Vector3 discardPos = GetDiscardPosition(rootCanvas, cardView.transform.position);
+
             cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
-            Tween tween = cardView.transform.DOMove(discardPilePoint.position, doTweenMoveDuration);
+            Tween tween = cardView.transform.DOMove(discardPos, doTweenMoveDuration);
             yield return tween.WaitForCompletion();
+
+            cardView.transform.DOKill();
+            Destroy(cardView.gameObject);
+        }
+
+        private IEnumerator ExhaustCard(CardView cardView, Card fallbackCard = null)
+        {
+            Card card = cardView != null ? cardView.Card : fallbackCard;
+            if (card != null) exhaustPile.Add(card);
+            UpdatePileTexts();
+
+            if (cardView == null) yield break;
+
+            Canvas rootCanvas = GetCardRootCanvas(cardView);
+            PrepareCardForExitAnimation(cardView, rootCanvas);
+
+            Tween scaleTween = cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration).SetEase(Ease.InBack);
+            yield return scaleTween.WaitForCompletion();
 
             cardView.transform.DOKill();
             Destroy(cardView.gameObject);
@@ -230,12 +304,42 @@ namespace PlushieOdyssey.Combat.Systems
 
         private IEnumerator DrawCard()
         {
-            Card card = drawPile.Draw();
+            if (hand.Count >= MaxHandSize)
+            {
+                HandFullRejected?.Invoke();
+                yield break;
+            }
+
+            Card card = PopNextCardToDraw();
+            if (card == null) yield break;
+
             UpdatePileTexts();
             if (drawCardSfx != global::PlushieOdyssey.Audio.SfxID.None) global::PlushieOdyssey.Audio.Tune.SFX(drawCardSfx);
-            CardView cardView = CardViewCreator.Instance.CreateCardView(card, drawPilePoint.position, drawPilePoint.rotation);
+            GetDrawSpawnPose(out Vector3 spawnPos, out Quaternion spawnRot);
+            CardView cardView = CardViewCreator.Instance.CreateCardView(card, spawnPos, spawnRot);
             hand.Add(card);
+            UpdatePileTexts();
             yield return handView.AddCard(cardView);
+        }
+
+        private Card PopNextCardToDraw()
+        {
+            if (drawPile.Count == 0) return null;
+
+            if (prioritizeInnateOnOpeningDraw)
+            {
+                for (int i = 0; i < drawPile.Count; i++)
+                {
+                    if (drawPile[i] != null && drawPile[i].HasKeyword(CardKeywords.Innate))
+                    {
+                        Card innate = drawPile[i];
+                        drawPile.RemoveAt(i);
+                        return innate;
+                    }
+                }
+            }
+
+            return drawPile.Draw();
         }
 
         /// <summary>
@@ -245,11 +349,114 @@ namespace PlushieOdyssey.Combat.Systems
         {
             if (cardData == null || CardViewCreator.Instance == null || handView == null) return;
             Card card = new(cardData);
-            Vector3 pos = drawPilePoint != null ? drawPilePoint.position : Vector3.zero;
-            Quaternion rot = drawPilePoint != null ? drawPilePoint.rotation : Quaternion.identity;
+            GetDrawSpawnPose(out Vector3 pos, out Quaternion rot);
             CardView cardView = CardViewCreator.Instance.CreateCardView(card, pos, rot);
             hand.Add(card);
             StartCoroutine(handView.AddCard(cardView));
+        }
+
+        private Canvas GetHandRootCanvas()
+        {
+            if (handView == null) return null;
+            Canvas canvas = handView.GetComponentInParent<Canvas>();
+            return canvas != null ? canvas.rootCanvas : null;
+        }
+
+        private Canvas GetCardRootCanvas(CardView cardView)
+        {
+            if (cardView != null && cardView.transform is RectTransform)
+            {
+                Canvas canvas = cardView.GetComponentInParent<Canvas>();
+                if (canvas != null) return canvas.rootCanvas;
+            }
+            return GetHandRootCanvas();
+        }
+
+        private void GetDrawSpawnPose(out Vector3 spawnPos, out Quaternion spawnRot)
+        {
+            Canvas rootCanvas = GetHandRootCanvas();
+            if (rootCanvas != null && handView != null)
+            {
+                Vector3 pileWorld = GetCanvasWorldPosition(drawPilePoint, rootCanvas, handView.transform.position);
+                Vector3 localInHand = handView.transform.InverseTransformPoint(pileWorld);
+                localInHand.z = 0f;
+                spawnPos = localInHand;
+                spawnRot = Quaternion.identity;
+                return;
+            }
+
+            spawnPos = drawPilePoint != null ? drawPilePoint.position : Vector3.zero;
+            spawnRot = drawPilePoint != null ? drawPilePoint.rotation : Quaternion.identity;
+        }
+
+        private Vector3 GetPlayCenterPosition(Canvas rootCanvas)
+        {
+            if (rootCanvas != null && rootCanvas.transform is RectTransform canvasRect)
+            {
+                return canvasRect.TransformPoint(canvasRect.rect.center);
+            }
+            return new Vector3(0f, 0f, -1f);
+        }
+
+        private Vector3 GetDiscardPosition(Canvas rootCanvas, Vector3 fallback)
+        {
+            if (rootCanvas != null)
+            {
+                return GetCanvasWorldPosition(discardPilePoint, rootCanvas, fallback);
+            }
+            return discardPilePoint != null ? discardPilePoint.position : fallback;
+        }
+
+        private static Vector3 GetCanvasWorldPosition(Transform point, Canvas rootCanvas, Vector3 fallback)
+        {
+            if (point == null) return fallback;
+            if (point is RectTransform pointRect)
+            {
+                return pointRect.TransformPoint(pointRect.rect.center);
+            }
+
+            Camera cam = rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay
+                ? Camera.main
+                : (rootCanvas.worldCamera != null ? rootCanvas.worldCamera : Camera.main);
+            if (cam == null) return fallback;
+
+            Vector3 screenPoint = cam.WorldToScreenPoint(point.position);
+            if (rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
+                return new Vector3(screenPoint.x, screenPoint.y, 0f);
+            }
+
+            if (rootCanvas.transform is RectTransform canvasRect &&
+                RectTransformUtility.ScreenPointToWorldPointInRectangle(canvasRect, screenPoint, cam, out Vector3 worldOnCanvas))
+            {
+                return worldOnCanvas;
+            }
+
+            return fallback;
+        }
+
+        private static void PrepareCardForExitAnimation(CardView cardView, Canvas rootCanvas)
+        {
+            if (cardView == null) return;
+            cardView.transform.DOKill();
+
+            if (cardView.TryGetComponent(out CardPointerInput pointerInput))
+            {
+                pointerInput.SetInteractable(false);
+            }
+
+            if (rootCanvas != null && cardView.transform is RectTransform cardRect)
+            {
+                cardRect.SetParent(rootCanvas.transform, true);
+                cardRect.SetAsLastSibling();
+
+                if (!cardView.TryGetComponent(out CanvasGroup group))
+                {
+                    group = cardView.gameObject.AddComponent<CanvasGroup>();
+                }
+                group.blocksRaycasts = false;
+                group.interactable = false;
+            }
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -315,6 +522,8 @@ namespace PlushieOdyssey.Combat.Systems
         {
             if (drawPileText != null) drawPileText.text = drawPile.Count.ToString();
             if (discardPileText != null) discardPileText.text = discardPile.Count.ToString();
+            if (exhaustPileText != null) exhaustPileText.text = exhaustPile.Count.ToString();
+            PilesChanged?.Invoke();
         }
 
         public bool HasPlayableCards()

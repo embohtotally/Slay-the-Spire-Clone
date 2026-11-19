@@ -24,6 +24,9 @@ namespace PlushieOdyssey.Combat.Systems
         {
             foreach (CombatantView target in applyStunGA.Targets)
             {
+                if (target == null) continue;
+                if (BuffSystem.Instance != null && BuffSystem.Instance.TryConsumeArtifact(target))
+                    continue;
                 target.ApplyStun(applyStunGA.Duration);
             }
 

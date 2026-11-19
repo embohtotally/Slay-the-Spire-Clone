@@ -15,8 +15,16 @@ namespace PlushieOdyssey.Combat.Views
         [SerializeField, Min(1)] private int maxHandSize = 10;
         [SerializeField, Min(0f)] private float doTweenUpdatePositionDuration = 0.15f;
 
+        [Header("Modern Hover Spread")]
+        [Tooltip("Horizontal spread applied to immediate neighbors of the hovered card.")]
+        [SerializeField, Min(0f)] private float hoverNeighborSpread = 86f;
+        [Tooltip("Decay factor per card distance away from the hovered card (0-1).")]
+        [SerializeField, Range(0.1f, 0.95f)] private float hoverSpreadFalloff = 0.58f;
+        [SerializeField, Min(0f)] private float hoverLayoutDuration = 0.14f;
+
         private Sequence _layoutTween;
         private CardView _suspendedCard;
+        private CardView _hoveredCard;
         private bool _refreshOnEnable;
 
         [SerializeField, ReadOnly]
@@ -48,6 +56,7 @@ namespace PlushieOdyssey.Combat.Views
             _layoutTween?.Kill();
             _layoutTween = null;
             _suspendedCard = null;
+            _hoveredCard = null;
             _refreshOnEnable = false;
         }
 
@@ -59,6 +68,7 @@ namespace PlushieOdyssey.Combat.Views
 
             cards.Remove(cardView);
             if (_suspendedCard == cardView) _suspendedCard = null;
+            if (_hoveredCard == cardView) _hoveredCard = null;
             CardRemoved?.Invoke(cardView);
             RefreshCardPositions();
             return cardView;
@@ -96,6 +106,7 @@ namespace PlushieOdyssey.Combat.Views
                 return null;
 
             duration = Mathf.Max(0f, duration);
+            int hoveredIndex = _hoveredCard != null ? cards.IndexOf(_hoveredCard) : -1;
 
             for (int i = 0; i < cards.Count; i++)
             {
@@ -103,6 +114,22 @@ namespace PlushieOdyssey.Combat.Views
                 if (cards[i].transform is not RectTransform cardRect) continue;
 
                 _fanLayout.GetCardPose(i, cards.Count, maxHandSize, out Vector2 position, out float angle);
+
+                if (hoveredIndex >= 0)
+                {
+                    if (i == hoveredIndex)
+                    {
+                        angle = 0f;
+                    }
+                    else
+                    {
+                        int delta = i - hoveredIndex;
+                        int distance = Mathf.Abs(delta);
+                        float spread = hoverNeighborSpread * Mathf.Pow(hoverSpreadFalloff, distance - 1);
+                        position.x += Mathf.Sign(delta) * spread;
+                    }
+                }
+
                 Vector3 anchoredPosition = new Vector3(position.x, position.y, 0f);
                 Vector3 rotation = new Vector3(0f, 0f, angle);
                 cardRect.SetSiblingIndex(i);
@@ -119,13 +146,27 @@ namespace PlushieOdyssey.Combat.Views
                     _layoutTween = DOTween.Sequence()
                         .SetAutoKill(true)
                         .SetRecyclable(false)
+                        .SetUpdate(true)
                         .OnKill(() => _layoutTween = null);
                 }
-                _layoutTween.Join(cardRect.DOAnchorPos3D(anchoredPosition, duration).SetEase(Ease.OutQuad));
-                _layoutTween.Join(cardRect.DOLocalRotate(rotation, duration).SetEase(Ease.OutQuad));
+                _layoutTween.Join(cardRect.DOAnchorPos3D(anchoredPosition, duration).SetEase(Ease.OutCubic));
+                _layoutTween.Join(cardRect.DOLocalRotate(rotation, duration).SetEase(Ease.OutCubic));
+            }
+
+            if (hoveredIndex >= 0 && cards[hoveredIndex] != null && cards[hoveredIndex] != _suspendedCard)
+            {
+                cards[hoveredIndex].transform.SetAsLastSibling();
             }
 
             return _layoutTween;
+        }
+
+        public void SetHoveredCard(CardView cardView)
+        {
+            CardView next = cardView != null && cards.Contains(cardView) ? cardView : null;
+            if (_hoveredCard == next) return;
+            _hoveredCard = next;
+            UpdateCardPositions(hoverLayoutDuration);
         }
 
         [Button(enabledMode: EButtonEnableMode.Playmode)]
@@ -138,6 +179,7 @@ namespace PlushieOdyssey.Combat.Views
         {
             if (!cards.Contains(cardView)) return;
             _suspendedCard = cardView;
+            if (_hoveredCard == cardView) _hoveredCard = null;
             RefreshCardPositions();
         }
 

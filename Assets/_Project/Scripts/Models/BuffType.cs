@@ -9,6 +9,14 @@ namespace PlushieOdyssey.Combat.Models
         DamageReductionPercentage,
         FearImmunity,
         Redirect,
-        Poison
+        Poison,
+        Dexterity,
+        Frail,
+        Thorns,
+        Metallicize,
+        Artifact,
+        Intangible,
+        PlatedArmor,
+        Barricade
     }
 }

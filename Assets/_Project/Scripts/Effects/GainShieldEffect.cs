@@ -10,6 +10,7 @@ namespace PlushieOdyssey.Combat.Effects
     public class GainShieldEffect : Effect
     {
         [SerializeField] private int shieldAmount;
+        public int ShieldAmount => shieldAmount;
 
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {

@@ -20,6 +20,8 @@ namespace PlushieOdyssey.Core.Extensions
 
         public static Vector3 GetMousePositionInWorldSpace(float zValue = 0f)
         {
+            if (Camera == null || Mouse.current == null) return Vector3.zero;
+
             Plane dragPlane = new(Camera.transform.forward, new Vector3(0, 0, zValue));
             Ray ray = Camera.ScreenPointToRay(Mouse.current.position.ReadValue());
 

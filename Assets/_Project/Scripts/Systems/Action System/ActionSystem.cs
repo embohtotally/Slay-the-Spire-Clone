@@ -32,6 +32,10 @@ namespace PlushieOdyssey.Combat.Actions
             {
                 gameObject.AddComponent<FrierenShieldSystem>();
             }
+            if (SimultaneousSystem.Instance == null && GetComponent<SimultaneousSystem>() == null)
+            {
+                gameObject.AddComponent<SimultaneousSystem>();
+            }
         }
 
         private static Dictionary<Type, List<Action<GameAction>>> preSubs = new();

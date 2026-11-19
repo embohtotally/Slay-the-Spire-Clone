@@ -38,11 +38,13 @@ namespace PlushieOdyssey.Combat.Systems
 
         private void EnemyTurnPreReaction(EnemyTurnGA enemyTurnGA)
         {
-            // Enemies lose shield at the start of their turn
+            // Enemies lose shield at the start of their turn (unless Barricade is active)
             if (EnemySystem.Instance != null && EnemySystem.Instance.Enemies != null)
             {
                 foreach (EnemyView enemy in EnemySystem.Instance.Enemies)
                 {
+                    if (BuffSystem.Instance != null && BuffSystem.Instance.HasBuff(enemy, Models.BuffType.Barricade))
+                        continue;
                     enemy.ClearShield();
                 }
             }
@@ -50,9 +52,11 @@ namespace PlushieOdyssey.Combat.Systems
 
         private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
         {
-            // Player loses shield at the start of their turn
+            // Player loses shield at the start of their turn (unless Barricade is active)
             if (HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null)
             {
+                if (BuffSystem.Instance != null && BuffSystem.Instance.HasBuff(HeroSystem.Instance.HeroView, Models.BuffType.Barricade))
+                    return;
                 HeroSystem.Instance.HeroView.ClearShield();
             }
         }

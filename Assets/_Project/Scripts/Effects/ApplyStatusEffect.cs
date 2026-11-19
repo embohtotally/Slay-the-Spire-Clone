@@ -13,6 +13,10 @@ namespace PlushieOdyssey.Combat.Effects
         [SerializeField] private int stacks;
         [SerializeField] private int duration;
 
+        public StatusType Status => status;
+        public int Stacks => stacks;
+        public int Duration => duration;
+
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
             return new ApplyStatusGA(targets, status, stacks, duration, caster);

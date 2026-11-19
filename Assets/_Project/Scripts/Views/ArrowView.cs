@@ -1,7 +1,4 @@
 using PlushieOdyssey.Core.Extensions;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace PlushieOdyssey.Combat.Views
@@ -13,32 +10,83 @@ namespace PlushieOdyssey.Combat.Views
 
         private Vector3 startPosition;
         private Transform targetTransform;
+        private Vector3? endPositionOverride;
+        private SpriteRenderer headSpriteRenderer;
+
+        private void Awake()
+        {
+            if (arrowHead != null)
+            {
+                headSpriteRenderer = arrowHead.GetComponent<SpriteRenderer>();
+            }
+        }
 
         private void Update()
         {
-            Vector3 endPosition = targetTransform != null ? targetTransform.position : MouseUtils.GetMousePositionInWorldSpace();
+            Vector3 endPosition = targetTransform != null
+                ? targetTransform.position
+                : (endPositionOverride ?? MouseUtils.GetMousePositionInWorldSpace());
+
             Vector3 direction = (endPosition - startPosition).normalized;
 
-            if (direction != Vector3.zero)
+            if (lineRenderer != null && direction != Vector3.zero)
             {
                 lineRenderer.SetPosition(1, endPosition - direction * 0.5f);
-                arrowHead.transform.right = direction;
             }
-            arrowHead.transform.position = endPosition;
+
+            if (arrowHead != null)
+            {
+                if (direction != Vector3.zero) arrowHead.transform.right = direction;
+                arrowHead.transform.position = endPosition;
+            }
         }
 
         public void SetupArrow(Vector3 startPosition, Transform targetTransform = null)
         {
             this.startPosition = startPosition;
             this.targetTransform = targetTransform;
-            lineRenderer.SetPosition(0, startPosition);
+            endPositionOverride = null;
+            if (lineRenderer != null) lineRenderer.SetPosition(0, startPosition);
             Update();
         }
 
         public void SetStartPosition(Vector3 startPosition)
         {
             this.startPosition = startPosition;
-            lineRenderer.SetPosition(0, startPosition);
+            if (lineRenderer != null) lineRenderer.SetPosition(0, startPosition);
+        }
+
+        public void SetTargetTransform(Transform target)
+        {
+            targetTransform = target;
+            if (target != null) endPositionOverride = null;
+            Update();
+        }
+
+        public void SetEndPositionOverride(Vector3? worldEnd)
+        {
+            endPositionOverride = worldEnd;
+            if (worldEnd.HasValue) targetTransform = null;
+            Update();
+        }
+
+        public void SetTint(Color color)
+        {
+            if (lineRenderer != null)
+            {
+                lineRenderer.startColor = color;
+                lineRenderer.endColor = color;
+            }
+
+            if (headSpriteRenderer == null && arrowHead != null)
+            {
+                headSpriteRenderer = arrowHead.GetComponent<SpriteRenderer>();
+            }
+
+            if (headSpriteRenderer != null)
+            {
+                headSpriteRenderer.color = color;
+            }
         }
     }
 }

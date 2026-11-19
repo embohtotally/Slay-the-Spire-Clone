@@ -1,5 +1,6 @@
 using PlushieOdyssey.Combat.Actions;
 using PlushieOdyssey.Combat.Models;
+using PlushieOdyssey.Combat.Systems;
 using PlushieOdyssey.Combat.Views;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,7 +15,10 @@ namespace PlushieOdyssey.Combat.Effects
         [SerializeField] private ConditionType condition;
         [SerializeField] private int threshold;
 
-        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        public int BaseDamage => baseDamage;
+        public int BonusDamage => bonusDamage;
+
+        public int EvaluateDamage(List<CombatantView> targets, CombatantView caster)
         {
             int totalDamage = baseDamage;
             bool conditionMet = false;
@@ -22,21 +26,42 @@ namespace PlushieOdyssey.Combat.Effects
             switch (condition)
             {
                 case ConditionType.CasterFearAtLeast:
-                    if (caster is HeroView heroView)
+                    if (caster is HeroView heroView && heroView.CurrentStress >= threshold)
                     {
-                        if (heroView.CurrentStress >= threshold) conditionMet = true;
+                        conditionMet = true;
                     }
                     break;
                 case ConditionType.TargetHasStatus:
+                    if (targets != null)
+                    {
+                        foreach (CombatantView target in targets)
+                        {
+                            if (HasAnyActiveStatus(target))
+                            {
+                                conditionMet = true;
+                                break;
+                            }
+                        }
+                    }
                     break;
             }
 
-            if (conditionMet)
-            {
-                totalDamage += bonusDamage;
-            }
+            if (conditionMet) totalDamage += bonusDamage;
+            return totalDamage;
+        }
 
-            return new DealDamageGA(totalDamage, targets, caster);
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
+        {
+            return new DealDamageGA(EvaluateDamage(targets, caster), targets, caster);
+        }
+
+        private static bool HasAnyActiveStatus(CombatantView target)
+        {
+            if (target == null) return false;
+            if (target.IsStunned || target.IsTaunted) return true;
+            if (BuffSystem.Instance != null && BuffSystem.Instance.GetBuffsFor(target).Count > 0) return true;
+            if (DamageOverTimeSystem.Instance != null && DamageOverTimeSystem.Instance.GetDoTsFor(target).Count > 0) return true;
+            return false;
         }
     }
 }

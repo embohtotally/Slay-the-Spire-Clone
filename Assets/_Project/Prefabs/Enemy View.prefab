@@ -34,6 +34,7 @@ Transform:
   - {fileID: 5361415316702498994}
   - {fileID: 481536128558644844}
   - {fileID: 7085984275718320003}
+  - {fileID: 5040619200444069012}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &6837618745493450372
@@ -75,7 +76,9 @@ MonoBehaviour:
   blockedSlider: {fileID: 6560537065595226458}
   shieldSlider: {fileID: 4652425542209001832}
   spriteRenderer: {fileID: 225371763584364498}
+  additionalSpriteRenderers: []
   animator: {fileID: 0}
+  additionalAnimators: []
   hurtAnimationTrigger: Hurt
   deadAnimationTrigger: Die
   shakeDuration: 0.2
@@ -84,6 +87,66 @@ MonoBehaviour:
   healSfx: 13
   shieldSfx: 14
   attackText: {fileID: 681870119253348446}
+--- !u!1 &4692978763613743367
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5040619200444069012}
+  - component: {fileID: 2118498144287622764}
+  m_Layer: 0
+  m_Name: Combatant Status Effects UI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5040619200444069012
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4692978763613743367}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4783093179771961110}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2118498144287622764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4692978763613743367}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94edf63e95bc6cd43af61861b83dee51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 6285475834935538950}
+  autoFindTargetInParent: 1
+  container: {fileID: 418447456203102875}
+  iconPrefab: {fileID: 5511396904919324721, guid: d05383d8a0156ac4e8d9a253cdb88d32, type: 3}
+  hideContainerWhenEmpty: 1
+  warnIfMissingReferences: 1
+  showStun: 1
+  showTaunt: 1
+  showShieldAsStatus: 0
+  showBuffs: 1
+  showDamageOverTime: 1
+  stunIcon: {fileID: 0}
+  tauntIcon: {fileID: 0}
+  shieldIcon: {fileID: 0}
+  dotIcon: {fileID: 0}
+  iconOverrides: []
 --- !u!1 &6440872090116772753
 GameObject:
   m_ObjectHideFlags: 0
@@ -439,6 +502,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 202417943507987927, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2697535234426076843, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -560,13 +627,20 @@ PrefabInstance:
       value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 2584700876849635222, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
+    - {fileID: 4565453181712751138, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
 --- !u!212 &225371763584364498 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 9086676255022467339, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
+  m_PrefabInstance: {fileID: 9023794758850324185}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &418447456203102875 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8715707982507736130, guid: 2ba5dbb3949420346bf65e2791c632d1, type: 3}
   m_PrefabInstance: {fileID: 9023794758850324185}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &3779739672844586395 stripped

@@ -38,8 +38,14 @@ namespace PlushieOdyssey.Combat.Systems
         {
             foreach (CombatantView target in addStressGA.Targets)
             {
+                if (target == null) continue;
+                if (addStressGA.Amount > 0 && BuffSystem.Instance != null && BuffSystem.Instance.HasBuff(target, Models.BuffType.FearImmunity))
+                {
+                    GameManager.GenerateFloatingText("Will Protected!", target.transform, 1f, 1f, "#FFD54F");
+                    continue;
+                }
                 target.AddStress(addStressGA.Amount);
-                GameManager.GenerateFloatingText("+" + addStressGA.Amount + " Fear", target.transform, 1f, 1f, "#800080");
+                GameManager.GenerateFloatingText("-" + addStressGA.Amount + " Will", target.transform, 1f, 1f, "#CE93D8");
                 target.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 5, 1f);
             }
             yield return new WaitForSeconds(0.4f);
@@ -53,14 +59,20 @@ namespace PlushieOdyssey.Combat.Systems
                 {
                     if (modifyStressGA.Amount > 0)
                     {
-                        heroView.AddStressToAllHeroes(modifyStressGA.Amount);
-                        GameManager.GenerateFloatingText("+" + modifyStressGA.Amount + " Fear", target.transform, 1f, 1f, "#800080");
+                        if (BuffSystem.Instance != null && BuffSystem.Instance.HasBuff(target, Models.BuffType.FearImmunity))
+                        {
+                            GameManager.GenerateFloatingText("Will Protected!", target.transform, 1f, 1f, "#FFD54F");
+                            continue;
+                        }
+                        heroView.DrainWillFromAllHeroes(modifyStressGA.Amount);
+                        GameManager.GenerateFloatingText("-" + modifyStressGA.Amount + " Will", target.transform, 1f, 1f, "#CE93D8");
                         target.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 5, 1f);
                     }
                     else if (modifyStressGA.Amount < 0)
                     {
-                        heroView.ReduceStressToAllHeroes(-modifyStressGA.Amount);
-                        GameManager.GenerateFloatingText(modifyStressGA.Amount + " Fear", target.transform, 1f, 1f, "#00FF00");
+                        int gainedWill = -modifyStressGA.Amount;
+                        heroView.AddWillToAllHeroes(gainedWill);
+                        GameManager.GenerateFloatingText("+" + gainedWill + " Will", target.transform, 1f, 1f, "#38D4FF");
                         target.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 5, 1f);
                     }
                 }

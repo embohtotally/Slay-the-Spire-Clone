@@ -59,6 +59,7 @@ namespace PlushieOdyssey.Combat.Systems
             if (!_cardSystem.ContainsCard(card)) return CardPlayFailure.NotInHand;
             if (IsBusy) return CardPlayFailure.Busy;
             if (_heroView.CurrentHealth <= 0 ||
+                card.HasKeyword(PlushieOdyssey.Data.CardKeywords.Unplayable) ||
                 (card.Type == PlushieOdyssey.Data.CardType.Attack && _heroView.HealthPenalty > 0))
                 return CardPlayFailure.Blocked;
             if (_tutorial != null && _tutorial.isActiveAndEnabled && !_tutorial.CanInteractWithCard(card))

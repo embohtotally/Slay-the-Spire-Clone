@@ -13,6 +13,10 @@ namespace PlushieOdyssey.Combat.Effects
         [SerializeField] private int value;
         [SerializeField] private int duration;
 
+        public BuffType BuffType => buffType;
+        public int Value => value;
+        public int Duration => duration;
+
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
             ApplyBuffGA applyBuffGA = new ApplyBuffGA(targets, buffType, value, duration, caster);

@@ -225,9 +225,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _visualRoot: {fileID: 5009446640019031247}
-  _hoverScale: 1.08
-  _pressedScale: 0.97
-  _duration: 0.12
+  _hoverScale: 1.22
+  _hoverLiftY: 122
+  _targetedScale: 1.12
+  _targetedLiftY: 72
+  _pressedScale: 1.02
+  _duration: 0.14
   _ease: 6
 --- !u!1 &2404463454975208443
 GameObject:

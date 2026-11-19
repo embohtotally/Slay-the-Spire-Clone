@@ -10,6 +10,7 @@ namespace PlushieOdyssey.Combat.Effects
     public class AddStressEffect : Effect
     {
         [SerializeField] private int stressAmount;
+        public int StressAmount => stressAmount;
 
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {

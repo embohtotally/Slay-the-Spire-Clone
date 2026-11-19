@@ -10,63 +10,53 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
 
 ## P0 — Critical Bugs, Refactor Wiring & Broken Systems
 
-- [ ] **Switch active combat scene from `old_Game.unity` to `Game.unity`**
-  - [`ProjectSettings/EditorBuildSettings.asset`](../ProjectSettings/EditorBuildSettings.asset) currently includes `Assets/_Project/Scenes/Old/old_Game.unity` and omits `Assets/_Project/Scenes/Game.unity`.
-  - Complete migration from the `6595`-line `old_Game.unity` to the refactored `2022`-line `Game.unity`, then update Build Settings.
-- [ ] **Finish `CombatHandController` refactor & Play Mode verification**
-  - Per [`ProjectDocs/code/cards-and-hand.md`](code/cards-and-hand.md), migrate legacy draw/discard presentation, card audio/VFX hooks, and targeting-arrow rendering (`ArrowView` / `ManualTargetingSystem`) to `CombatHandController`, finish scene/prefab wiring, and verify in Play Mode.
-- [ ] **Register `SimultaneousSystem` so `ScalingEffect` cards work**
-  - [`ScalingEffect.cs`](../Assets/_Project/Scripts/Effects/ScalingEffect.cs) returns `new SequentialGameAction(actions)`, whose performer is only attached by [`SimultaneousSystem.cs`](../Assets/_Project/Scripts/Systems/SimultaneousSystem.cs).
-  - [`ActionSystem.Awake()`](../Assets/_Project/Scripts/Systems/Action%20System/ActionSystem.cs) auto-attaches `DamageOverTimeSystem`, `BuffSystem`, `BeamVfxSystem`, and `FrierenShieldSystem`—**not** `SimultaneousSystem`—and `SimultaneousSystem` is currently placed in `0` scenes or prefabs (breaking scaling cards like `Reward_Aura_Mana_Bloom.asset`).
-- [ ] **Fix inverted pause time scale & wire pause menu into `Game.unity`**
-  - [`GameManager.SetPaused(bool pause)`](../Assets/_Project/Scripts/General/GameManager.cs) currently sets `Time.timeScale = 1f` when `pause == true` and `0f` when `false`.
-  - `PauseAnimateablePanel.prefab` is only placed in `old_Game.unity` and `GameTutorial.unity`, not `Game.unity`.
-- [ ] **Guard or remove the global save-wipe hotkey in `GameManager.Update()`**
-  - [`GameManager.cs`](../Assets/_Project/Scripts/General/GameManager.cs) calls `PlayerPrefs.DeleteAll()` unconditionally whenever `KeyCode.Equals` (`=`) is pressed, with no `#if UNITY_EDITOR` or debug-build guard.
-- [ ] **Fix `EffectSystem` hardcoded hero caster**
-  - [`EffectSystem.cs`](../Assets/_Project/Scripts/Systems/EffectSystem.cs) unconditionally passes `HeroSystem.Instance.HeroView` into `GetGameAction`, which prevents multi-hero allies, companions, or non-hero sources from acting as distinct casters through `PerformEffectGA`.
+- [x] **Switch active combat scene from `old_Game.unity` to `Game.unity`**
+  - Wired `Assets/_Project/Scenes/Game.unity` with all combat systems, views, HUD, and audio from `old_Game.unity` while preserving the refactored Canvas hand system, and updated [`ProjectSettings/EditorBuildSettings.asset`](../ProjectSettings/EditorBuildSettings.asset) to use `Assets/_Project/Scenes/Game.unity`.
+- [x] **Finish `CombatHandController` refactor & Play Mode verification**
+  - Updated [`CardSystem.cs`](../Assets/_Project/Scripts/Systems/CardSystem.cs) for Canvas-aware draw/play/discard animations, added [`CombatTargetingPresenter.cs`](../Assets/_Project/Scripts/Views/CombatTargetingPresenter.cs) to drive `ArrowView` from `CombatHandController`, fixed child `Wrapper` `Button` event interception and WorldSpace UI raycast blocking in [`CombatHandController.cs`](../Assets/_Project/Scripts/Views/CombatHandController.cs), wired `CardPlayService` / `CardTargetResolver` / `CombatHandController`, and verified hover, targeting, card play, End Turn, and Enemy Turn in Play Mode with zero console errors.
+- [x] **Register `SimultaneousSystem` so `ScalingEffect` cards work**
+  - Auto-attached [`SimultaneousSystem.cs`](../Assets/_Project/Scripts/Systems/SimultaneousSystem.cs) in [`ActionSystem.Awake()`](../Assets/_Project/Scripts/Systems/Action%20System/ActionSystem.cs) alongside `DamageOverTimeSystem`, `BuffSystem`, `BeamVfxSystem`, and `FrierenShieldSystem`.
+- [x] **Fix inverted pause time scale & wire pause menu into `Game.unity`**
+  - Fixed [`GameManager.SetPaused(bool pause)`](../Assets/_Project/Scripts/General/GameManager.cs) to set `Time.timeScale = pause ? 0f : 1f;`.
+  - Wired `PauseButton`, `PauseAnimateablePanel.prefab`, and `SettingsAnimateablePanel.prefab` (with `PanelTransitionTween` open/close listeners and `GameController.BackToMenu`) into `Game.unity`.
+- [x] **Guard or remove the global save-wipe hotkey in `GameManager.Update()`**
+  - Wrapped `KeyCode.Equals` (`PlayerPrefs.DeleteAll()`) in [`GameManager.cs`](../Assets/_Project/Scripts/General/GameManager.cs) behind `#if UNITY_EDITOR || DEVELOPMENT_BUILD`.
+- [x] **Fix `EffectSystem` hardcoded hero caster**
+  - Added optional `Caster` to [`PerformEffectGA.cs`](../Assets/_Project/Scripts/Game%20Actions/PerformEffectGA.cs) and updated [`EffectSystem.cs`](../Assets/_Project/Scripts/Systems/EffectSystem.cs) to pass `performEffectGA.Caster` with fallback to `HeroSystem.Instance?.HeroView`.
 - [ ] **Place orphaned combat HUDs & systems into `Game.unity`**
-  - Component scan shows the following exist in scripts but are absent from active combat scenes:
-    - `PotionUseSystem` -> `[]` (no scenes/prefabs)
-    - `RunPotionBeltUI` -> `[]`
-    - `HeroStressBarView` -> `[]`
-    - `HeroStressPanelUI` -> `[]`
-    - `UltimatePointsView` -> `[UIGameTest.unity]` only
-    - `RunRelicListUI` -> `[RelicListUI.prefab]` only
-    - `CombatantStatusEffectsUI` -> `[Hero View.prefab]` only (missing from Enemy views/prefabs)
+  - Wired into `Game.unity` / prefabs: `PotionUseSystem`, repaired `PotionBeltUI.prefab` (`RunPotionBeltUI`) + `PotionIconView.prefab` (`PotionSlotView`), `RelicListUI.prefab` (`RunRelicListUI`), and `CombatantStatusEffectsUI` on `Enemy View.prefab` (with placeholder icons cleared).
+  - Still remaining for multi-hero / ultimate milestones:
+    - `HeroStressBarView` / `HeroStressPanelUI` (for multi-hero party stress rows)
+    - `UltimatePointsView` (when Ultimate charge/cast mechanics are implemented)
 
 ---
 
 ## P1 — Combat Mechanics, Buffs, Keywords & AI Gaps
 
 ### Status Effects, Buffs & DoT Fixes
-- [ ] **Implement no-op `BuffType` & `ConditionType` handlers**
-  - [`BuffType.cs`](../Assets/_Project/Scripts/Models/BuffType.cs) defines `FearImmunity`, `Redirect`, and `Poison`, but [`BuffSystem.cs`](../Assets/_Project/Scripts/Systems/BuffSystem.cs) only applies modifiers for `Strength`, `Weak`, `DamageReductionPercentage`, `Vulnerable`, and `DamageReduction` (`Poison` is only mapped in `IsDebuff` / `ApplyStatusPerformer` with no damage-tick effect inside `BuffSystem`).
-  - [`ConditionalDamageEffect.cs`](../Assets/_Project/Scripts/Effects/ConditionalDamageEffect.cs) has an empty `case ConditionType.TargetHasStatus: break;` no-op.
-- [ ] **Fix `RemoveDebuffPerformer` missing `DamageOverTimeSystem` DoTs & DoT tick timing**
-  - `BuffSystem.RemoveDebuffPerformer` only clears entries in `BuffSystem.activeBuffs`, leaving DoTs stored in `DamageOverTimeSystem` untouched.
-  - Refactor `DamageOverTimeSystem` (currently ticking both Hero and Enemy DoTs together on `EnemyTurnGA.PRE` via duration) so *Slay the Spire*-style Poison decrements cleanly by `1` on each afflicted combatant's own turn and cleanses properly.
+- [x] **Implement no-op `BuffType` & `ConditionType` handlers**
+  - Implemented `FearImmunity` (blocks stress gain in [`HeroSystem.cs`](../Assets/_Project/Scripts/Systems/HeroSystem.cs)), `Redirect` (attack redirection in [`BuffSystem.cs`](../Assets/_Project/Scripts/Systems/BuffSystem.cs)), StS-style stacking/ticking `Poison` in [`BuffSystem.cs`](../Assets/_Project/Scripts/Systems/BuffSystem.cs), and `ConditionType.TargetHasStatus` in [`ConditionalDamageEffect.cs`](../Assets/_Project/Scripts/Effects/ConditionalDamageEffect.cs).
+- [x] **Fix `RemoveDebuffPerformer` missing `DamageOverTimeSystem` DoTs & DoT tick timing**
+  - [`BuffSystem.RemoveDebuffPerformer`](../Assets/_Project/Scripts/Systems/BuffSystem.cs) now cleanses both `BuffSystem` debuffs and [`DamageOverTimeSystem`](../Assets/_Project/Scripts/Systems/DamageOverTimeSystem.cs) DoTs (`RemoveDoTsFor`).
+  - Split DoT/Poison ticks so enemy DoTs tick at Enemy turn start (`EnemyTurnGA.PRE`) and hero DoTs tick at Player turn start (`EnemyTurnGA.POST`), with Poison decrementing by `1` per tick.
 - [ ] **Clean up player turn-skip in `StunSystem` & extend `TauntSystem` for multi-hero**
-  - [`StunSystem.cs`](../Assets/_Project/Scripts/Systems/StunSystem.cs) skips a stunned player turn inside `EnemyTurnPostReaction` by immediately queueing another `EnemyTurnGA()`, bypassing normal turn-start/turn-end cleanup.
-  - [`TauntSystem.cs`](../Assets/_Project/Scripts/Systems/TauntSystem.cs) only enforces player targeting onto taunted enemies; add enemy-targeting redirect (`HeroTM` / multi-hero support) when heroes or companions apply `Redirect` / `Taunt`.
-- [ ] **Add core *Slay the Spire* combat statuses**
-  - `Dexterity` / `Frail` (Block/Shield scaling & reduction)
-  - `Thorns` / `Metallicize` / `Artifact` (debuff negate) / `Intangible` / `Plated Armor` / `Barricade` (retain shield)
+  - `StunSystem` now honors `Artifact` on stun application; player turn-skip refactoring and multi-hero `HeroTM` targeting redirect remain for the multi-hero milestone.
+- [x] **Add core *Slay the Spire* combat statuses**
+  - Added and wired `Dexterity`, `Frail`, `Thorns`, `Metallicize`, `Artifact`, `Intangible`, `PlatedArmor`, and `Barricade` across [`BuffType.cs`](../Assets/_Project/Scripts/Models/BuffType.cs), [`BuffSystem.cs`](../Assets/_Project/Scripts/Systems/BuffSystem.cs), [`ShieldSystem.cs`](../Assets/_Project/Scripts/Systems/ShieldSystem.cs), and [`DamageSystem.cs`](../Assets/_Project/Scripts/Systems/DamageSystem.cs).
 
 ### Card Keywords & Mid-Combat Deck Mechanics
-- [ ] **Add Card Keywords & Exhaust Pile in `CardData` / `CardSystem`**
-  - [`CardData.cs`](../Assets/_Project/Scripts/Data/CardData.cs) defines `CardType` (`Attack`, `Buff`, `Power`), but lacks keyword flags and runtime handling for `Exhaust`, `Retain`, `Ethereal`, `Innate`, `Unplayable`, `X-Cost`, and persistent `Power` passive triggers.
-  - [`CardSystem.cs`](../Assets/_Project/Scripts/Systems/CardSystem.cs) only tracks `drawPile`, `discardPile`, and `hand`; add an `exhaustPile` and exhaust-recovery actions.
-- [ ] **Enforce Max Hand Size (`10`) & empty-draw guards**
-  - `HandView.maxHandSize` (`10`) is currently used only for fan-spline layout spacing; add StS-style `"Hand is full"` draw blocking/overflow-to-discard handling (and guard empty draws cleanly where [`ListExtensions.Draw<T>()`](../Assets/_Project/Scripts/Extensions/ListExtensions.cs) returns `default`/`null`).
-- [ ] **Add Max-Mana scaling API in `ManaSystem`**
-  - [`ManaSystem.cs`](../Assets/_Project/Scripts/Systems/ManaSystem.cs) hardcodes `maxMana = 3` and clamps `ModifyMana` to `[0, maxMana]`; expose max-mana modifiers for Energy Boss Relics (`+1 Max Mana/AP`) and multi-turn mana buffs.
+- [x] **Add Card Keywords & Exhaust Pile in `CardData` / `CardSystem`**
+  - Added `[Flags] CardKeywords` (`Exhaust`, `Retain`, `Ethereal`, `Innate`, `Unplayable`) to [`CardData.cs`](../Assets/_Project/Scripts/Data/CardData.cs) / [`Card.cs`](../Assets/_Project/Scripts/Models/Card.cs) and runtime handling + `exhaustPile` in [`CardSystem.cs`](../Assets/_Project/Scripts/Systems/CardSystem.cs) & [`CardPlayService.cs`](../Assets/_Project/Scripts/Systems/CardPlayService.cs) (`X-Cost` and persistent `Power` triggers remain for future cards).
+- [x] **Enforce Max Hand Size (`10`) & empty-draw guards**
+  - Enforced `MaxHandSize` (`10`) with `HandFullRejected` toast notification and null-draw guards in [`CardSystem.cs`](../Assets/_Project/Scripts/Systems/CardSystem.cs).
+- [x] **Add Max-Mana scaling API in `ManaSystem`**
+  - Exposed `CurrentMana`, `MaxMana`, `ModifyMaxMana`, `SetMaxMana`, and `ManaChanged` in [`ManaSystem.cs`](../Assets/_Project/Scripts/Systems/ManaSystem.cs).
 - [ ] **Implement missing mid-combat card manipulation**
   - **Scry** (inspect & selectively discard top cards of draw pile)
   - **Discover / Choose 1 of N** card creation in combat
   - **Card Upgrade in combat** (single card or full hand)
   - **Status / Curse card injection** into draw/hand/discard piles during combat (by enemies and drawbacks)
-  - **Combat pile viewers**: in-combat Draw Pile, Discard Pile, and Exhaust Pile modal browsers (currently only run-deck panels exist: `RunDeckPanelController` / `RunDeckCardView`).
+  - *(Completed)* **Combat pile viewers**: clickable Draw / Discard / Exhaust pile modal browser via [`CombatPileViewerUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatPileViewerUI.cs).
 
 ### Party, Heroes, Companions, Ultimates & Enemy AI
 - [ ] **Implement multi-hero party & playable hero selection (Aura / Ember)**
@@ -155,29 +145,22 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
 Scene/prefab audit comparing current Unity UI (`Assets/_Project/Scenes/` & `Assets/_Project/Prefabs/UI/`) against **Miro** specs, **Slay the Spire**, and **Witch's Apocalyptic Journey (魔女的末日旅途)**.
 
 ### A. Cross-Scene Persistent Top Bar (Miro Frame 1 & Frame 3)
-- [ ] **Unify the persistent Top Status Bar (`RunStatusUI` + `PotionBeltUI` + `RelicListUI`) across all run scenes**
-  - Currently `PotionBeltUI.prefab` and `RelicListUI.prefab` appear in `0` scenes, `RunStatusUI.prefab` is missing from `Game.unity`, `old_Game.unity`, `GameTutorial.unity`, `CardReward.unity`, and `RunRewards.unity`, and `RunDeckContainer.prefab` is missing from `Map.unity`, `Merchant.unity`, `RunRewards.unity`, and `Game.unity`.
-  - Add missing Top Bar HUD elements specified in StS / WAJ / Miro Frame 1:
-    - Hero Name, Class/Title, Level/Act, **Floor counter**, and **Ascension/Difficulty badge**
-    - Dual currency readout: **Gold** + **Crystal** (`gambar crystal`, Miro Frame 1)
-    - Interactive **Potion Belt (`PotionBeltUI`)** with Use / Discard / Info actions
-    - Interactive **Relics Row (`RelicListUI`)** with hover tooltips and per-relic stack/cooldown counters
-    - Always-accessible **Deck Viewer**, **Peek Map**, and **Settings / Pause** icon buttons
+- [ ] **Unify the persistent Top Status Bar across all run scenes**
+  - *(Completed in `Game.unity`)* Built the Figma-layout **Combat Top Bar** ([`CombatTopBarUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatTopBarUI.cs)) with relocated Party HP Bar, **3 Character Portrait Cards with Will sliders** (`>=75%` High Will `+25%` ATK/DEF, `<25%` Low Will Fear breakdown) & per-character Buff/Debuff grids, **Top-Middle 5-Slot Relic Bar** ([`TopBarRelicSlotsUI.cs`](../Assets/_Project/Scripts/UI/Relics/TopBarRelicSlotsUI.cs)) with 5-relic capacity (`RunRelicManager`), hover tooltips, drag-and-drop slot reordering, and automatic **Full-Slots Drag-and-Drop Equip/Unequip/Swap Modal** ([`RelicSwapModalUI.cs`](../Assets/_Project/Scripts/UI/Relics/RelicSwapModalUI.cs)), **Crystal** + **Gold** readouts, relocated **PotionBeltUI**, **Map**, and **Menu** buttons.
+  - Remaining for non-combat scenes (`Map.unity`, `Merchant.unity`, `Rest.unity`, `CardReward.unity`, `RunRewards.unity`, `GameTutorial.unity`): propagate this unified Top Bar & `RunDeckContainer` across all run scenes and add **Floor counter** / **Ascension badge** / per-relic stack counters.
 
 ### B. Combat UI (`Game.unity` vs `old_Game.unity` + StS / WAJ)
-- [ ] **Build out the `Game.unity` combat HUD (`GameCanvas`)**
-  - `Game.unity` currently only has card-hand sandbox objects (`HandView`, `Ghosts`, `DragLayer`, `CardPlayService`, `CardViewAdder`) and lacks `ManaUI`, `EndTurnButtonUI`, Draw/Discard pile HUDs, `HeroView`, `EnemyBoardView`, `StressSliderUI`, `PauseButton`, `PauseAnimateablePanel`, and `ArrowView`.
-- [ ] **Add In-Combat Pile Viewers** (Miro Frame 3: *"showing the discard piles"*)
-  - Clickable **Draw Pile Modal** (sorted order indicator), **Discard Pile Modal**, and **Exhaust Pile Modal** (currently only `RunDeckContainer` exists for the full run deck).
+- [x] **Build out the `Game.unity` combat HUD (`GameCanvas`)**
+  - Wired `ManaUI`, `EndTurnButtonUI`, Draw/Discard pile HUDs, `PerksUI`, `PotionBeltUI`, `TopBarRelicSlotsUI` + `RelicSwapModalUI`, `HeroView`, `EnemyBoardView`, `CombatTopBarUI`, `EnemyIntentHUD`, `PauseButton`, `PauseAnimateablePanel`, `SettingsAnimateablePanel`, `RunDeckContainer`, and `ArrowView` + StS/WAJ target reticle indicators (`CombatTargetingPresenter`) into `Game.unity`.
+- [x] **Add In-Combat Pile Viewers** (Miro Frame 3: *"showing the discard piles"*)
+  - Implemented clickable **Draw Pile Modal** (sorted order indicator), **Discard Pile Modal**, and **Exhaust Pile Modal** via [`CombatPileViewerUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatPileViewerUI.cs), wired to `Deck Size UI` and `Discard Pile UI`.
 - [ ] **Add Enemy & Companion Combat Overlays**
-  - Replace plain-text `Attack Text` (`"ATK: 99"` / `NextIntent.IntentName`) on `Enemy View.prefab` with **Intent Icons** (Attack, Multi-Hit `NxM`, Shield, Buff, Debuff, Stunned, Unknown) and intent tooltips.
-  - Attach `CombatantStatusEffectsUI` to **Enemy prefabs** (currently only present on `Hero View.prefab`).
-  - Place `HeroStressPanelUI`, `HeroStressBarView`, and `UltimatePointsView` (currently test-only in `UIGameTest.unity`) into the combat HUD, plus a **Breakdown / Fear State banner** and locked-card overlay when stress hits max.
-  - Add **Companion / Summon / Multi-Hero Turn Intent & HP frames** (Miro Frame 3: *"Even companion shows what they're gonna do on their next turn"*).
+  - *(Completed)* Built icon-based **Enemy Intent HUD** ([`EnemyIntentHUD.cs`](../Assets/_Project/Scripts/UI/Combat/EnemyIntentHUD.cs) + [`EnemyIntentSnapshot.cs`](../Assets/_Project/Scripts/Models/EnemyIntentSnapshot.cs) + 10 replaceable template icon PNGs in `Assets/_Project/Art/UI/Intents/`) with color-coded top action labels, live buff-adjusted numbers, cursor hover description tooltips, Player-Turn deferred reveals (enemies no longer roll new intents mid-Enemy-Turn), and procedural pop-in/idle/execute animations.
+  - *(Completed)* Attached `CombatantStatusEffectsUI` to `Enemy View.prefab` and removed placeholder status icons.
+  - Remaining: place multi-hero `HeroStressPanelUI`, `HeroStressBarView`, `UltimatePointsView`, **Breakdown / Fear State banner**, and **Companion / Summon Turn Intent & HP frames**.
 - [ ] **Add Live Combat Math, Tooltips & Turn Prompts**
-  - Floating **Keyword & Effect Tooltips** on cards, relics, potions, statuses, and enemy intents (`*Tooltip*` scripts currently count `0`).
-  - **Dynamic Damage / Shield / Lethal Preview** (recalculating `Weak`/`Vulnerable`/`Strength` numbers directly on hovered cards, enemy intents, and target HP bars).
-  - **Turn Phase Banner** (`"Player Turn"` / `"Enemy Turn"`), **Out-of-Mana / Invalid Target toast** (Miro Frame 3), and **Mid-Combat Card Picker Modals** (Scry, Discover/Choose 1 of N, Discard/Exhaust/Upgrade card selection).
+  - *(Completed)* Card hover **Keyword Tooltips** ([`CombatKeywordTooltipUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatKeywordTooltipUI.cs)), **Enemy Intent Hover Tooltips** ([`EnemyIntentHUD.cs`](../Assets/_Project/Scripts/UI/Combat/EnemyIntentHUD.cs)), **Relic Hover Tooltips** ([`TopBarRelicSlotsUI.cs`](../Assets/_Project/Scripts/UI/Relics/TopBarRelicSlotsUI.cs)), **Live Target Damage / Lethal & Taunt Preview Reticles** ([`CombatTargetingPresenter.cs`](../Assets/_Project/Scripts/Views/CombatTargetingPresenter.cs)), **Turn Phase Banner** (`PLAYER TURN` / `ENEMY TURN`), and **Play-Rejection / Hand-Full Toast** ([`CombatFeedbackBannerUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatFeedbackBannerUI.cs)).
+  - Remaining: tooltips on Potions/Status icons, projected HP-bar loss shading, and **Mid-Combat Card Picker Modals** (Scry, Discover, Discard/Exhaust/Upgrade pickers).
 
 ### C. Existing Map & Non-Combat Scene UI Gaps
 - [ ] **`MainMenu.unity`**: Only has `Play`, `Settings`, `Credits`, `Exit`. Add **Continue / Resume Run**, **Game Modes** (Standard, Daily, Custom Seed/Modifiers), **Compendium** (Card Library, Relic Gallery, Potion List, Enemy Bestiary), **Run History & Lifetime Stats**, **Achievements**, Language switcher, and **Quit Confirmation** popup.
