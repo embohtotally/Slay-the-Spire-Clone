@@ -212,6 +212,29 @@ namespace PlushieOdyssey.Combat.Systems
                     return;
                 }
             }
+            else if (type == BuffType.Weak || type == BuffType.Vulnerable || type == BuffType.Frail ||
+                     type == BuffType.Intangible || type == BuffType.FearImmunity || type == BuffType.Redirect)
+            {
+                BuffData existing = activeBuffs.Find(b => b.Target == target && b.Type == type && b.RemainingTurns > 0);
+                if (existing != null)
+                {
+                    existing.AddDuration(effectiveDuration);
+                    return;
+                }
+            }
+            else if (type == BuffType.Strength || type == BuffType.Dexterity ||
+                     type == BuffType.DamageReduction || type == BuffType.DamageReductionPercentage)
+            {
+                // Merge when durations match (including permanent 999-turn stacks) so identical buffs stack cleanly
+                BuffData existing = activeBuffs.Find(b =>
+                    b.Target == target && b.Type == type && b.RemainingTurns > 0 &&
+                    ((b.RemainingTurns >= 900 && effectiveDuration >= 900) || b.RemainingTurns == effectiveDuration));
+                if (existing != null)
+                {
+                    existing.AddValue(effectiveValue);
+                    return;
+                }
+            }
 
             BuffData buff = new BuffData(target, type, effectiveValue, effectiveDuration, caster);
             activeBuffs.Add(buff);

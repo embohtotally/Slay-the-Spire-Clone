@@ -36,6 +36,16 @@ namespace PlushieOdyssey.Combat.Models
             Value += delta;
         }
 
+        public void AddDuration(int delta)
+        {
+            if (RemainingTurns >= 900 || delta >= 900)
+            {
+                RemainingTurns = 999;
+                return;
+            }
+            RemainingTurns = Mathf.Max(1, RemainingTurns + delta);
+        }
+
         public void DecrementValue(int amount = 1)
         {
             Value = Mathf.Max(0, Value - amount);

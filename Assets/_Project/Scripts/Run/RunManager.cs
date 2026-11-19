@@ -95,9 +95,42 @@ namespace PlushieOdyssey.Run
         {
             if (selectedNode == null) return;
 
+            CurrentMap?.MarkVisited(selectedNode.Id);
             CurrentMapNodeId = selectedNode.Id;
             SelectedEncounter = selectedNode.Encounter;
             NotifyRunStateChanged();
+        }
+
+        /// <summary>
+        /// Guarantees an active procedural map exists for the current run (useful when entering
+        /// Game.unity directly for testing or peeking at the current map mid-combat).
+        /// </summary>
+        public MapGraph EnsureActiveProceduralMap(
+            MapGeneratorConfig config,
+            MapEncounterPool encounterPool,
+            bool placeOnStartingCombatNode = false)
+        {
+            if (CurrentMap == null || CurrentMap.Nodes == null || CurrentMap.Nodes.Count == 0)
+            {
+                CurrentMap = ProceduralMapGenerator.Generate(config, encounterPool);
+                CurrentMapNodeId = null;
+            }
+
+            if (placeOnStartingCombatNode && string.IsNullOrEmpty(CurrentMapNodeId))
+            {
+                List<MapNode> initialNodes = CurrentMap.GetInitialNodes();
+                if (initialNodes != null && initialNodes.Count > 0)
+                {
+                    MapNode activeStart = initialNodes[0];
+                    CurrentMap.MarkVisited(activeStart.Id);
+                    CurrentMapNodeId = activeStart.Id;
+                    if (SelectedEncounter == null) SelectedEncounter = activeStart.Encounter;
+                }
+            }
+
+            CurrentMap.RefreshAvailability(CurrentMapNodeId);
+            NotifyRunStateChanged();
+            return CurrentMap;
         }
 
         public void ClearSelectedEncounter()

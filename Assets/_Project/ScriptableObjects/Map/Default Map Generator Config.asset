@@ -12,6 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7988c5558c63ea544970513ecffe80fd, type: 3}
   m_Name: Default Map Generator Config
   m_EditorClassIdentifier: 
+  UseSlayTheSpireProceduralMode: 1
+  LayerCountRange:
+    Min: 6
+    Max: 8
+  LaneCount: 4
+  MapCanvasSpan: {x: 1340, y: 520}
+  HorizontalJitter: 0.24
+  VerticalJitter: 0.28
+  EnemyWeight: 42
+  EventWeight: 22
+  EliteWeight: 15
+  ShopWeight: 10
+  RestWeight: 8
+  TreasureWeight: 3
   UseSyntheticStartNode: 0
   SyntheticStartDistance: 190
   NumberOfStartingNodes:

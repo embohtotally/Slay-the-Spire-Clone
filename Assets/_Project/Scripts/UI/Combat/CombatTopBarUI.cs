@@ -7,16 +7,17 @@ using PlushieOdyssey.Combat.Views;
 using PlushieOdyssey.Run;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace PlushieOdyssey.UI.Combat
 {
     /// <summary>
     /// Slay-the-Spire style Combat Top Bar matching the Figma layout:
-    /// - Shared Party HP bar (with Shield & Low-Will penalty visualization)
-    /// - 3 Character Portrait Cards with individual Will sliders (>=75% positive, <25% Fear)
-    ///   and per-character Buff/Debuff icon grids directly below each portrait
-    /// - Center Potions/Relics tray, Crystal & Gold counters, Map scroll button, and Menu button.
+    /// - Shared Party HP bar (with Shield &amp; Low-Will penalty visualization)
+    /// - 3 Character Portrait Cards with individual Will sliders (&gt;=75% positive, &lt;25% Fear)
+    ///   and per-character Buff/Debuff icon rows (hidden when empty, stacked with bottom-right count badges &amp; hover tooltips)
+    /// - Center Relic slots, Crystal &amp; Gold counters, Map scroll button, and Menu button.
     /// </summary>
     [DisallowMultipleComponent]
     public class CombatTopBarUI : MonoBehaviour
@@ -38,23 +39,20 @@ namespace PlushieOdyssey.UI.Combat
         {
             public Image Background;
             public TMP_Text Label;
-        }
 
-        private readonly struct ActiveBadge
-        {
-            public readonly string ShortText;
-            public readonly Color Color;
-
-            public ActiveBadge(string shortText, Color color)
-            {
-                ShortText = shortText;
-                Color = color;
-            }
+            [NonSerialized] public Image InnerBg;
+            [NonSerialized] public Image IconImage;
+            [NonSerialized] public TextMeshProUGUI StackBadge;
+            [NonSerialized] public CombatStatusBadgeData BoundBadge;
+            [NonSerialized] internal TopBarStatusHoverHandler HoverHandler;
+            [NonSerialized] public string LastStackLabel;
+            [NonSerialized] public bool VisualsBuilt;
         }
 
         [Header("Core References")]
         [SerializeField] private HeroView _heroView;
         [SerializeField] private CombatFeedbackBannerUI _feedbackBanner;
+        [SerializeField] private CombatMapOverlayUI _mapOverlay;
 
         [Header("Top Bar HP & Currencies")]
         [SerializeField] private TMP_Text _hpText;
@@ -75,15 +73,10 @@ namespace PlushieOdyssey.UI.Combat
         [SerializeField] private Color _highWillBorderColor = new(0.32f, 0.86f, 1f, 1f);
         [SerializeField] private Color _lowWillBorderColor = new(1f, 0.28f, 0.32f, 1f);
 
-        [Header("Status Cell Styling")]
-        [SerializeField] private Color _emptyCellColor = new(0.84f, 0.86f, 0.88f, 0.45f);
-        [SerializeField] private Color _buffCellColor = new(0.18f, 0.66f, 0.42f, 0.95f);
-        [SerializeField] private Color _debuffCellColor = new(0.76f, 0.22f, 0.26f, 0.95f);
-        [SerializeField] private Color _highWillCellColor = new(0.14f, 0.62f, 0.94f, 0.96f);
-
         private RunManager _subscribedRunManager;
         private BuffSystem _subscribedBuffSystem;
         private DamageOverTimeSystem _subscribedDotSystem;
+        private StatusCell _hoveredCell;
 
         private void Awake()
         {
@@ -100,6 +93,7 @@ namespace PlushieOdyssey.UI.Combat
         private void OnDisable()
         {
             UnsubscribeAll();
+            ClearHoverTooltip();
         }
 
         private void Update()
@@ -116,6 +110,13 @@ namespace PlushieOdyssey.UI.Combat
 
         public void OnMapButtonClicked()
         {
+            if (_mapOverlay == null) _mapOverlay = FindFirstObjectByType<CombatMapOverlayUI>();
+            if (_mapOverlay != null)
+            {
+                _mapOverlay.Toggle();
+                return;
+            }
+
             if (_feedbackBanner != null)
             {
                 _feedbackBanner.ShowToast("Defeat enemies to advance on the Map.");
@@ -128,6 +129,51 @@ namespace PlushieOdyssey.UI.Combat
             RefreshCurrencies();
             RefreshCharacterWillSlots();
             RefreshStatusGrids();
+        }
+
+        /// <summary>
+        /// Counts currently visible (active) status icon cells across all 3 character portrait rows.
+        /// </summary>
+        public int GetVisibleStatusCellCount(int slotIndex = -1)
+        {
+            if (_characterSlots == null) return 0;
+            int total = 0;
+            for (int i = 0; i < _characterSlots.Count; i++)
+            {
+                if (slotIndex >= 0 && i != slotIndex) continue;
+                CharacterWillSlot slot = _characterSlots[i];
+                if (slot?.StatusCells == null) continue;
+                for (int c = 0; c < slot.StatusCells.Count; c++)
+                {
+                    if (slot.StatusCells[c]?.Background != null && slot.StatusCells[c].Background.gameObject.activeSelf)
+                        total++;
+                }
+            }
+            return total;
+        }
+
+        /// <summary>
+        /// Triggers hover enter/exit programmatically for verification tests.
+        /// </summary>
+        public bool TryHoverStatusCell(int slotIndex, int badgeIndex)
+        {
+            if (_characterSlots == null || slotIndex < 0 || slotIndex >= _characterSlots.Count) return false;
+            var cells = _characterSlots[slotIndex]?.StatusCells;
+            if (cells == null || badgeIndex < 0 || badgeIndex >= cells.Count) return false;
+            StatusCell cell = cells[badgeIndex];
+            if (cell?.BoundBadge == null || cell.Background == null || !cell.Background.gameObject.activeSelf) return false;
+            HandleCellHoverEnter(cell);
+            return true;
+        }
+
+        public void ClearHoverTooltip()
+        {
+            if (_hoveredCell != null)
+            {
+                if (_hoveredCell.Background != null) _hoveredCell.Background.rectTransform.localScale = Vector3.one;
+                _hoveredCell = null;
+            }
+            CombatStatusTooltipUI.Instance?.Hide(this);
         }
 
         private void RefreshHealth()
@@ -176,7 +222,6 @@ namespace PlushieOdyssey.UI.Combat
                 CharacterWillSlot slot = _characterSlots[i];
                 if (slot == null) continue;
 
-                // Map per-character Will when multi-hero states exist; otherwise share the active Hero's Will cleanly across party portraits.
                 RunHeroStressState state = null;
                 if (states != null && states.Count > 0)
                 {
@@ -219,15 +264,15 @@ namespace PlushieOdyssey.UI.Combat
         {
             if (_characterSlots == null || _characterSlots.Count == 0) return;
 
-            List<ActiveBadge> sharedBadges = BuildHeroStatusBadges();
+            List<CombatStatusBadgeData> sharedBadges = CombatStatusBadgeData.CollectFor(_heroView, includeWillState: true);
+            bool hoveredStillValid = false;
 
             for (int i = 0; i < _characterSlots.Count; i++)
             {
                 CharacterWillSlot slot = _characterSlots[i];
                 if (slot == null || slot.StatusCells == null) continue;
 
-                // Show active party buffs/debuffs on the primary character slot (and Will state on all slots when multi-hero states diverge)
-                List<ActiveBadge> slotBadges = i == 0 ? sharedBadges : BuildSecondarySlotBadges(i);
+                List<CombatStatusBadgeData> slotBadges = i == 0 ? sharedBadges : BuildSecondarySlotBadges(i);
 
                 for (int c = 0; c < slot.StatusCells.Count; c++)
                 {
@@ -236,108 +281,227 @@ namespace PlushieOdyssey.UI.Combat
 
                     if (c < slotBadges.Count)
                     {
-                        cell.Background.color = slotBadges[c].Color;
-                        if (cell.Label != null)
+                        EnsureCellVisuals(cell);
+                        CombatStatusBadgeData badge = slotBadges[c];
+                        bool wasInactive = !cell.Background.gameObject.activeSelf;
+                        bool stackedUp = !wasInactive && cell.BoundBadge != null && cell.BoundBadge.Id == badge.Id &&
+                                         !string.IsNullOrEmpty(badge.StackLabel) && cell.LastStackLabel != badge.StackLabel;
+
+                        cell.BoundBadge = badge;
+                        cell.LastStackLabel = badge.StackLabel;
+                        cell.Background.gameObject.SetActive(true);
+                        BindStatusCellVisual(cell, badge);
+
+                        if (Application.isPlaying)
                         {
-                            cell.Label.gameObject.SetActive(true);
-                            cell.Label.text = slotBadges[c].ShortText;
+                            if (wasInactive)
+                            {
+                                cell.Background.rectTransform.DOKill();
+                                cell.Background.rectTransform.localScale = Vector3.one * 0.45f;
+                                cell.Background.rectTransform.DOScale(Vector3.one, 0.22f).SetEase(Ease.OutBack).SetUpdate(true);
+                            }
+                            else if (stackedUp && cell.StackBadge != null)
+                            {
+                                cell.StackBadge.rectTransform.DOKill();
+                                cell.StackBadge.rectTransform.localScale = Vector3.one;
+                                cell.StackBadge.rectTransform.DOPunchScale(Vector3.one * 0.35f, 0.22f, 6, 0.6f).SetUpdate(true);
+                            }
+                        }
+
+                        if (_hoveredCell == cell)
+                        {
+                            hoveredStillValid = true;
+                            CombatStatusTooltipUI.Instance?.Show(badge, cell.Background.rectTransform, this, preferBelow: true, playHoverSfx: false);
                         }
                     }
                     else
                     {
-                        cell.Background.color = _emptyCellColor;
-                        if (cell.Label != null)
-                        {
-                            cell.Label.text = string.Empty;
-                            cell.Label.gameObject.SetActive(false);
-                        }
+                        // Hide empty buff/debuff cells completely during gameplay — only show when an actual buff/debuff exists!
+                        cell.BoundBadge = null;
+                        cell.LastStackLabel = null;
+                        cell.Background.gameObject.SetActive(false);
                     }
                 }
             }
+
+            if (_hoveredCell != null && !hoveredStillValid)
+            {
+                ClearHoverTooltip();
+            }
         }
 
-        private List<ActiveBadge> BuildHeroStatusBadges()
+        private List<CombatStatusBadgeData> BuildSecondarySlotBadges(int slotIndex)
         {
-            List<ActiveBadge> badges = new();
-            if (_heroView == null) return badges;
-
-            if (_heroView.IsHighWill)
-                badges.Add(new ActiveBadge("W+", _highWillCellColor));
-            else if (_heroView.IsLowWill)
-                badges.Add(new ActiveBadge("F!", _debuffCellColor));
-
-            if (_heroView.IsStunned)
-                badges.Add(new ActiveBadge($"ST{_heroView.StunDuration}", _debuffCellColor));
-
-            if (_heroView.IsTaunted)
-                badges.Add(new ActiveBadge($"T{_heroView.TauntDuration}", _buffCellColor));
-
-            if (BuffSystem.Instance != null)
-            {
-                Dictionary<BuffType, int> grouped = new();
-                foreach (BuffData buff in BuffSystem.Instance.GetBuffsFor(_heroView))
-                {
-                    if (!grouped.ContainsKey(buff.Type)) grouped[buff.Type] = 0;
-                    grouped[buff.Type] += Mathf.Max(1, buff.Value);
-                }
-
-                foreach (KeyValuePair<BuffType, int> kv in grouped)
-                {
-                    string code = GetBuffShortCode(kv.Key, kv.Value);
-                    Color color = BuffSystem.IsDebuff(kv.Key) ? _debuffCellColor : _buffCellColor;
-                    badges.Add(new ActiveBadge(code, color));
-                }
-            }
-
-            if (DamageOverTimeSystem.Instance != null)
-            {
-                int dotDamage = 0;
-                foreach (DamageOverTimeData dot in DamageOverTimeSystem.Instance.GetDoTsFor(_heroView))
-                    dotDamage += dot.DamagePerTurn;
-                if (dotDamage > 0)
-                    badges.Add(new ActiveBadge($"D{dotDamage}", _debuffCellColor));
-            }
-
-            return badges;
-        }
-
-        private List<ActiveBadge> BuildSecondarySlotBadges(int slotIndex)
-        {
-            List<ActiveBadge> badges = new();
             if (_heroView == null || _heroView.StressStates == null || _heroView.StressStates.Count == 0)
-                return badges;
+                return new List<CombatStatusBadgeData>();
 
             RunHeroStressState state = slotIndex < _heroView.StressStates.Count
                 ? _heroView.StressStates[slotIndex]
                 : _heroView.StressStates[0];
 
-            if (state.IsHighWill) badges.Add(new ActiveBadge("W+", _highWillCellColor));
-            else if (state.IsLowWill) badges.Add(new ActiveBadge("F!", _debuffCellColor));
-            return badges;
+            return CombatStatusBadgeData.CollectWillOnly(state);
         }
 
-        private static string GetBuffShortCode(BuffType type, int value)
+        private void EnsureCellVisuals(StatusCell cell)
         {
-            return type switch
+            if (cell.VisualsBuilt || cell.Background == null) return;
+            cell.VisualsBuilt = true;
+
+            RectTransform rootRt = cell.Background.rectTransform;
+            rootRt.sizeDelta = new Vector2(24f, 24f);
+            cell.Background.raycastTarget = true;
+
+            Sprite solid = CombatStatusTooltipUI.GetSolidSprite();
+            TMP_FontAsset font = CombatStatusTooltipUI.Instance != null
+                ? CombatStatusTooltipUI.Instance.Font
+                : (cell.Label != null ? cell.Label.font : TMP_Settings.defaultFontAsset);
+            int layer = rootRt.gameObject.layer;
+
+            // Inner dark fill
+            Transform existingInner = rootRt.Find("InnerBg");
+            if (existingInner != null)
             {
-                BuffType.Strength => $"S{value}",
-                BuffType.Dexterity => $"DX{value}",
-                BuffType.Weak => $"WK",
-                BuffType.Vulnerable => $"VN",
-                BuffType.Frail => $"FR",
-                BuffType.Poison => $"P{value}",
-                BuffType.Thorns => $"TH{value}",
-                BuffType.Artifact => $"A{value}",
-                BuffType.Barricade => "BR",
-                BuffType.Metallicize => $"M{value}",
-                BuffType.PlatedArmor => $"PA{value}",
-                BuffType.Intangible => "IN",
-                BuffType.FearImmunity => "WI",
-                BuffType.Redirect => "RD",
-                BuffType.DamageReduction => $"DR{value}",
-                BuffType.DamageReductionPercentage => $"DR%",
-                _ => "?"
-            };
+                cell.InnerBg = existingInner.GetComponent<Image>();
+            }
+            else
+            {
+                GameObject innerGo = new("InnerBg", typeof(RectTransform), typeof(Image));
+                innerGo.layer = layer;
+                RectTransform innerRt = (RectTransform)innerGo.transform;
+                innerRt.SetParent(rootRt, false);
+                innerRt.SetAsFirstSibling();
+                innerRt.anchorMin = Vector2.zero;
+                innerRt.anchorMax = Vector2.one;
+                innerRt.offsetMin = new Vector2(1.5f, 1.5f);
+                innerRt.offsetMax = new Vector2(-1.5f, -1.5f);
+                cell.InnerBg = innerGo.GetComponent<Image>();
+                cell.InnerBg.sprite = solid;
+                cell.InnerBg.raycastTarget = false;
+            }
+
+            // Icon sprite inside badge
+            Transform existingIcon = rootRt.Find("StatusIcon");
+            if (existingIcon != null)
+            {
+                cell.IconImage = existingIcon.GetComponent<Image>();
+            }
+            else
+            {
+                GameObject iconGo = new("StatusIcon", typeof(RectTransform), typeof(Image));
+                iconGo.layer = layer;
+                RectTransform iconRt = (RectTransform)iconGo.transform;
+                iconRt.SetParent(rootRt, false);
+                iconRt.anchorMin = Vector2.zero;
+                iconRt.anchorMax = Vector2.one;
+                iconRt.offsetMin = new Vector2(3.5f, 3.5f);
+                iconRt.offsetMax = new Vector2(-3.5f, -3.5f);
+                cell.IconImage = iconGo.GetComponent<Image>();
+                cell.IconImage.preserveAspect = true;
+                cell.IconImage.raycastTarget = false;
+            }
+
+            // Stack count badge tucked at the bottom-right corner, right under the icon
+            Transform existingStack = rootRt.Find("StackBadge");
+            if (existingStack != null)
+            {
+                cell.StackBadge = existingStack.GetComponent<TextMeshProUGUI>();
+            }
+            else
+            {
+                GameObject stackGo = new("StackBadge", typeof(RectTransform), typeof(TextMeshProUGUI));
+                stackGo.layer = layer;
+                RectTransform stackRt = (RectTransform)stackGo.transform;
+                stackRt.SetParent(rootRt, false);
+                stackRt.anchorMin = stackRt.anchorMax = new Vector2(1f, 0f);
+                stackRt.pivot = new Vector2(0.80f, 0.25f);
+                stackRt.anchoredPosition = new Vector2(3f, -2f);
+                stackRt.sizeDelta = new Vector2(28f, 16f);
+
+                cell.StackBadge = stackGo.GetComponent<TextMeshProUGUI>();
+                cell.StackBadge.fontSize = 12.5f;
+                cell.StackBadge.fontStyle = FontStyles.Bold;
+                cell.StackBadge.alignment = TextAlignmentOptions.BottomRight;
+                cell.StackBadge.color = Color.white;
+                cell.StackBadge.textWrappingMode = TextWrappingModes.NoWrap;
+                cell.StackBadge.raycastTarget = false;
+                if (font != null) cell.StackBadge.font = font;
+
+                Outline outline = stackGo.AddComponent<Outline>();
+                outline.effectColor = new Color(0.02f, 0.03f, 0.06f, 0.98f);
+                outline.effectDistance = new Vector2(1.4f, -1.4f);
+            }
+
+            // Hover handler for status description tooltip
+            cell.HoverHandler = rootRt.GetComponent<TopBarStatusHoverHandler>();
+            if (cell.HoverHandler == null) cell.HoverHandler = rootRt.gameObject.AddComponent<TopBarStatusHoverHandler>();
+            cell.HoverHandler.Init(this, cell);
+        }
+
+        private static void BindStatusCellVisual(StatusCell cell, CombatStatusBadgeData badge)
+        {
+            Color accent = badge.AccentColor;
+            cell.Background.color = accent;
+
+            if (cell.InnerBg != null)
+            {
+                cell.InnerBg.color = new Color(accent.r * 0.18f + 0.06f, accent.g * 0.18f + 0.06f, accent.b * 0.18f + 0.08f, 0.96f);
+            }
+
+            Sprite icon = CombatStatusTooltipUI.Instance != null
+                ? CombatStatusTooltipUI.Instance.GetSprite(badge.IconKey)
+                : null;
+
+            bool hasIcon = icon != null;
+            if (cell.IconImage != null)
+            {
+                cell.IconImage.sprite = icon;
+                cell.IconImage.enabled = hasIcon;
+                cell.IconImage.color = Color.Lerp(accent, Color.white, 0.24f);
+            }
+
+            if (cell.Label != null)
+            {
+                cell.Label.gameObject.SetActive(!hasIcon);
+                if (!hasIcon) cell.Label.text = badge.ShortCode;
+            }
+
+            if (cell.StackBadge != null)
+            {
+                bool showStack = !string.IsNullOrEmpty(badge.StackLabel);
+                cell.StackBadge.gameObject.SetActive(showStack);
+                if (showStack)
+                {
+                    cell.StackBadge.text = badge.StackLabel;
+                    cell.StackBadge.transform.SetAsLastSibling();
+                }
+            }
+        }
+
+        internal void HandleCellHoverEnter(StatusCell cell)
+        {
+            if (cell == null || cell.BoundBadge == null || cell.Background == null) return;
+            if (_hoveredCell != null && _hoveredCell != cell && _hoveredCell.Background != null)
+            {
+                _hoveredCell.Background.rectTransform.localScale = Vector3.one;
+            }
+
+            _hoveredCell = cell;
+            cell.Background.rectTransform.localScale = Vector3.one * 1.15f;
+            CombatStatusTooltipUI.Instance?.Show(cell.BoundBadge, cell.Background.rectTransform, this, preferBelow: true);
+        }
+
+        internal void HandleCellHoverExit(StatusCell cell)
+        {
+            if (cell != null && cell.Background != null)
+            {
+                cell.Background.rectTransform.localScale = Vector3.one;
+            }
+
+            if (_hoveredCell == cell)
+            {
+                _hoveredCell = null;
+                CombatStatusTooltipUI.Instance?.Hide(this);
+            }
         }
 
         private void ResolveHeroView()
@@ -411,5 +575,19 @@ namespace PlushieOdyssey.UI.Combat
             RefreshStatusGrids();
         }
     }
-}
 
+    internal sealed class TopBarStatusHoverHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    {
+        private CombatTopBarUI _owner;
+        private CombatTopBarUI.StatusCell _cell;
+
+        public void Init(CombatTopBarUI owner, CombatTopBarUI.StatusCell cell)
+        {
+            _owner = owner;
+            _cell = cell;
+        }
+
+        public void OnPointerEnter(PointerEventData eventData) => _owner?.HandleCellHoverEnter(_cell);
+        public void OnPointerExit(PointerEventData eventData) => _owner?.HandleCellHoverExit(_cell);
+    }
+}

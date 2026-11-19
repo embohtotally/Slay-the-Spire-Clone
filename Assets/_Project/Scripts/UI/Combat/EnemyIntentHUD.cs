@@ -5,6 +5,7 @@ using PlushieOdyssey.Combat.Models;
 using PlushieOdyssey.Combat.Systems;
 using PlushieOdyssey.Combat.Views;
 using PlushieOdyssey.UI.Relics;
+using PlushieOdyssey.UI.StatusEffects;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,12 +14,13 @@ using UnityEngine.UI;
 namespace PlushieOdyssey.UI.Combat
 {
     /// <summary>
-    /// Screen-space Enemy Intent Icon HUD matching Slay the Spire &amp; Witch's Apocalyptic Journey:
+    /// Screen-space Enemy Intent Icon &amp; Enemy Buff/Debuff HUD matching Slay the Spire &amp; Witch's Apocalyptic Journey:
     /// - Replaceable icon templates per EnemyIntentCategory (assign custom sprites in Inspector anytime)
     /// - Color-coded action label displayed at the top of each intent icon
-    /// - Live buff-adjusted primary damage/shield/value numbers &amp; optional secondary chip (e.g. "-5 WILL")
+    /// - Active Enemy Buff/Debuff icon row positioned directly at the top of the intent icon
+    ///   (hidden when empty, identical effects stack into a single icon with a bottom-right stack count badge, and hoverable for full descriptions)
     /// - Procedural squash-and-stretch pop-in animation at Player Turn start, alive idle motion, and execute burst
-    /// - Non-blocking cursor hover detection that shows a rich intent description tooltip
+    /// - Non-blocking cursor hover detection for both Enemy Status icons and Intent icons
     /// </summary>
     [DisallowMultipleComponent]
     public class EnemyIntentHUD : MonoBehaviour
@@ -48,13 +50,31 @@ namespace PlushieOdyssey.UI.Combat
         [SerializeField] private float _hoverPaddingPx = 10f;
         [SerializeField] private float _hoverScale = 1.12f;
 
+        private sealed class EnemyStatusSlot
+        {
+            public RectTransform Root;
+            public Image Border;
+            public Image InnerBg;
+            public Image IconImage;
+            public TextMeshProUGUI FallbackCode;
+            public TextMeshProUGUI StackText;
+            public CombatStatusBadgeData Badge;
+            public string LastBadgeId;
+            public string LastStackLabel;
+        }
+
         private sealed class IntentWidget
         {
             public EnemyView Enemy;
             public RectTransform Root;
-            public CanvasGroup Group;
+            public CanvasGroup IntentGroup;
             public RectTransform AnimPivot;
             public RectTransform HoverBounds;
+
+            // Active Buffs/Debuffs row directly at the top of the intent icon (hidden when empty)
+            public RectTransform StatusRowRoot;
+            public readonly List<EnemyStatusSlot> StatusSlots = new();
+            public int ActiveStatusCount;
 
             public Image TopPillBorder;
             public Image TopPillBg;
@@ -97,11 +117,15 @@ namespace PlushieOdyssey.UI.Combat
         private readonly List<EnemyView> _staleKeys = new();
 
         private EnemyView _hoveredEnemy;
+        private EnemyStatusSlot _hoveredStatusSlot;
         private Vector2? _simulatedHoverScreenPos;
         private RelicSwapModalUI _relicSwapModal;
+        private BuffSystem _subscribedBuffSystem;
+        private DamageOverTimeSystem _subscribedDotSystem;
 
         public EnemyView HoveredEnemy => _hoveredEnemy;
         public bool IsTooltipVisible => _tooltipRoot != null && _tooltipRoot.gameObject.activeSelf;
+        public bool IsHoveringEnemyStatus => _hoveredStatusSlot != null;
 
         /// <summary>
         /// Allows automated tests to hover an exact screen coordinate through the real hit-test path.
@@ -112,9 +136,6 @@ namespace PlushieOdyssey.UI.Combat
             _simulatedHoverScreenPos = screenPos;
         }
 
-        /// <summary>
-        /// Returns the current screen-space center of an enemy's active intent widget (for inspection/tests).
-        /// </summary>
         public bool TryGetIntentScreenCenter(EnemyView enemy, out Vector2 screenCenter)
         {
             screenCenter = Vector2.zero;
@@ -125,6 +146,26 @@ namespace PlushieOdyssey.UI.Combat
             Vector3 worldCenter = w.HoverBounds.TransformPoint(w.HoverBounds.rect.center);
             screenCenter = RectTransformUtility.WorldToScreenPoint(uiCam, worldCenter);
             return true;
+        }
+
+        public bool TryGetEnemyStatusScreenCenter(EnemyView enemy, int statusIndex, out Vector2 screenCenter)
+        {
+            screenCenter = Vector2.zero;
+            if (enemy == null || !_widgets.TryGetValue(enemy, out IntentWidget w)) return false;
+            if (statusIndex < 0 || statusIndex >= w.ActiveStatusCount || statusIndex >= w.StatusSlots.Count) return false;
+
+            RectTransform rt = w.StatusSlots[statusIndex].Root;
+            if (rt == null || !rt.gameObject.activeSelf) return false;
+
+            Camera uiCam = _canvas != null && _canvas.renderMode != RenderMode.ScreenSpaceOverlay ? _canvas.worldCamera : null;
+            screenCenter = RectTransformUtility.WorldToScreenPoint(uiCam, rt.TransformPoint(rt.rect.center));
+            return true;
+        }
+
+        public int GetVisibleEnemyStatusCount(EnemyView enemy)
+        {
+            if (enemy == null || !_widgets.TryGetValue(enemy, out IntentWidget w)) return 0;
+            return w.ActiveStatusCount;
         }
 
         private void Awake()
@@ -139,6 +180,8 @@ namespace PlushieOdyssey.UI.Combat
         private void OnEnable()
         {
             EnemyView.SuppressLegacyIntentText = true;
+            CombatantStatusEffectsUI.SuppressEnemyWorldStatusUI = true;
+
             EnemyView.AnyIntentRevealed -= HandleIntentRevealed;
             EnemyView.AnyIntentRevealed += HandleIntentRevealed;
             EnemyView.AnyIntentUpdated -= HandleIntentUpdated;
@@ -146,6 +189,7 @@ namespace PlushieOdyssey.UI.Combat
             EnemyView.AnyIntentConsumed -= HandleIntentConsumed;
             EnemyView.AnyIntentConsumed += HandleIntentConsumed;
 
+            SubscribeStatusSystems();
             BuildLayersIfNeeded();
             SyncExistingEnemies();
         }
@@ -153,9 +197,13 @@ namespace PlushieOdyssey.UI.Combat
         private void OnDisable()
         {
             EnemyView.SuppressLegacyIntentText = false;
+            CombatantStatusEffectsUI.SuppressEnemyWorldStatusUI = false;
+
             EnemyView.AnyIntentRevealed -= HandleIntentRevealed;
             EnemyView.AnyIntentUpdated -= HandleIntentUpdated;
             EnemyView.AnyIntentConsumed -= HandleIntentConsumed;
+
+            UnsubscribeStatusSystems();
 
             foreach (IntentWidget w in _widgets.Values)
             {
@@ -165,6 +213,7 @@ namespace PlushieOdyssey.UI.Combat
             }
 
             HideTooltip();
+            ClearHoveredStatus();
         }
 
         private void LateUpdate()
@@ -172,13 +221,20 @@ namespace PlushieOdyssey.UI.Combat
             if (_worldCamera == null) _worldCamera = Camera.main;
             if (_canvas == null || _widgetsLayer == null) return;
 
+            if (_subscribedBuffSystem != BuffSystem.Instance || _subscribedDotSystem != DamageOverTimeSystem.Instance)
+            {
+                UnsubscribeStatusSystems();
+                SubscribeStatusSystems();
+                RefreshAllEnemyStatuses();
+            }
+
             SyncEnemyRoster();
             UpdateWidgetPositionsAndIdle();
             UpdateHoverTooltip();
         }
 
         // ------------------------------------------------------------------
-        // Enemy Event Handlers
+        // Enemy & Status Event Handlers
         // ------------------------------------------------------------------
         private void HandleIntentRevealed(EnemyView enemy, float revealDelay)
         {
@@ -186,6 +242,7 @@ namespace PlushieOdyssey.UI.Combat
 
             IntentWidget widget = GetOrCreateWidget(enemy);
             BindSnapshot(widget, enemy.CurrentIntentSnapshot, punchValueOnChange: false);
+            RefreshEnemyStatuses(widget);
             PlayPopIn(widget, revealDelay);
         }
 
@@ -193,11 +250,16 @@ namespace PlushieOdyssey.UI.Combat
         {
             if (enemy == null) return;
 
+            if (_widgets.TryGetValue(enemy, out IntentWidget existingWidget))
+            {
+                RefreshEnemyStatuses(existingWidget);
+            }
+
             if (!enemy.IsIntentVisible || enemy.CurrentIntentSnapshot == null)
             {
-                if (_widgets.TryGetValue(enemy, out IntentWidget hiddenWidget) && hiddenWidget.IsVisible)
+                if (existingWidget != null && existingWidget.IsVisible)
                 {
-                    PlayConsumeAndHide(hiddenWidget);
+                    PlayConsumeAndHide(existingWidget);
                 }
                 return;
             }
@@ -205,6 +267,7 @@ namespace PlushieOdyssey.UI.Combat
             IntentWidget widget = GetOrCreateWidget(enemy);
             bool wasHidden = !widget.IsVisible;
             BindSnapshot(widget, enemy.CurrentIntentSnapshot, punchValueOnChange: !wasHidden);
+            RefreshEnemyStatuses(widget);
 
             if (wasHidden)
             {
@@ -231,6 +294,86 @@ namespace PlushieOdyssey.UI.Combat
             }
         }
 
+        private void RefreshAllEnemyStatuses()
+        {
+            if (EnemySystem.Instance != null && EnemySystem.Instance.Enemies != null)
+            {
+                foreach (EnemyView enemy in EnemySystem.Instance.Enemies)
+                {
+                    if (enemy == null || enemy.CurrentHealth <= 0) continue;
+                    IntentWidget w = GetOrCreateWidget(enemy);
+                    RefreshEnemyStatuses(w);
+                }
+            }
+        }
+
+        private void RefreshEnemyStatuses(IntentWidget w)
+        {
+            if (w == null || w.Enemy == null || w.StatusRowRoot == null) return;
+
+            List<CombatStatusBadgeData> badges = CombatStatusBadgeData.CollectFor(w.Enemy, includeWillState: false);
+            w.ActiveStatusCount = badges.Count;
+
+            // Hide completely when there are zero active buffs/debuffs
+            bool hasAny = badges.Count > 0;
+            w.StatusRowRoot.gameObject.SetActive(hasAny);
+
+            if (hasAny)
+            {
+                w.Root.gameObject.SetActive(true);
+            }
+            else if (!w.IsVisible && !w.IsAnimatingTransition)
+            {
+                w.Root.gameObject.SetActive(false);
+            }
+
+            EnsureStatusSlotPool(w, badges.Count);
+
+            for (int i = 0; i < w.StatusSlots.Count; i++)
+            {
+                EnemyStatusSlot slot = w.StatusSlots[i];
+                if (i < badges.Count)
+                {
+                    CombatStatusBadgeData badge = badges[i];
+                    bool wasInactive = !slot.Root.gameObject.activeSelf;
+                    bool stackedUp = !wasInactive && slot.LastBadgeId == badge.Id &&
+                                     !string.IsNullOrEmpty(badge.StackLabel) && slot.LastStackLabel != badge.StackLabel;
+
+                    slot.Badge = badge;
+                    slot.LastBadgeId = badge.Id;
+                    slot.LastStackLabel = badge.StackLabel;
+                    slot.Root.gameObject.SetActive(true);
+                    BindEnemyStatusSlot(slot, badge);
+
+                    if (wasInactive)
+                    {
+                        slot.Root.DOKill();
+                        slot.Root.localScale = Vector3.one * 0.4f;
+                        slot.Root.DOScale(Vector3.one, 0.22f).SetEase(Ease.OutBack).SetUpdate(true);
+                    }
+                    else if (stackedUp && slot.StackText != null)
+                    {
+                        slot.StackText.rectTransform.DOKill();
+                        slot.StackText.rectTransform.localScale = Vector3.one;
+                        slot.StackText.rectTransform.DOPunchScale(Vector3.one * 0.36f, 0.22f, 6, 0.6f).SetUpdate(true);
+                    }
+
+                    if (_hoveredStatusSlot == slot)
+                    {
+                        CombatStatusTooltipUI.Instance?.Show(badge, slot.Root, this, preferBelow: false, playHoverSfx: false);
+                    }
+                }
+                else
+                {
+                    if (_hoveredStatusSlot == slot) ClearHoveredStatus();
+                    slot.Badge = null;
+                    slot.LastBadgeId = null;
+                    slot.LastStackLabel = null;
+                    slot.Root.gameObject.SetActive(false);
+                }
+            }
+        }
+
         private void SyncExistingEnemies()
         {
             if (EnemySystem.Instance == null || EnemySystem.Instance.Enemies == null) return;
@@ -241,9 +384,11 @@ namespace PlushieOdyssey.UI.Combat
                 if (enemy == null) continue;
                 enemy.RefreshIntentDisplay();
 
+                IntentWidget w = GetOrCreateWidget(enemy);
+                RefreshEnemyStatuses(w);
+
                 if (enemy.IsIntentVisible && enemy.CurrentIntentSnapshot != null)
                 {
-                    IntentWidget w = GetOrCreateWidget(enemy);
                     BindSnapshot(w, enemy.CurrentIntentSnapshot, punchValueOnChange: false);
                     PlayPopIn(w, 0.10f + order * 0.10f);
                     order++;
@@ -253,7 +398,6 @@ namespace PlushieOdyssey.UI.Combat
 
         private void SyncEnemyRoster()
         {
-            // Clean up widgets whose enemy has been destroyed or killed
             _staleKeys.Clear();
             foreach (KeyValuePair<EnemyView, IntentWidget> pair in _widgets)
             {
@@ -274,6 +418,11 @@ namespace PlushieOdyssey.UI.Combat
 
                 if (_widgets.TryGetValue(stale, out IntentWidget w))
                 {
+                    foreach (EnemyStatusSlot slot in w.StatusSlots)
+                    {
+                        if (_hoveredStatusSlot == slot) ClearHoveredStatus();
+                    }
+
                     w.ActiveTween?.Kill();
                     w.BurstTween?.Kill();
                     w.ValuePunchTween?.Kill();
@@ -282,17 +431,20 @@ namespace PlushieOdyssey.UI.Combat
                 }
             }
 
-            // Pick up any newly spawned enemies that haven't registered a widget yet
             if (EnemySystem.Instance != null && EnemySystem.Instance.Enemies != null)
             {
                 foreach (EnemyView enemy in EnemySystem.Instance.Enemies)
                 {
                     if (enemy == null || enemy.CurrentHealth <= 0) continue;
-                    if (enemy.IsIntentVisible && enemy.CurrentIntentSnapshot != null && !_widgets.ContainsKey(enemy))
+                    if (!_widgets.ContainsKey(enemy))
                     {
                         IntentWidget w = GetOrCreateWidget(enemy);
-                        BindSnapshot(w, enemy.CurrentIntentSnapshot, punchValueOnChange: false);
-                        PlayPopIn(w, 0.05f);
+                        RefreshEnemyStatuses(w);
+                        if (enemy.IsIntentVisible && enemy.CurrentIntentSnapshot != null)
+                        {
+                            BindSnapshot(w, enemy.CurrentIntentSnapshot, punchValueOnChange: false);
+                            PlayPopIn(w, 0.05f);
+                        }
                     }
                 }
             }
@@ -308,13 +460,16 @@ namespace PlushieOdyssey.UI.Combat
             Camera uiCam = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
             float halfH = canvasRect.rect.height * 0.5f;
             float halfW = canvasRect.rect.width * 0.5f;
-            float maxY = halfH - _topSafeMarginPx;
             float minY = -halfH + 140f;
             float time = Time.unscaledTime;
 
             foreach (IntentWidget w in _widgets.Values)
             {
                 if (w.Enemy == null || w.Root == null || !w.Root.gameObject.activeSelf) continue;
+
+                // Give extra headroom when active enemy buffs sit on top of the intent icon so they never clip behind CombatTopBar
+                float topMargin = w.ActiveStatusCount > 0 ? _topSafeMarginPx + 30f : _topSafeMarginPx;
+                float maxY = halfH - topMargin;
 
                 Vector3 worldAnchor = w.Enemy.GetIntentAnchorWorldPosition();
                 Vector3 screenPt = _worldCamera.WorldToScreenPoint(worldAnchor);
@@ -326,13 +481,11 @@ namespace PlushieOdyssey.UI.Combat
                     w.Root.anchoredPosition = localPt;
                 }
 
-                // Smooth hover magnification blend
                 float targetHover = _hoveredEnemy == w.Enemy ? 1f : 0f;
                 w.HoverBlend = Mathf.MoveTowards(w.HoverBlend, targetHover, Time.unscaledDeltaTime * 9f);
 
                 if (w.IsAnimatingTransition || !w.IsVisible) continue;
 
-                // Category-aware procedural alive idle motion
                 EnemyIntentCategory cat = w.Snapshot != null ? w.Snapshot.Category : EnemyIntentCategory.Unknown;
                 float bob = Mathf.Sin(time * 2.5f + w.IdlePhase) * 3.5f;
                 float rotZ = 0f;
@@ -376,9 +529,9 @@ namespace PlushieOdyssey.UI.Combat
             w.IsVisible = true;
             w.IsAnimatingTransition = true;
             w.Root.gameObject.SetActive(true);
+            w.AnimPivot.gameObject.SetActive(true);
 
-            // Initial anticipation pose (hidden & vertically stretched slightly below target)
-            w.Group.alpha = 0f;
+            w.IntentGroup.alpha = 0f;
             w.AnimPivot.anchoredPosition = new Vector2(0f, -26f);
             w.AnimPivot.localScale = new Vector3(0.32f, 1.38f, 1f);
             w.AnimPivot.localRotation = Quaternion.Euler(0f, 0f, -10f);
@@ -396,18 +549,15 @@ namespace PlushieOdyssey.UI.Combat
 
             seq.AppendCallback(() => PlayBurstFlash(w, 0.52f, 1.55f, 0.36f));
 
-            // Phase 1: Energetic upward pop with squash overshoot
-            seq.Append(w.Group.DOFade(1f, 0.14f).SetEase(Ease.OutQuad));
+            seq.Append(w.IntentGroup.DOFade(1f, 0.14f).SetEase(Ease.OutQuad));
             seq.Join(w.AnimPivot.DOAnchorPosY(12f, 0.17f).SetEase(Ease.OutCubic));
             seq.Join(w.AnimPivot.DOScale(new Vector3(1.18f, 0.86f, 1f), 0.17f).SetEase(Ease.OutCubic));
             seq.Join(w.AnimPivot.DOLocalRotate(new Vector3(0f, 0f, 3.5f), 0.17f).SetEase(Ease.OutCubic));
 
-            // Phase 2: Spring rebound
             seq.Append(w.AnimPivot.DOAnchorPosY(-3f, 0.12f).SetEase(Ease.InOutSine));
             seq.Join(w.AnimPivot.DOScale(new Vector3(0.95f, 1.06f, 1f), 0.12f).SetEase(Ease.InOutSine));
             seq.Join(w.AnimPivot.DOLocalRotate(new Vector3(0f, 0f, -1.2f), 0.12f).SetEase(Ease.InOutSine));
 
-            // Phase 3: Crisp settle into alive idle
             seq.Append(w.AnimPivot.DOAnchorPosY(0f, 0.11f).SetEase(Ease.OutSine));
             seq.Join(w.AnimPivot.DOScale(Vector3.one, 0.11f).SetEase(Ease.OutSine));
             seq.Join(w.AnimPivot.DOLocalRotate(Vector3.zero, 0.11f).SetEase(Ease.OutSine));
@@ -422,9 +572,10 @@ namespace PlushieOdyssey.UI.Combat
             w.IsVisible = false;
             w.IsAnimatingTransition = true;
 
-            if (!w.Root.gameObject.activeSelf)
+            if (!w.AnimPivot.gameObject.activeSelf)
             {
                 w.IsAnimatingTransition = false;
+                if (w.ActiveStatusCount == 0 && w.Root != null) w.Root.gameObject.SetActive(false);
                 return;
             }
 
@@ -433,13 +584,14 @@ namespace PlushieOdyssey.UI.Combat
             Sequence seq = DOTween.Sequence().SetUpdate(true);
             seq.Append(w.AnimPivot.DOAnchorPosY(w.AnimPivot.anchoredPosition.y + 22f, 0.20f).SetEase(Ease.OutQuad));
             seq.Join(w.AnimPivot.DOScale(new Vector3(1.26f, 1.26f, 1f), 0.20f).SetEase(Ease.OutQuad));
-            seq.Join(w.Group.DOFade(0f, 0.19f).SetEase(Ease.InQuad));
+            seq.Join(w.IntentGroup.DOFade(0f, 0.19f).SetEase(Ease.InQuad));
             seq.OnComplete(() =>
             {
                 w.IsAnimatingTransition = false;
-                if (!w.IsVisible && w.Root != null)
+                if (!w.IsVisible)
                 {
-                    w.Root.gameObject.SetActive(false);
+                    if (w.AnimPivot != null) w.AnimPivot.gameObject.SetActive(false);
+                    if (w.ActiveStatusCount == 0 && w.Root != null) w.Root.gameObject.SetActive(false);
                 }
             });
 
@@ -467,13 +619,14 @@ namespace PlushieOdyssey.UI.Combat
         }
 
         // ------------------------------------------------------------------
-        // Cursor Hover Detection & Tooltip Presentation
+        // Cursor Hover Detection (Priority: Enemy Status Icons -> Intent Icons)
         // ------------------------------------------------------------------
         private void UpdateHoverTooltip()
         {
             bool suppressHover =
                 (_handController != null && _handController.IsCardInteracting) ||
                 (_relicSwapModal != null && _relicSwapModal.IsOpen) ||
+                CombatMapOverlayUI.IsAnyOpen ||
                 Time.timeScale == 0f;
 
             if (suppressHover)
@@ -483,6 +636,7 @@ namespace PlushieOdyssey.UI.Combat
                     _hoveredEnemy = null;
                     HideTooltip();
                 }
+                ClearHoveredStatus();
                 return;
             }
 
@@ -501,12 +655,67 @@ namespace PlushieOdyssey.UI.Combat
             }
 
             Camera uiCam = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
+
+            // 1. Check active Enemy Buff/Debuff icons at the top of each intent icon first
+            EnemyStatusSlot newlyHoveredStatus = null;
+            foreach (IntentWidget w in _widgets.Values)
+            {
+                if (w.ActiveStatusCount <= 0 || w.Root == null || !w.Root.gameObject.activeSelf || !w.StatusRowRoot.gameObject.activeSelf)
+                    continue;
+
+                for (int i = 0; i < w.ActiveStatusCount && i < w.StatusSlots.Count; i++)
+                {
+                    EnemyStatusSlot slot = w.StatusSlots[i];
+                    if (slot.Badge == null || slot.Root == null || !slot.Root.gameObject.activeSelf) continue;
+
+                    if (RectTransformUtility.ScreenPointToLocalPointInRectangle(slot.Root, pointerScreen, uiCam, out Vector2 localHit))
+                    {
+                        Rect r = slot.Root.rect;
+                        r.xMin -= 5f;
+                        r.xMax += 5f;
+                        r.yMin -= 5f;
+                        r.yMax += 5f;
+                        if (r.Contains(localHit))
+                        {
+                            newlyHoveredStatus = slot;
+                            break;
+                        }
+                    }
+                }
+                if (newlyHoveredStatus != null) break;
+            }
+
+            if (newlyHoveredStatus != null)
+            {
+                if (_hoveredEnemy != null)
+                {
+                    _hoveredEnemy = null;
+                    HideTooltip();
+                }
+
+                if (_hoveredStatusSlot != newlyHoveredStatus)
+                {
+                    if (_hoveredStatusSlot?.Root != null) _hoveredStatusSlot.Root.localScale = Vector3.one;
+                    _hoveredStatusSlot = newlyHoveredStatus;
+                    _hoveredStatusSlot.Root.localScale = Vector3.one * 1.16f;
+                    CombatStatusTooltipUI.Instance?.Show(_hoveredStatusSlot.Badge, _hoveredStatusSlot.Root, this, preferBelow: false);
+                }
+                else
+                {
+                    CombatStatusTooltipUI.Instance?.Show(_hoveredStatusSlot.Badge, _hoveredStatusSlot.Root, this, preferBelow: false, playHoverSfx: false);
+                }
+                return;
+            }
+
+            ClearHoveredStatus();
+
+            // 2. Check Enemy Intent icons
             EnemyView newlyHovered = null;
             IntentWidget hoveredWidget = null;
 
             foreach (IntentWidget w in _widgets.Values)
             {
-                if (!w.IsVisible || w.Snapshot == null || w.HoverBounds == null || !w.Root.gameObject.activeSelf)
+                if (!w.IsVisible || w.Snapshot == null || w.HoverBounds == null || !w.Root.gameObject.activeSelf || !w.AnimPivot.gameObject.activeSelf)
                     continue;
 
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(w.HoverBounds, pointerScreen, uiCam, out Vector2 localHit))
@@ -542,6 +751,16 @@ namespace PlushieOdyssey.UI.Combat
             else if (_hoveredEnemy != null && hoveredWidget != null)
             {
                 PositionTooltip(hoveredWidget);
+            }
+        }
+
+        private void ClearHoveredStatus()
+        {
+            if (_hoveredStatusSlot != null)
+            {
+                if (_hoveredStatusSlot.Root != null) _hoveredStatusSlot.Root.localScale = Vector3.one;
+                _hoveredStatusSlot = null;
+                CombatStatusTooltipUI.Instance?.Hide(this);
             }
         }
 
@@ -587,9 +806,9 @@ namespace PlushieOdyssey.UI.Combat
             float halfW = canvasRect.rect.width * 0.5f;
             float halfH = canvasRect.rect.height * 0.5f;
 
-            // Place cleanly above the hovered intent; if near top bar, flip cleanly to the left side
+            float extraLift = w.ActiveStatusCount > 0 ? 108f : 76f;
             float x = anchorPos.x;
-            float y = anchorPos.y + 76f + tipSize.y * 0.5f;
+            float y = anchorPos.y + extraLift + tipSize.y * 0.5f;
 
             if (y + tipSize.y * 0.5f > halfH - 86f)
             {
@@ -621,16 +840,13 @@ namespace PlushieOdyssey.UI.Combat
             w.Snapshot = snap;
             Color accent = snap.AccentColor;
 
-            // Color-coded top action label
             w.TopActionLabel.text = snap.ActionLabel;
             w.TopActionLabel.color = Color.Lerp(accent, Color.white, 0.14f);
             w.TopPillBorder.color = new Color(accent.r, accent.g, accent.b, 0.90f);
 
-            // Resize top pill width cleanly to fit text
             float labelPrefW = Mathf.Clamp(w.TopActionLabel.GetPreferredValues(snap.ActionLabel).x + 22f, 84f, 176f);
             w.TopPillBorder.rectTransform.sizeDelta = new Vector2(labelPrefW, 24f);
 
-            // Template Icon + frame tint
             Sprite icon = GetTemplateSprite(snap.Category);
             w.IconImage.sprite = icon;
             w.IconImage.enabled = icon != null;
@@ -638,7 +854,6 @@ namespace PlushieOdyssey.UI.Combat
             w.IconBorder.color = accent;
             w.IconBg.color = new Color(accent.r * 0.16f + 0.06f, accent.g * 0.16f + 0.06f, accent.b * 0.16f + 0.08f, 0.94f);
 
-            // Primary numeric readout (e.g. "15", "6x2", "+3", "8/t")
             bool hasVal = !string.IsNullOrEmpty(snap.ValueLabel);
             w.ValueText.gameObject.SetActive(hasVal);
             if (hasVal)
@@ -658,7 +873,6 @@ namespace PlushieOdyssey.UI.Combat
             }
             w.LastValueText = snap.ValueLabel;
 
-            // Optional secondary chip (e.g. "-5 WILL" on Attack + Will)
             bool hasSec = !string.IsNullOrEmpty(snap.SecondaryBadge);
             w.SecondaryChipRoot.SetActive(hasSec);
             if (hasSec)
@@ -667,6 +881,32 @@ namespace PlushieOdyssey.UI.Combat
                 w.SecondaryChipBorder.color = new Color(sec.r, sec.g, sec.b, 0.92f);
                 w.SecondaryChipText.text = snap.SecondaryBadge;
                 w.SecondaryChipText.color = Color.Lerp(sec, Color.white, 0.35f);
+            }
+        }
+
+        private static void BindEnemyStatusSlot(EnemyStatusSlot slot, CombatStatusBadgeData badge)
+        {
+            Color accent = badge.AccentColor;
+            slot.Border.color = accent;
+            slot.InnerBg.color = new Color(accent.r * 0.18f + 0.06f, accent.g * 0.18f + 0.06f, accent.b * 0.18f + 0.08f, 0.96f);
+
+            Sprite icon = CombatStatusTooltipUI.Instance != null
+                ? CombatStatusTooltipUI.Instance.GetSprite(badge.IconKey)
+                : null;
+            bool hasIcon = icon != null;
+
+            slot.IconImage.sprite = icon;
+            slot.IconImage.enabled = hasIcon;
+            slot.IconImage.color = Color.Lerp(accent, Color.white, 0.24f);
+
+            slot.FallbackCode.gameObject.SetActive(!hasIcon);
+            if (!hasIcon) slot.FallbackCode.text = badge.ShortCode;
+
+            bool showStack = !string.IsNullOrEmpty(badge.StackLabel);
+            slot.StackText.gameObject.SetActive(showStack);
+            if (showStack)
+            {
+                slot.StackText.text = badge.StackLabel;
             }
         }
 
@@ -690,8 +930,40 @@ namespace PlushieOdyssey.UI.Combat
             return picked != null ? picked : _unknownIcon;
         }
 
+        private void SubscribeStatusSystems()
+        {
+            _subscribedBuffSystem = BuffSystem.Instance;
+            if (_subscribedBuffSystem != null)
+            {
+                _subscribedBuffSystem.StatusEffectsChanged -= RefreshAllEnemyStatuses;
+                _subscribedBuffSystem.StatusEffectsChanged += RefreshAllEnemyStatuses;
+            }
+
+            _subscribedDotSystem = DamageOverTimeSystem.Instance;
+            if (_subscribedDotSystem != null)
+            {
+                _subscribedDotSystem.StatusEffectsChanged -= RefreshAllEnemyStatuses;
+                _subscribedDotSystem.StatusEffectsChanged += RefreshAllEnemyStatuses;
+            }
+        }
+
+        private void UnsubscribeStatusSystems()
+        {
+            if (_subscribedBuffSystem != null)
+            {
+                _subscribedBuffSystem.StatusEffectsChanged -= RefreshAllEnemyStatuses;
+                _subscribedBuffSystem = null;
+            }
+
+            if (_subscribedDotSystem != null)
+            {
+                _subscribedDotSystem.StatusEffectsChanged -= RefreshAllEnemyStatuses;
+                _subscribedDotSystem = null;
+            }
+        }
+
         // ------------------------------------------------------------------
-        // Runtime UI Construction (Non-Blocking Overlay + Hover Tooltip)
+        // Runtime UI Construction
         // ------------------------------------------------------------------
         private void BuildLayersIfNeeded()
         {
@@ -722,7 +994,6 @@ namespace PlushieOdyssey.UI.Combat
                     cg.blocksRaycasts = false;
                     cg.interactable = false;
 
-                    // Keep behind HandView / CombatTopBar / Modals so cards and menus always sit cleanly above
                     _widgetsLayer.SetAsFirstSibling();
                 }
             }
@@ -742,27 +1013,44 @@ namespace PlushieOdyssey.UI.Combat
             TMP_FontAsset font = _font != null ? _font : TMP_Settings.defaultFontAsset;
             int layer = _canvas.gameObject.layer;
 
-            // Root (tracks enemy world position)
-            GameObject rootGo = new($"Intent_{enemy.name}", typeof(RectTransform), typeof(CanvasGroup));
+            GameObject rootGo = new($"Intent_{enemy.name}", typeof(RectTransform));
             rootGo.layer = layer;
             RectTransform rootRt = (RectTransform)rootGo.transform;
             rootRt.SetParent(_widgetsLayer, false);
             rootRt.anchorMin = rootRt.anchorMax = new Vector2(0.5f, 0.5f);
             rootRt.pivot = new Vector2(0.5f, 0.5f);
-            rootRt.sizeDelta = new Vector2(180f, 114f);
+            rootRt.sizeDelta = new Vector2(190f, 118f);
 
-            CanvasGroup cg = rootGo.GetComponent<CanvasGroup>();
-            cg.blocksRaycasts = false;
-            cg.interactable = false;
+            // Active Buff/Debuff row directly AT THE TOP of the intent icon (sibling of AnimPivot so it remains visible even while intent is hidden during Enemy Turn)
+            GameObject statusRowGo = new("EnemyStatusRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            statusRowGo.layer = layer;
+            RectTransform statusRowRt = (RectTransform)statusRowGo.transform;
+            statusRowRt.SetParent(rootRt, false);
+            statusRowRt.anchorMin = statusRowRt.anchorMax = new Vector2(0.5f, 0.5f);
+            statusRowRt.pivot = new Vector2(0.5f, 0.5f);
+            statusRowRt.anchoredPosition = new Vector2(0f, 77f);
+            statusRowRt.sizeDelta = new Vector2(220f, 30f);
+            HorizontalLayoutGroup statusHlg = statusRowGo.GetComponent<HorizontalLayoutGroup>();
+            statusHlg.spacing = 11f;
+            statusHlg.childAlignment = TextAnchor.MiddleCenter;
+            statusHlg.childControlWidth = false;
+            statusHlg.childControlHeight = false;
+            statusHlg.childForceExpandWidth = false;
+            statusHlg.childForceExpandHeight = false;
+            statusRowGo.SetActive(false);
 
-            // AnimPivot (receives procedural pop-in, squash/stretch, tilt, idle float, and hover scale)
-            GameObject pivotGo = new("AnimPivot", typeof(RectTransform));
+            // AnimPivot (receives intent pop-in, squash/stretch, tilt, idle float, hover scale, and consume fade)
+            GameObject pivotGo = new("AnimPivot", typeof(RectTransform), typeof(CanvasGroup));
             pivotGo.layer = layer;
             RectTransform pivotRt = (RectTransform)pivotGo.transform;
             pivotRt.SetParent(rootRt, false);
             pivotRt.anchorMin = pivotRt.anchorMax = new Vector2(0.5f, 0.5f);
             pivotRt.pivot = new Vector2(0.5f, 0.5f);
             pivotRt.sizeDelta = new Vector2(170f, 108f);
+
+            CanvasGroup intentGroup = pivotGo.GetComponent<CanvasGroup>();
+            intentGroup.blocksRaycasts = false;
+            intentGroup.interactable = false;
 
             // 1. Top Color-Coded Action Header Pill
             GameObject pillGo = new("TopActionPill", typeof(RectTransform), typeof(Image));
@@ -771,7 +1059,7 @@ namespace PlushieOdyssey.UI.Combat
             pillRt.SetParent(pivotRt, false);
             pillRt.anchorMin = pillRt.anchorMax = new Vector2(0.5f, 1f);
             pillRt.pivot = new Vector2(0.5f, 1f);
-            pillRt.anchoredPosition = new Vector2(0f, 0f);
+            pillRt.anchoredPosition = Vector2.zero;
             pillRt.sizeDelta = new Vector2(128f, 24f);
             Image pillBorder = pillGo.GetComponent<Image>();
             pillBorder.sprite = solid;
@@ -796,7 +1084,7 @@ namespace PlushieOdyssey.UI.Combat
             topLabel.rectTransform.offsetMin = new Vector2(6f, 0f);
             topLabel.rectTransform.offsetMax = new Vector2(-6f, 0f);
 
-            // 2. Icon + Primary Value Row (centered directly below TopActionPill)
+            // 2. Icon + Primary Value Row
             GameObject bodyGo = new("IconRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
             bodyGo.layer = layer;
             RectTransform bodyRt = (RectTransform)bodyGo.transform;
@@ -813,7 +1101,6 @@ namespace PlushieOdyssey.UI.Combat
             bodyHlg.childForceExpandWidth = false;
             bodyHlg.childForceExpandHeight = false;
 
-            // Icon Frame (52x52 template container)
             GameObject frameGo = new("IconFrame", typeof(RectTransform), typeof(Image));
             frameGo.layer = layer;
             RectTransform frameRt = (RectTransform)frameGo.transform;
@@ -823,7 +1110,6 @@ namespace PlushieOdyssey.UI.Combat
             iconBorder.sprite = solid;
             iconBorder.raycastTarget = false;
 
-            // Procedural Burst Flash Ring behind icon frame
             GameObject burstGo = new("BurstRing", typeof(RectTransform), typeof(Image));
             burstGo.layer = layer;
             RectTransform burstRt = (RectTransform)burstGo.transform;
@@ -862,7 +1148,6 @@ namespace PlushieOdyssey.UI.Combat
             iconImg.preserveAspect = true;
             iconImg.raycastTarget = false;
 
-            // Bold Value Readout beside icon
             TextMeshProUGUI valueText = CreateText(bodyRt, "ValueText", font, 28f, FontStyles.Bold, Color.white, TextAlignmentOptions.Left);
             valueText.rectTransform.sizeDelta = new Vector2(68f, 46f);
             valueText.textWrappingMode = TextWrappingModes.NoWrap;
@@ -873,7 +1158,7 @@ namespace PlushieOdyssey.UI.Combat
             valFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             valFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-            // 3. Optional Secondary Chip directly below IconRow (e.g. "-5 WILL")
+            // 3. Optional Secondary Chip directly below IconRow
             GameObject secGo = new("SecondaryChip", typeof(RectTransform), typeof(Image));
             secGo.layer = layer;
             RectTransform secRt = (RectTransform)secGo.transform;
@@ -906,15 +1191,17 @@ namespace PlushieOdyssey.UI.Combat
             secText.rectTransform.offsetMax = new Vector2(-4f, 0f);
             secGo.SetActive(false);
 
+            pivotGo.SetActive(false);
             rootGo.SetActive(false);
 
             var widget = new IntentWidget
             {
                 Enemy = enemy,
                 Root = rootRt,
-                Group = cg,
+                IntentGroup = intentGroup,
                 AnimPivot = pivotRt,
                 HoverBounds = pivotRt,
+                StatusRowRoot = statusRowRt,
                 TopPillBorder = pillBorder,
                 TopPillBg = pillBg,
                 TopActionLabel = topLabel,
@@ -931,6 +1218,79 @@ namespace PlushieOdyssey.UI.Combat
 
             _widgets[enemy] = widget;
             return widget;
+        }
+
+        private void EnsureStatusSlotPool(IntentWidget w, int needed)
+        {
+            Sprite solid = GetSolidSprite();
+            TMP_FontAsset font = _font != null ? _font : TMP_Settings.defaultFontAsset;
+            int layer = _canvas.gameObject.layer;
+
+            while (w.StatusSlots.Count < needed)
+            {
+                int idx = w.StatusSlots.Count;
+                GameObject go = new($"StatusIcon_{idx}", typeof(RectTransform), typeof(Image));
+                go.layer = layer;
+                RectTransform rt = (RectTransform)go.transform;
+                rt.SetParent(w.StatusRowRoot, false);
+                rt.sizeDelta = new Vector2(26f, 26f);
+                Image borderImg = go.GetComponent<Image>();
+                borderImg.sprite = solid;
+                borderImg.raycastTarget = false;
+
+                GameObject innerGo = new("Inner", typeof(RectTransform), typeof(Image));
+                innerGo.layer = layer;
+                RectTransform innerRt = (RectTransform)innerGo.transform;
+                innerRt.SetParent(rt, false);
+                innerRt.anchorMin = Vector2.zero;
+                innerRt.anchorMax = Vector2.one;
+                innerRt.offsetMin = new Vector2(1.5f, 1.5f);
+                innerRt.offsetMax = new Vector2(-1.5f, -1.5f);
+                Image innerImg = innerGo.GetComponent<Image>();
+                innerImg.sprite = solid;
+                innerImg.raycastTarget = false;
+
+                GameObject iconGo = new("Icon", typeof(RectTransform), typeof(Image));
+                iconGo.layer = layer;
+                RectTransform iconRt = (RectTransform)iconGo.transform;
+                iconRt.SetParent(innerRt, false);
+                iconRt.anchorMin = Vector2.zero;
+                iconRt.anchorMax = Vector2.one;
+                iconRt.offsetMin = new Vector2(3f, 3f);
+                iconRt.offsetMax = new Vector2(-3f, -3f);
+                Image iconImg = iconGo.GetComponent<Image>();
+                iconImg.preserveAspect = true;
+                iconImg.raycastTarget = false;
+
+                TextMeshProUGUI codeTmp = CreateText(innerRt, "FallbackCode", font, 10f, FontStyles.Bold, Color.white, TextAlignmentOptions.Center);
+                codeTmp.rectTransform.anchorMin = Vector2.zero;
+                codeTmp.rectTransform.anchorMax = Vector2.one;
+                codeTmp.rectTransform.offsetMin = Vector2.zero;
+                codeTmp.rectTransform.offsetMax = Vector2.zero;
+                codeTmp.gameObject.SetActive(false);
+
+                // Bottom-right stack count tucked cleanly right under the icon
+                TextMeshProUGUI stackTmp = CreateText(rt, "StackCount", font, 12.5f, FontStyles.Bold, Color.white, TextAlignmentOptions.BottomRight);
+                stackTmp.rectTransform.anchorMin = stackTmp.rectTransform.anchorMax = new Vector2(1f, 0f);
+                stackTmp.rectTransform.pivot = new Vector2(0.75f, 0.28f);
+                stackTmp.rectTransform.anchoredPosition = new Vector2(3f, -2f);
+                stackTmp.rectTransform.sizeDelta = new Vector2(26f, 16f);
+                stackTmp.textWrappingMode = TextWrappingModes.NoWrap;
+                Outline stackOutline = stackTmp.gameObject.AddComponent<Outline>();
+                stackOutline.effectColor = new Color(0.02f, 0.03f, 0.06f, 0.98f);
+                stackOutline.effectDistance = new Vector2(1.5f, -1.5f);
+
+                go.SetActive(false);
+                w.StatusSlots.Add(new EnemyStatusSlot
+                {
+                    Root = rt,
+                    Border = borderImg,
+                    InnerBg = innerImg,
+                    IconImage = iconImg,
+                    FallbackCode = codeTmp,
+                    StackText = stackTmp
+                });
+            }
         }
 
         private void BuildTooltip()
@@ -969,7 +1329,6 @@ namespace PlushieOdyssey.UI.Combat
             bgImg.color = new Color(0.07f, 0.08f, 0.13f, 0.96f);
             bgImg.raycastTarget = false;
 
-            // Left accent stripe
             GameObject stripeGo = new("AccentStripe", typeof(RectTransform), typeof(Image));
             stripeGo.layer = layer;
             RectTransform stripeRt = (RectTransform)stripeGo.transform;
@@ -983,7 +1342,6 @@ namespace PlushieOdyssey.UI.Combat
             _tooltipAccentBar.sprite = solid;
             _tooltipAccentBar.raycastTarget = false;
 
-            // Text stack
             _tooltipEnemyName = CreateText(bgRt, "EnemyName", font, 12.5f, FontStyles.Bold, new Color(0.72f, 0.77f, 0.86f, 1f), TextAlignmentOptions.Left);
             _tooltipEnemyName.rectTransform.anchorMin = new Vector2(0f, 1f);
             _tooltipEnemyName.rectTransform.anchorMax = new Vector2(1f, 1f);

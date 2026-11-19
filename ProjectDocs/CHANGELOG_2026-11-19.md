@@ -15,8 +15,10 @@ Complete log of all engineering, scene wiring, combat mechanics, UI/UX, audio, a
 5. [Figma Combat Top Bar, 3 Character Portraits & Will System](#5-figma-combat-top-bar-3-character-portraits--will-system)
 6. [Top-Middle 5-Slot Relic Bar & Full-Slots Drag-and-Drop Swap Modal](#6-top-middle-5-slot-relic-bar--full-slots-drag-and-drop-swap-modal)
 7. [Enemy Intent Icon Templates, Hover Tooltips, Turn Timing & Procedural Animations](#7-enemy-intent-icon-templates-hover-tooltips-turn-timing--procedural-animations)
-8. [File Change Inventory](#8-file-change-inventory)
-9. [Verification Summary](#9-verification-summary)
+8. [Dynamic Stacked Buff/Debuff Icons (Hero & Enemy) & Status Tooltips](#8-dynamic-stacked-buffdebuff-icons-hero--enemy--status-tooltips)
+9. [Slay-the-Spire Procedural Left-to-Right Map (`Map.unity`) & In-Combat Map Overlay (`Game.unity`)](#9-slay-the-spire-procedural-left-to-right-map-mapunity--in-combat-map-overlay-gameunity)
+10. [File Change Inventory](#10-file-change-inventory)
+11. [Verification Summary](#11-verification-summary)
 
 ---
 
@@ -123,21 +125,53 @@ Complete log of all engineering, scene wiring, combat mechanics, UI/UX, audio, a
 
 ---
 
-## 8. File Change Inventory
+## 8. Dynamic Stacked Buff/Debuff Icons (Hero & Enemy) & Status Tooltips
+
+- **Hide Empty Buff/Debuff Placeholders** ([`CombatTopBarUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatTopBarUI.cs), [`EnemyIntentHUD.cs`](../Assets/_Project/Scripts/UI/Combat/EnemyIntentHUD.cs), [`CombatantStatusEffectsUI.cs`](../Assets/_Project/Scripts/UI/StatusEffects/CombatantStatusEffectsUI.cs)):
+  - All empty buff/debuff placeholder squares under the 3 Character Portraits and above enemies are completely hidden during gameplay unless an actual active buff/debuff exists.
+  - Suppressed legacy bottom-of-HP-bar enemy status icons (`SuppressEnemyWorldStatusUI`) so enemy statuses appear exclusively **at the top of each enemy's intent icon** (and remain visible even while the enemy's intent icon is consumed during Enemy Turn).
+- **Single-Icon Stacking & Bottom-Right Count Badge** ([`CombatStatusBadgeData.cs`](../Assets/_Project/Scripts/Models/CombatStatusBadgeData.cs), [`BuffSystem.cs`](../Assets/_Project/Scripts/Systems/BuffSystem.cs), [`BuffData.cs`](../Assets/_Project/Scripts/Models/BuffData.cs)):
+  - Repeated applications of the same buff/debuff (`Strength`, `Dexterity`, `DamageReduction`, `Weak`, `Vulnerable`, `Frail`, `Poison`, `DoT`, `Thorns`, `Artifact`, etc.) merge into **one single icon** with the stacked total displayed cleanly at the **bottom-right corner right under the icon** (with a punch-scale cue when stacks increase).
+  - Generated 5 additional replaceable status icon PNG templates in `Assets/_Project/Art/UI/Status/` (`Status_Weak`, `Status_Vulnerable`, `Status_Poison`, `Status_Burn`, `Status_Thorns`).
+- **Unified Status Hover Tooltip** ([`CombatStatusTooltipUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatStatusTooltipUI.cs)):
+  - Hovering over any active buff/debuff icon on **Hero Portraits** or **above Enemy Intents** shows a color-coded description tooltip with `[BUFF]` / `[DEBUFF]` tag, current stack total, gameplay effect explanation, and remaining turns.
+
+---
+
+## 9. Slay-the-Spire Procedural Left-to-Right Map (`Map.unity`) & In-Combat Map Overlay (`Game.unity`)
+
+- **Procedural 6–8 Column Left-to-Right Generator** ([`ProceduralMapGenerator.cs`](../Assets/_Project/Scripts/Map/ProceduralMapGenerator.cs), [`MapGeneratorConfig.cs`](../Assets/_Project/Scripts/Map/MapGeneratorConfig.cs), [`MapGraph.cs`](../Assets/_Project/Scripts/Map/MapGraph.cs)):
+  - Generates branching Left (Start) → Right (Boss) maps whose depth varies randomly between **6 and 8 columns** across 4 vertical lanes with organic X/Y jitter, anti-overlap relaxation, and crossing-edge untangling.
+  - Enforces balanced *Slay the Spire* rules: opening Enemy row on the left, Rest/Treasure sanctuary before the Boss, Act Boss on the far right, weighted middle-layer distribution (`Enemy`, `Event`, `Elite`, `Shop`, `Rest`, `Treasure`), zero back-to-back Elite/Rest/Shop/Treasure nodes, sibling branch variety, and non-repeating encounter selection.
+- **Parchment Renderer & Procedural Pop-Up Animations** ([`ProceduralMapRendererUI.cs`](../Assets/_Project/Scripts/UI/Map/ProceduralMapRendererUI.cs)):
+  - Built entirely with existing project Map assets (`scroll.png`, `Tombol.png`, `Pin Map.png`, `Icon_Enemy.png`, `Icon_Elite Boss.png`, `Icon_Boss.png`, `Icon_Event2.png`, `Icon_Merchant.png`, `Icon_Rest.png`, `Icon_Event.png`).
+  - Renders curved hand-inked dotted trails (amber-gold traveled path, dark-ink next reachable path, charcoal upcoming path, dimmed skipped branches), a Left → Right staggered squash-and-stretch pop-in animation wave, allocation-free trail-dot ripple animations, bouncing `Pin Map.png` + `"HERE"` current-node marker, hover tooltips, and bottom Legend bar.
+- **Live Scene Integration (`Map.unity` & `Game.unity`)** ([`MapSystem.cs`](../Assets/_Project/Scripts/Map/MapSystem.cs), [`CombatMapOverlayUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatMapOverlayUI.cs), [`RunManager.cs`](../Assets/_Project/Scripts/Run/RunManager.cs)):
+  - Replaced manual static layout loading in `Map.unity` with procedural `MapSystem` + `ProceduralMapRendererUI` + `"NEW MAP"` reroll button and full scene routing (`Game`, `Merchant`, `Rest`, `Event`, `Treasure`, plus Boss level completion).
+  - Wired `CombatMapOverlayUI` to `CombatTopBar/MapButton` (and `M` hotkey / `Esc` close) in `Game.unity` so players can inspect the current run's procedural map and exact current node position mid-combat.
+
+---
+
+## 10. File Change Inventory
 
 ### New Scripts
+- [`Assets/_Project/Scripts/Models/CombatStatusBadgeData.cs`](../Assets/_Project/Scripts/Models/CombatStatusBadgeData.cs)
 - [`Assets/_Project/Scripts/Models/EnemyIntentSnapshot.cs`](../Assets/_Project/Scripts/Models/EnemyIntentSnapshot.cs)
 - [`Assets/_Project/Scripts/UI/Combat/CombatFeedbackBannerUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatFeedbackBannerUI.cs)
 - [`Assets/_Project/Scripts/UI/Combat/CombatKeywordTooltipUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatKeywordTooltipUI.cs)
+- [`Assets/_Project/Scripts/UI/Combat/CombatMapOverlayUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatMapOverlayUI.cs)
 - [`Assets/_Project/Scripts/UI/Combat/CombatPileViewerUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatPileViewerUI.cs)
+- [`Assets/_Project/Scripts/UI/Combat/CombatStatusTooltipUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatStatusTooltipUI.cs)
 - [`Assets/_Project/Scripts/UI/Combat/CombatTopBarUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatTopBarUI.cs)
 - [`Assets/_Project/Scripts/UI/Combat/EnemyIntentHUD.cs`](../Assets/_Project/Scripts/UI/Combat/EnemyIntentHUD.cs)
+- [`Assets/_Project/Scripts/UI/Map/ProceduralMapRendererUI.cs`](../Assets/_Project/Scripts/UI/Map/ProceduralMapRendererUI.cs)
 - [`Assets/_Project/Scripts/UI/Relics/TopBarRelicSlotsUI.cs`](../Assets/_Project/Scripts/UI/Relics/TopBarRelicSlotsUI.cs)
 - [`Assets/_Project/Scripts/UI/Relics/RelicSwapModalUI.cs`](../Assets/_Project/Scripts/UI/Relics/RelicSwapModalUI.cs)
 - [`Assets/_Project/Scripts/Views/CombatTargetingPresenter.cs`](../Assets/_Project/Scripts/Views/CombatTargetingPresenter.cs)
 
 ### New Art Templates
-- `Assets/_Project/Art/UI/Intents/Intent_*.png` (10 replaceable Sprite templates)
+- `Assets/_Project/Art/UI/Intents/Intent_*.png` (10 replaceable Intent Sprite templates)
+- `Assets/_Project/Art/UI/Status/Status_*.png` (5 replaceable Status Sprite templates)
 
 ### Modified Scenes, Prefabs & Settings
 - [`Assets/_Project/Scenes/Game.unity`](../Assets/_Project/Scenes/Game.unity)
@@ -156,11 +190,13 @@ Complete log of all engineering, scene wiring, combat mechanics, UI/UX, audio, a
 
 ---
 
-## 9. Verification Summary
+## 11. Verification Summary
 
-Every milestone above was compiled (`0` errors) and verified live in Unity Play Mode inside `Assets/_Project/Scenes/Game.unity` with **`0` console errors and `0` runtime warnings**, including visual inspection of captured `1920×1080` Game View frames:
+Every milestone above was compiled (`0` errors) and verified live in Unity Play Mode inside `Assets/_Project/Scenes/Game.unity` and `Assets/_Project/Scenes/Map.unity` with **`0` console errors and `0` runtime warnings**, including visual inspection of captured `1920×1080` Game View frames:
 - Full combat turn loop (draw, hover pop-up & neighbor spread, single-target reticle + lethal preview, AoE targeting, card play, pile modals, End Turn, enemy intent execution).
 - Will system transitions across **Neutral (50%)**, **High Will (85%, `+25%` ATK/DEF + `WL+`)**, and **Low Will (15%, Fear HP cap penalty + `FEAR`)**.
 - Top-Middle 5-slot Relic bar (empty Figma template squares → 5/5 equipped relics → 6th relic auto-opening `RelicSwapModalUI` → uGUI drag-and-drop unequip, equip, swap, Confirm Loadout, and direct Top Bar slot reordering).
 - Enemy Intent Icon HUD across Turn 1 (`ATTACK + WILL`), cursor hover tooltips (`Attack & Will Drain` and `Affliction`), mid-Enemy-Turn consumed/hidden state (confirming no premature intent roll), and Turn 2 Player-Turn staggered pop-in (`DEFEND +3`, `AFFLICT 8/t`, `BUFF +5`).
+- Dynamic Buff/Debuff Icon HUD: confirmed `0` visible status boxes on both Hero portraits and Enemies when none are active; confirmed duplicate applications stack into single icons with bottom-right counts (`Strength 6`, `Weak 4`, `Vulnerable 4`, `Poison 8`, `Damage Reduction 10`) positioned cleanly above Enemy Intents and under Hero Portraits; verified hover description tooltips on both Hero and Enemy status icons.
+- Procedural Left-to-Right Map: audited 20 generated maps (`6-col: 6, 7-col: 7, 8-col: 7`, balanced StS node distribution, `0` endpoint/consecutive-special/overlap violations); verified `Game.unity` Map Peek Overlay at Step 1 and Step 3 (traveled amber-gold dotted trail + `Pin Map.png` `"HERE"` marker + dimmed skipped branches) and `Map.unity` live Play Mode across 6-column and 8-column seeds with `0` console errors/warnings.
 

@@ -1,4 +1,4 @@
-using PlushieOdyssey.Combat.Models;
+    using PlushieOdyssey.Combat.Models;
 using PlushieOdyssey.Combat.Systems;
 using PlushieOdyssey.Combat.Views;
 using PlushieOdyssey.Core;
@@ -64,6 +64,11 @@ namespace PlushieOdyssey.UI.StatusEffects
 
         private Transform Container => container != null ? container : transform;
 
+        /// <summary>
+        /// When true, EnemyView status icons are rendered above enemy intents by EnemyIntentHUD instead of below the enemy HP bar.
+        /// </summary>
+        public static bool SuppressEnemyWorldStatusUI { get; set; }
+
         private void Awake()
         {
             if (container == null) container = transform;
@@ -124,6 +129,13 @@ namespace PlushieOdyssey.UI.StatusEffects
         public void Refresh()
         {
             EnsureTargetReference();
+
+            if (SuppressEnemyWorldStatusUI && target is EnemyView)
+            {
+                ClearIconViews();
+                SetContainerVisible(false);
+                return;
+            }
 
             if (!ValidateReferences())
             {

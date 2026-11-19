@@ -1194,18 +1194,18 @@ PrefabInstance:
     - target: {fileID: 7581927665586147330, guid: 8cb3859f2f27ec143993ae6609b1c1ae, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1708031078}
     - target: {fileID: 7581927665586147330, guid: 8cb3859f2f27ec143993ae6609b1c1ae, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7581927665586147330, guid: 8cb3859f2f27ec143993ae6609b1c1ae, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Play
+      value: StartNewCampaign
       objectReference: {fileID: 0}
     - target: {fileID: 7581927665586147330, guid: 8cb3859f2f27ec143993ae6609b1c1ae, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: BrunoMikoski.AnimationSequencer.AnimationSequencerController, BrunoMikoski.AnimationSequencer
+      value: PlushieOdyssey.UI.Menus.MainMenuController, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 7581927665586147330, guid: 8cb3859f2f27ec143993ae6609b1c1ae, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
