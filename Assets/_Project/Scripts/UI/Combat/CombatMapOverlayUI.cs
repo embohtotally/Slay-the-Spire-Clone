@@ -1,5 +1,7 @@
+using System;
 using DG.Tweening;
 using PlushieOdyssey.Audio;
+using PlushieOdyssey.Inputs;
 using PlushieOdyssey.Map;
 using PlushieOdyssey.Run;
 using PlushieOdyssey.UI.Map;
@@ -16,7 +18,7 @@ namespace PlushieOdyssey.UI.Combat
     /// highlights the player's current node with Pin Map.png + pulsing ring, and animates nodes Left->Right.
     /// </summary>
     [DisallowMultipleComponent]
-    public class CombatMapOverlayUI : MonoBehaviour
+    public class CombatMapOverlayUI : MonoBehaviour, IBackHandler
     {
         public static bool IsAnyOpen { get; private set; }
 
@@ -25,6 +27,7 @@ namespace PlushieOdyssey.UI.Combat
         [SerializeField] private TMP_FontAsset _font;
         [SerializeField] private MapGeneratorConfig _generatorConfig;
         [SerializeField] private MapEncounterPool _encounterPool;
+        [SerializeField] private InputContextRouter _inputRouter;
 
         [Header("Existing Project Map Art Assets")]
         [SerializeField] private Sprite _frameSprite;
@@ -46,6 +49,7 @@ namespace PlushieOdyssey.UI.Combat
         private TextMeshProUGUI _headerSubtitle;
         private ProceduralMapRendererUI _mapRenderer;
         private bool _isOpen;
+        private IDisposable _contextLease;
 
         public bool IsOpen => _isOpen;
         public ProceduralMapRendererUI MapRenderer => _mapRenderer;
@@ -54,14 +58,21 @@ namespace PlushieOdyssey.UI.Combat
         {
             if (_canvas == null) _canvas = GetComponentInParent<Canvas>()?.rootCanvas;
             if (_canvas == null) _canvas = FindFirstObjectByType<Canvas>();
+            if (_inputRouter == null) _inputRouter = InputContextRouter.FromBootstrap;
         }
 
         private void OnDisable()
         {
-            if (_isOpen)
+            _contextLease?.Dispose();
+            _contextLease = null;
+            _isOpen = false;
+            IsAnyOpen = false;
+            _mapRenderer?.KillAnimations();
+            if (_modalRoot != null)
             {
-                _isOpen = false;
-                IsAnyOpen = false;
+                _modalGroup.DOKill();
+                _windowRect.DOKill();
+                _modalRoot.SetActive(false);
             }
         }
 
@@ -69,11 +80,8 @@ namespace PlushieOdyssey.UI.Combat
         {
             if (Keyboard.current == null) return;
 
-            if (_isOpen && Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                Close();
-                return;
-            }
+            if (_inputRouter != null && !_isOpen &&
+                _inputRouter.CurrentContext != InputContext.Combat) return;
 
             if (Keyboard.current.mKey.wasPressedThisFrame)
             {
@@ -89,6 +97,7 @@ namespace PlushieOdyssey.UI.Combat
 
         public void Open()
         {
+            if (!isActiveAndEnabled) return;
             BuildModalIfNeeded();
             if (_modalRoot == null) return;
 
@@ -110,6 +119,9 @@ namespace PlushieOdyssey.UI.Combat
 
             _isOpen = true;
             IsAnyOpen = true;
+            if (_inputRouter == null) _inputRouter = InputContextRouter.FromBootstrap;
+            if (_contextLease == null && _inputRouter != null && _inputRouter.isActiveAndEnabled)
+                _contextLease = _inputRouter.EnterContext(this, InputContext.Modal, this);
 
             _modalRoot.SetActive(true);
             _modalRoot.transform.SetAsLastSibling();
@@ -146,6 +158,8 @@ namespace PlushieOdyssey.UI.Combat
             if (!_isOpen) return;
             _isOpen = false;
             IsAnyOpen = false;
+            _contextLease?.Dispose();
+            _contextLease = null;
 
             _mapRenderer?.KillAnimations();
             Tune.SFX(SfxID.ui_cancel);
@@ -153,8 +167,16 @@ namespace PlushieOdyssey.UI.Combat
             if (_modalRoot != null)
             {
                 _modalGroup.DOKill();
+                _windowRect.DOKill();
                 _modalRoot.SetActive(false);
             }
+        }
+
+        public bool TryHandleBack()
+        {
+            if (!_isOpen) return false;
+            Close();
+            return true;
         }
 
         private void BuildModalIfNeeded()

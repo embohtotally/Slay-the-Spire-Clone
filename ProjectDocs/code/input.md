@@ -84,4 +84,7 @@ Change `InputContext.Menu` to the required context. Replace `SetActive(false)` w
 | `InputContextStack`  | Internal priority/lifetime handling                  |
 
 Example in use: [`MainMenuNavigation.cs`](../../Assets/_Project/Scripts/Menus/MainMenuNavigation.cs).
+
+`CombatMapOverlayUI`, `CombatPileViewerUI`, and `RelicSwapModalUI` register `Modal` only while open and dispose on close/disable. Assign their optional `_inputRouter`, or use the existing GameManager bootstrap router. Back closes the active modal without also cancelling the underlying hand; the map's `M` shortcut remains keyboard-only.
+
 **Migration is partial:** other legacy polling and gamepad combat remain unmigrated; the asset currently has no Combat/Dialogue maps.

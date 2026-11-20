@@ -11,6 +11,8 @@ namespace PlushieOdyssey.Combat.Views
 
         private Vector3 startPosition;
         private Transform targetTransform;
+        private Vector3? _endPositionOverride;
+        private SpriteRenderer _headSpriteRenderer;
         private bool _followLegacyTarget;
 
         private void Update()
@@ -21,7 +23,9 @@ namespace PlushieOdyssey.Combat.Views
 
         private void UpdateLegacyArrow()
         {
-            Vector3 endPosition = targetTransform != null ? targetTransform.position : MouseUtils.GetMousePositionInWorldSpace();
+            Vector3 endPosition = targetTransform != null
+                ? targetTransform.position
+                : (_endPositionOverride ?? MouseUtils.GetMousePositionInWorldSpace());
             Draw(startPosition, endPosition);
         }
 
@@ -48,6 +52,7 @@ namespace PlushieOdyssey.Combat.Views
         {
             this.startPosition = startPosition;
             this.targetTransform = targetTransform;
+            _endPositionOverride = null;
             _followLegacyTarget = true;
             UpdateLegacyArrow();
             SetVisible(true);
@@ -57,6 +62,32 @@ namespace PlushieOdyssey.Combat.Views
         {
             this.startPosition = startPosition;
             if (lineRenderer != null) lineRenderer.SetPosition(0, startPosition);
+        }
+
+        public void SetTargetTransform(Transform target)
+        {
+            targetTransform = target;
+            if (target != null) _endPositionOverride = null;
+            if (_followLegacyTarget) UpdateLegacyArrow();
+        }
+
+        public void SetEndPositionOverride(Vector3? worldEnd)
+        {
+            _endPositionOverride = worldEnd;
+            if (worldEnd.HasValue) targetTransform = null;
+            if (_followLegacyTarget) UpdateLegacyArrow();
+        }
+
+        public void SetTint(Color color)
+        {
+            if (lineRenderer != null)
+            {
+                lineRenderer.startColor = color;
+                lineRenderer.endColor = color;
+            }
+            if (_headSpriteRenderer == null && arrowHead != null)
+                _headSpriteRenderer = arrowHead.GetComponent<SpriteRenderer>();
+            if (_headSpriteRenderer != null) _headSpriteRenderer.color = color;
         }
 
         private void Draw(Vector3 startWorld, Vector3 endWorld)

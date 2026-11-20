@@ -1,11 +1,12 @@
+using System;
 using System.Collections.Generic;
 using PlushieOdyssey.Audio;
 using PlushieOdyssey.Data;
+using PlushieOdyssey.Inputs;
 using PlushieOdyssey.Run;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace PlushieOdyssey.UI.Relics
@@ -24,11 +25,12 @@ namespace PlushieOdyssey.UI.Relics
     /// a Top Bar relic slot).
     /// </summary>
     [DisallowMultipleComponent]
-    public class RelicSwapModalUI : MonoBehaviour
+    public class RelicSwapModalUI : MonoBehaviour, IBackHandler
     {
         [Header("References")]
         [SerializeField] private Canvas _canvas;
         [SerializeField] private TMP_FontAsset _font;
+        [SerializeField] private InputContextRouter _inputRouter;
 
         private sealed class ModalSlot
         {
@@ -73,6 +75,7 @@ namespace PlushieOdyssey.UI.Relics
         private TextMeshProUGUI _dragGhostText;
 
         private RunRelicManager _subscribedManager;
+        private IDisposable _contextLease;
 
         public bool IsOpen => _isOpen;
 
@@ -89,7 +92,7 @@ namespace PlushieOdyssey.UI.Relics
         private void OnDisable()
         {
             Unsubscribe();
-            EndDragVisual();
+            CloseInternal();
         }
 
         private void Update()
@@ -98,11 +101,6 @@ namespace PlushieOdyssey.UI.Relics
             {
                 Unsubscribe();
                 Subscribe();
-            }
-
-            if (_isOpen && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                CancelAndClose();
             }
         }
 
@@ -120,6 +118,7 @@ namespace PlushieOdyssey.UI.Relics
 
         private void OpenInternal(RelicData incomingRelic, bool isPendingMode)
         {
+            if (!isActiveAndEnabled) return;
             BuildModalIfNeeded();
             if (_modalRoot == null) return;
 
@@ -136,6 +135,9 @@ namespace PlushieOdyssey.UI.Relics
             _stagedUnequipped = null;
             _isPendingSwapMode = isPendingMode;
             _isOpen = true;
+            if (_inputRouter == null) _inputRouter = InputContextRouter.FromBootstrap;
+            if (_contextLease == null && _inputRouter != null && _inputRouter.isActiveAndEnabled)
+                _contextLease = _inputRouter.EnterContext(this, InputContext.Modal, this);
 
             _modalRoot.SetActive(true);
             _modalRoot.transform.SetAsLastSibling();
@@ -166,7 +168,16 @@ namespace PlushieOdyssey.UI.Relics
         {
             EndDragVisual();
             _isOpen = false;
+            _contextLease?.Dispose();
+            _contextLease = null;
             if (_modalRoot != null) _modalRoot.SetActive(false);
+        }
+
+        public bool TryHandleBack()
+        {
+            if (!_isOpen) return false;
+            CancelAndClose();
+            return true;
         }
 
         private void Subscribe()

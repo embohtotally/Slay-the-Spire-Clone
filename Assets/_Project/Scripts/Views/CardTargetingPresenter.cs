@@ -12,9 +12,13 @@ namespace PlushieOdyssey.Combat.Views
 
         [Tooltip("Normalized point within the card root rectangle; center is (0.5, 0.5).")]
         [SerializeField] private Vector2 _cardAnchor = new Vector2(0.5f, 0.5f);
+        [Tooltip("Anchor within the animated Wrapper instead of the card root.")]
+        [SerializeField] private bool _useVisualRoot;
 
         private CardView _card;
         private Vector2 _pointerPosition;
+        private Transform _target;
+        private Camera _targetCamera;
 
         private void OnEnable()
         {
@@ -45,6 +49,20 @@ namespace PlushieOdyssey.Combat.Views
             _pointerPosition = pointerPosition;
         }
 
+        public void SetTargetFeedback(Transform target, Camera worldCamera, Color tint)
+        {
+            _target = target;
+            _targetCamera = worldCamera;
+            if (_canvasArrow != null) _canvasArrow.SetTint(tint);
+        }
+
+        public void ClearTargetFeedback()
+        {
+            _target = null;
+            _targetCamera = null;
+            if (_canvasArrow != null) _canvasArrow.SetTint(Color.white);
+        }
+
         private void LateUpdate()
         {
             if (_card == null)
@@ -71,17 +89,25 @@ namespace PlushieOdyssey.Combat.Views
                 return;
             }
 
+            if (_useVisualRoot && rect.Find("Wrapper") is RectTransform visualRoot)
+                rect = visualRoot;
             Rect area = rect.rect;
             Vector3 localStart = new Vector3(
                 Mathf.LerpUnclamped(area.xMin, area.xMax, _cardAnchor.x),
                 Mathf.LerpUnclamped(area.yMin, area.yMax, _cardAnchor.y), 0f);
             Vector2 startScreen = RectTransformUtility.WorldToScreenPoint(uiCamera, rect.TransformPoint(localStart));
+            Vector2 endScreen = _pointerPosition;
+            if (_target != null && _targetCamera != null && _target.gameObject.activeInHierarchy)
+            {
+                Vector3 targetScreen = _targetCamera.WorldToScreenPoint(_target.position);
+                if (targetScreen.z > 0f) endScreen = targetScreen;
+            }
 
             RectTransform arrowRect = _canvasArrow.RectTransform;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
                     arrowRect, startScreen, arrowCamera, out Vector2 startLocal) ||
                 !RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    arrowRect, _pointerPosition, arrowCamera, out Vector2 endLocal))
+                    arrowRect, endScreen, arrowCamera, out Vector2 endLocal))
             {
                 _canvasArrow.Hide();
                 return;
@@ -103,6 +129,7 @@ namespace PlushieOdyssey.Combat.Views
         private void Hide()
         {
             _card = null;
+            ClearTargetFeedback();
             if (_canvasArrow != null) _canvasArrow.Hide();
         }
     }

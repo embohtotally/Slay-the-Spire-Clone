@@ -50,6 +50,7 @@ namespace PlushieOdyssey.Combat.Views
         private Vector2 _start;
         private Vector2 _end;
         private bool _visible;
+        private Color _tint = Color.white;
 
         public RectTransform RectTransform => (RectTransform)transform;
         public Canvas Canvas => GetComponentInParent<Canvas>();
@@ -59,6 +60,7 @@ namespace PlushieOdyssey.Combat.Views
         private void OnDisable()
         {
             _visible = false;
+            SetTint(Color.white);
             HideVisuals();
         }
 
@@ -87,6 +89,14 @@ namespace PlushieOdyssey.Combat.Views
         {
             _visible = false;
             RefreshVisuals();
+        }
+
+        // CanvasRenderer tint preserves each visual's authored Graphic color.
+        public void SetTint(Color tint)
+        {
+            _tint = tint;
+            if (_line != null) _line.canvasRenderer.SetColor(tint);
+            if (_head != null) _head.canvasRenderer.SetColor(tint);
         }
 
         public void RefreshVisuals()
@@ -135,6 +145,7 @@ namespace PlushieOdyssey.Combat.Views
                 _head.raycastTarget = false;
                 _head.enabled = true;
             }
+            SetTint(_tint);
         }
 
         private void HideVisuals()

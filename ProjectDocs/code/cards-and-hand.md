@@ -2,7 +2,7 @@
 
 [Code index](README.md) · [Views](../../Assets/_Project/Scripts/Views/) · [Systems](../../Assets/_Project/Scripts/Systems/)
 
-Canvas-only presentation. Local references/events; no singleton lookup in the view, input, feedback, hover preview, or hand controller. `CardPlayService` bridges to the existing gameplay backend, which still contains globals.
+Canvas card presentation uses local references/events. `CardPlayService` bridges to the gameplay backend. The integrated hand controller also resolves the existing bootstrap input router and plays Tune SFX; combat previews use the existing combat systems.
 
 ## Component scope
 
@@ -10,11 +10,12 @@ Canvas-only presentation. Local references/events; no singleton lookup in the vi
 | --- | --- | --- |
 | `CardView` | Per card prefab, including preview cards | Text, artwork, frame, displayed cost, blocked/selected overlays. |
 | `CardPointerInput` | Same root as an interactive hand card's CardView | Pointer events and pointer-press tracking. |
-| `CardVisualFeedback` | Optional component on the same card root | Hover/press scale on an inner visual child. |
+| `CardVisualFeedback` | Optional component on the same card root | Hover/press/target scale and lift on an inner visual child. |
 | `CardFanLayout` | Per hand, on a UI container | Fan pose calculation and selected-object curve gizmo. |
 | `HandView` | Per hand, usually beside CardFanLayout | Registered views, layout animation, sibling order. |
 | `CombatHandController` | Per hand rig/prefab | Input subscriptions, selection, drag/target state, cancellation, play requests. |
 | `CardTargetingPresenter` | Per hand rig, with explicit local references | Converts card/pointer screen positions into arrow-local UI coordinates. |
+| `CombatTargetingPresenter` | Per battle | Target resolution feedback, reticles, damage previews, and lock-on SFX. |
 | `CanvasArrowView` | Full-stretch UI object in a targeting layer | Coordinates a line graphic and child Image head; owns path, pose and visibility, not artwork. |
 | `CanvasArrowLineGraphic` | Full-stretch child of CanvasArrowView | Textured/tapered uGUI strip with standard Graphic tint, UI material and masking. |
 | `CardViewHoverSystem` | Local preview owner, outside the preview card's hierarchy | One enlarged display-only card; **not a singleton**. |
@@ -64,6 +65,10 @@ Keep hand/drag/preview under the same Canvas setup. Later siblings normally rend
 | | `_inputRouter` | O for pointer isolation; required for routed Back/context gating. Use the existing active router and [UIInputBridge](input.md). |
 | CardTargetingPresenter | `_handController`, `_canvasArrow`, `_canvas` | R: local controller, active CanvasArrowView, and Canvas containing the hand cards. |
 | | `_cardAnchor` | Normalized point in the CardView root rectangle; default `(0.5, 0.5)` (center). |
+| | `_useVisualRoot` | O: use the animated `Wrapper` for anchoring. `Game.unity` uses this with `(0.5, 1)` for its top edge. |
+| CombatTargetingPresenter | `_handController`, `_targetResolver`, `_camera`, `_canvas` | R for combat target previews. |
+| | `_canvasTargeting` | Assign the local CardTargetingPresenter to share its Canvas arrow. |
+| | `_arrowView` | Legacy world-arrow fallback; not drawn when `_canvasTargeting` is active. |
 | CanvasArrowView | `_line`, `_head` | Assign the child line graphic and Image; head must not be on the arrow root. Either visual can be omitted. |
 | | `_curveHeight` | Signed bend perpendicular to the chord, limited for short arrows; `0` = straight, default `60` UI units. |
 | | `_headGap`, `_headAngleOffset` | Line gap before head pivot (`24` UI units), clamped for short arrows; artwork rotation offset (`0` degrees for +X, `-90` for +Y). |
@@ -89,14 +94,16 @@ Pointer delivery requires EventSystem, Canvas GraphicRaycaster, and a raycastabl
 | Component | Fields / meaning |
 | --- | --- |
 | CardPointerInput | `_interactable`: pointer reporting; `SetInteractable(false)` cancels pointer state. |
-| CardVisualFeedback | `_hoverScale = 1.08`, `_pressedScale = 0.97`: base-scale multipliers; `_duration = 0.12` seconds (`0` = instant); `_ease`. |
+| CardVisualFeedback | Hover scale/lift `1.22` / `122`; target scale/lift `1.12` / `72`; pressed scale `1.02`; duration `0.14` seconds (`0` = instant). Lift is in Canvas units. |
 | CardFanLayout | `_width = 1000`: maximum center-to-center span, clamped to container width; `_arcHeight = 80`: downward edge offset, both in Canvas units; `_maxCardAngle = 15` degrees. `_showCurve` / `_curveColor`: selected Scene-view gizmo. |
 | HandView | `maxHandSize = 10`: spacing reference count, **not capacity**. `doTweenUpdatePositionDuration = 0.15`: layout seconds. `cards`: read-only runtime list. |
+| | `hoverNeighborSpread = 86`, `hoverSpreadFalloff = 0.58`, `hoverLayoutDuration = 0.14`: neighbor spreading around the hovered card. |
+| CombatHandController | `_useHoverPreview = false`: hover lifts the actual card; enable only for a separate enlarged preview. |
 | CardViewHoverSystem | `_offset = (140, 180)`: pointer offset; `_padding = (12, 12)`: parent-bound margins, in local Canvas units. |
 | CardTargetResolver | `_rayDistance = 100`: maximum ray distance in world units. |
 
 HandRoot needs non-zero width. Smaller hands occupy a centered portion of the fan; larger hands compress into its width.
-Feedback owns only VisualRoot scale; the hand/controller own outer movement and ordering.
+Feedback owns VisualRoot scale and lift; the hand/controller own outer movement and ordering. CardSystem enforces the actual gameplay hand cap separately.
 
 ## Binding and ownership
 
@@ -126,7 +133,8 @@ CardPointerInput → CombatHandController → CardPlayService → gameplay backe
                          ├── HandView → CardFanLayout
                          ├── CardVisualFeedback
                          ├── CardViewHoverSystem → preview CardView
-                         └── CardTargetingPresenter → CanvasArrowView
+                         ├── CardTargetingPresenter → CanvasArrowView
+                         └── CombatTargetingPresenter → target feedback/reticles
 ```
 
 - `ManualTargetEffect != null`: select/target, release over a valid combatant; otherwise restore.
@@ -171,7 +179,9 @@ Assign both children to CanvasArrowView, and the root/controller/card Canvas to 
 - For visual authoring, enable **Preview In Editor** on CanvasArrowView. Select the root for **Start**, **End**, and perpendicular **Curve** Scene handles; select either child for normal visual editing. Enable Gizmos if handles are hidden. Changes update the preview live. Handles support Undo and prefab overrides; they appear only for a single selected arrow outside Play Mode.
 - Preview endpoints are editor-only. The Curve handle edits the shared `_curveHeight` style used at runtime; endpoints do not change card/pointer positions. Turn preview off to hide the sample.
 - Place the targeting layer after card/preview siblings for front rendering, or before them for back rendering. Separate/nested canvases still obey their sorting orders.
-- Works without Play Service for presentation checks. Does not resolve/snap targets, draw automatic-target arrows, or execute effects.
+- Works without Play Service for presentation checks. Alone, it follows the pointer without resolving targets or executing effects.
+- With `CombatTargetingPresenter._canvasTargeting` assigned, combat resolution supplies target snapping and valid/ally/taunt tint through `SetTargetFeedback(target, worldCamera, tint)`. CardTargetingPresenter remains the only Canvas arrow owner; reticles and AoE previews stay in CombatTargetingPresenter.
+- `CanvasArrowView.SetTint(color)` multiplies the visuals' authored colors without replacing their Graphic colors. Feedback clears on release, cancellation, or presenter disable.
 - `CanvasArrowView.Show(startLocal, endLocal)` accepts root-local endpoints; `Hide()` hides the line mesh and Image without disabling their GameObjects. A world target can supply an endpoint by projecting its anchor to screen, then converting into arrow-local space.
 - Migrating the all-procedural Canvas arrow: keep the root script and presenter reference; assign the new child visuals. Move width/tint/material choices onto Line and author the head Image. The root is now a MonoBehaviour, not a Graphic; its former Graphic appearance and generated-head fields are no longer used. Remove the root's leftover CanvasRenderer manually. Curve/preview field names and script GUID remain unchanged.
 - Migrating the earlier world arrow: assign the new **Canvas Arrow** field and disable the old dedicated world-arrow object manually. The old `_arrow` reference is not reused across incompatible component types; `_worldCamera` and `_planeDistance` are removed. Controller/card Canvas references and the presenter script GUID remain unchanged. Legacy ArrowView/ManualTargetingSystem remain available for their existing callers.
@@ -200,4 +210,4 @@ Each clone binds a separate runtime Card, but is registered only with HandView, 
 
 ## Current boundary
 
-Scene/prefab wiring remains manual. Legacy draw/discard presentation, audio/VFX, and automatic-target previews are not migrated here. The component refactor and manual-target arrow have not been verified in Play Mode.
+`Game.unity` includes the combat backend, Canvas hand/arrow, target previews, and HUD wiring. World ArrowView/ManualTargetingSystem remain for legacy callers. The merge repair and combined targeting setup have not been compiled or verified in Play Mode.

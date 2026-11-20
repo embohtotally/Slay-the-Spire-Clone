@@ -1,11 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using PlushieOdyssey.Combat.Models;
 using PlushieOdyssey.Combat.Systems;
 using PlushieOdyssey.Data;
+using PlushieOdyssey.Inputs;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace PlushieOdyssey.UI.Combat
@@ -22,12 +23,13 @@ namespace PlushieOdyssey.UI.Combat
     /// Discard Pile, and Exhaust Pile.
     /// </summary>
     [DisallowMultipleComponent]
-    public class CombatPileViewerUI : MonoBehaviour
+    public class CombatPileViewerUI : MonoBehaviour, IBackHandler
     {
         [Header("References")]
         [SerializeField] private Canvas _canvas;
         [SerializeField] private RunDeckCardView _cardViewPrefab;
         [SerializeField] private TMP_FontAsset _font;
+        [SerializeField] private InputContextRouter _inputRouter;
 
         private static Sprite _solidSprite;
 
@@ -41,6 +43,7 @@ namespace PlushieOdyssey.UI.Combat
         private CombatPileKind _activePile = CombatPileKind.Draw;
         private bool _isOpen;
         private CardSystem _subscribedCardSystem;
+        private IDisposable _contextLease;
 
         public bool IsOpen => _isOpen;
 
@@ -56,6 +59,7 @@ namespace PlushieOdyssey.UI.Combat
 
         private void OnDisable()
         {
+            Close();
             if (_subscribedCardSystem != null)
             {
                 _subscribedCardSystem.PilesChanged -= OnPilesChanged;
@@ -68,11 +72,6 @@ namespace PlushieOdyssey.UI.Combat
             if (_subscribedCardSystem == null && CardSystem.Instance != null)
             {
                 TrySubscribeCardSystem();
-            }
-
-            if (_isOpen && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                Close();
             }
         }
 
@@ -100,11 +99,15 @@ namespace PlushieOdyssey.UI.Combat
 
         public void OpenPile(CombatPileKind kind)
         {
+            if (!isActiveAndEnabled) return;
             BuildModalIfNeeded();
             if (_modalRoot == null) return;
 
             _activePile = kind;
             _isOpen = true;
+            if (_inputRouter == null) _inputRouter = InputContextRouter.FromBootstrap;
+            if (_contextLease == null && _inputRouter != null && _inputRouter.isActiveAndEnabled)
+                _contextLease = _inputRouter.EnterContext(this, InputContext.Modal, this);
             _modalRoot.SetActive(true);
             _modalRoot.transform.SetAsLastSibling();
             RefreshView();
@@ -113,7 +116,16 @@ namespace PlushieOdyssey.UI.Combat
         public void Close()
         {
             _isOpen = false;
+            _contextLease?.Dispose();
+            _contextLease = null;
             if (_modalRoot != null) _modalRoot.SetActive(false);
+        }
+
+        public bool TryHandleBack()
+        {
+            if (!_isOpen) return false;
+            Close();
+            return true;
         }
 
         private void OnPilesChanged()

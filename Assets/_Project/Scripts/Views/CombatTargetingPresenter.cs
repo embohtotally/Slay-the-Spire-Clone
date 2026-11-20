@@ -12,9 +12,7 @@ using UnityEngine.UI;
 namespace PlushieOdyssey.Combat.Views
 {
     /// <summary>
-    /// Bridges CombatHandController targeting and AoE card drags to world-space ArrowView
-    /// plus Slay the Spire / Witch's Apocalyptic Journey-style animated target reticles,
-    /// world Target Select rings, and live effective damage / lethal preview badges.
+    /// Adds target lock feedback, reticles, and damage previews to hand interactions.
     /// </summary>
     [DisallowMultipleComponent]
     public class CombatTargetingPresenter : MonoBehaviour
@@ -22,6 +20,8 @@ namespace PlushieOdyssey.Combat.Views
         [Header("References")]
         [SerializeField] private CombatHandController _handController;
         [SerializeField] private CardTargetResolver _targetResolver;
+        [Tooltip("Canvas arrow owner; takes precedence over the legacy world arrow.")]
+        [SerializeField] private CardTargetingPresenter _canvasTargeting;
         [SerializeField] private ArrowView _arrowView;
         [SerializeField] private Camera _camera;
         [SerializeField] private Canvas _canvas;
@@ -242,6 +242,16 @@ namespace PlushieOdyssey.Combat.Views
             bool blockedByTaunt,
             Card card)
         {
+            if (_canvasTargeting != null && _canvasTargeting.isActiveAndEnabled)
+            {
+                bool isAlly = hovered is HeroView || (card != null && card.TargetType == CardTargetType.Hero);
+                Color tint = validLock
+                    ? (isAlly ? _arrowAllyColor : _arrowLockedColor)
+                    : (blockedByTaunt ? _arrowBlockedColor : _arrowIdleColor);
+                _canvasTargeting.SetTargetFeedback(validLock ? hovered.transform : null, cam, tint);
+                if (_arrowView != null) _arrowView.Hide();
+                return;
+            }
             if (_arrowView == null) return;
 
             Vector2 originScreen = GetCardOriginScreenPoint(cardView, pointerScreenPosition);
@@ -740,6 +750,7 @@ namespace PlushieOdyssey.Combat.Views
             _isShowingArrow = false;
             _lastLockedTarget = null;
             _lastBlockedTarget = null;
+            if (_canvasTargeting != null) _canvasTargeting.ClearTargetFeedback();
             if (_arrowView != null)
             {
                 _arrowView.SetTargetTransform(null);

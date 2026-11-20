@@ -18,9 +18,11 @@ namespace PlushieOdyssey.Combat.Views
         [SerializeField] private Ease _ease = Ease.OutCubic;
 
         private Vector3 _baseScale;
+        private Vector2 _basePosition;
         [ShowNonSerializedField] private bool _initialized;
         [ShowNonSerializedField] private bool _hovered;
         [ShowNonSerializedField] private bool _pressed;
+        [ShowNonSerializedField] private bool _targeted;
         private Tween _scaleTween;
         private Tween _moveTween;
 
