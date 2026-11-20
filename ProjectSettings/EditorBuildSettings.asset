@@ -15,8 +15,8 @@ EditorBuildSettings:
     path: Assets/_Project/Scenes/Map.unity
     guid: 59831b9b158261c4287a0962a8578f2d
   - enabled: 1
-    path: Assets/_Project/Scenes/Old/old_Game.unity
-    guid: 7bfdccf732a156e43b2a36684135fb0f
+    path: Assets/_Project/Scenes/Game.unity
+    guid: 31988a71fd3329a4eb9e2f3f6aa6f588
   - enabled: 1
     path: Assets/_Project/Scenes/GameOver.unity
     guid: 7cb35a70236401c4687e7a82f43d785f

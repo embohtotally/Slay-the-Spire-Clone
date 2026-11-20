@@ -53,58 +53,83 @@ namespace PlushieOdyssey.Map
         [Tooltip("Chance for each node on this layer to use a random type from Random Node Types instead of the default type.")]
         [Range(0f, 1f)] public float RandomizeNodes;
 
-        [Tooltip("Vertical distance from the previous layer. Similar to the original repo's distanceFromPreviousLayer.")]
+        [Tooltip("Distance from the previous layer.")]
         public FloatRange DistanceFromPreviousLayer = new(140f, 170f);
 
-        [Tooltip("Horizontal distance between nodes on this layer.")]
+        [Tooltip("Lane spacing between nodes on this layer.")]
         public float NodesApartDistance = 220f;
 
-        [Tooltip("0 = straight row, 1 = strong random position offset, like the original repo.")]
+        [Tooltip("0 = straight row, 1 = strong random position offset.")]
         [Range(0f, 1f)] public float RandomizePosition = 0.25f;
     }
 
     [CreateAssetMenu(menuName = "Data/Map Generator Config")]
     public class MapGeneratorConfig : ScriptableObject
     {
+        [Header("Slay-the-Spire Procedural Map (Left -> Right)")]
+        [Tooltip("When enabled, generates a balanced Slay-the-Spire style branching map from Left (Start) to Right (Boss) with randomized depth in Layer Count Range.")]
+        public bool UseSlayTheSpireProceduralMode = true;
+
+        [Tooltip("Total columns/steps from Start (left) to Boss (right). Varies randomly between Min and Max (6 to 8 by default).")]
+        public IntRange LayerCountRange = new(6, 8);
+
+        [Tooltip("Vertical lanes available for branching paths (4 lanes produces 2-4 nodes per column like the reference).")]
+        [Range(3, 6)] public int LaneCount = 4;
+
+        [Tooltip("Left-to-Right horizontal span (X) and vertical span (Y) in map canvas units.")]
+        public Vector2 MapCanvasSpan = new(1340f, 520f);
+
+        [Tooltip("Organic horizontal position jitter fraction per node (prevents stiff grid columns).")]
+        [Range(0f, 0.42f)] public float HorizontalJitter = 0.24f;
+
+        [Tooltip("Organic vertical position jitter fraction per node (prevents stiff horizontal rows).")]
+        [Range(0f, 0.42f)] public float VerticalJitter = 0.28f;
+
+        [Header("Balanced Slay-the-Spire Node Weights (Middle Layers)")]
+        [Min(0f)] public float EnemyWeight = 42f;
+        [Min(0f)] public float EventWeight = 22f;
+        [Min(0f)] public float EliteWeight = 15f;
+        [Min(0f)] public float ShopWeight = 10f;
+        [Min(0f)] public float RestWeight = 8f;
+        [Min(0f)] public float TreasureWeight = 3f;
+
         [Header("Start Mode")]
-        [Tooltip("On: add a tutorial-style START node before the first playable row. Off: first-row nodes are immediately selectable, like Slay the Spire.")]
+        [Tooltip("Off: first-column nodes are immediately selectable on the left, like Slay the Spire.")]
         public bool UseSyntheticStartNode;
 
-        [Tooltip("Vertical distance between the optional START node and the first playable row. Prevents visual overlap when synthetic start is enabled.")]
+        [Tooltip("Distance between the optional START node and the first playable column.")]
         [Min(1f)] public float SyntheticStartDistance = 170f;
 
         [Header("Path Counts")]
-        [Tooltip("How many different first-layer nodes can be starting choices.")]
+        [Tooltip("How many different first-column nodes can be starting choices (left side).")]
         public IntRange NumberOfStartingNodes = new(2, 3);
 
-        [Tooltip("How many different nodes on the layer before the boss should connect to boss.")]
+        [Tooltip("How many different pre-boss nodes converge into the Boss (right side).")]
         public IntRange NumberOfPreBossNodes = new(2, 3);
 
-        [Tooltip("Additional paths beyond max(starting nodes, pre-boss nodes).")]
+        [Tooltip("Additional braided paths beyond max(starting nodes, pre-boss nodes).")]
         [Min(0)] public int ExtraPaths = 2;
 
-        [Header("Layer Design")]
-        [Tooltip("Types allowed when a layer's Randomize Nodes value succeeds.")]
+        [Header("Legacy Layer List (Used only if UseSlayTheSpireProceduralMode is off)")]
         public List<MapNodeType> RandomNodeTypes = new()
         {
             MapNodeType.Event,
             MapNodeType.Shop,
             MapNodeType.Treasure,
             MapNodeType.Enemy,
+            MapNodeType.Elite,
             MapNodeType.Rest
         };
 
-        [Tooltip("Designer-authored layers. First layer is usually Enemy/Start-choice layer; final layer should be Boss.")]
         public List<MapLayerConfig> Layers = new();
 
         [Header("Compatibility Defaults")]
-        [Tooltip("Used only when Layers is empty. Creates this many generated layers.")]
-        [Min(3)] public int FallbackLayerCount = 6;
-
-        [Tooltip("Used only when Layers is empty.")]
+        [Min(3)] public int FallbackLayerCount = 7;
         [Min(2)] public int FallbackGridWidth = 4;
 
-        public int GridWidth => Mathf.Max(1, Mathf.Max(NumberOfStartingNodes.Max, NumberOfPreBossNodes.Max));
+        public int GridWidth => UseSlayTheSpireProceduralMode
+            ? Mathf.Clamp(LaneCount, 3, 6)
+            : Mathf.Max(1, Mathf.Max(NumberOfStartingNodes.Max, NumberOfPreBossNodes.Max));
 
         public IReadOnlyList<MapLayerConfig> GetEffectiveLayers()
         {
@@ -115,17 +140,22 @@ namespace PlushieOdyssey.Map
 
             Layers ??= new List<MapLayerConfig>();
             Layers.Clear();
-            for (int i = 0; i < FallbackLayerCount; i++)
+            int count = Mathf.Clamp(FallbackLayerCount, 6, 8);
+            for (int i = 0; i < count; i++)
             {
                 MapNodeType type = MapNodeType.Enemy;
-                float randomizeNodes = 0.25f;
+                float randomizeNodes = 0.35f;
 
-                if (i == FallbackLayerCount - 2)
+                if (i == 0)
+                {
+                    randomizeNodes = 0f;
+                }
+                else if (i == count - 2)
                 {
                     type = MapNodeType.Rest;
                     randomizeNodes = 0f;
                 }
-                else if (i == FallbackLayerCount - 1)
+                else if (i == count - 1)
                 {
                     type = MapNodeType.Boss;
                     randomizeNodes = 0f;
@@ -135,14 +165,12 @@ namespace PlushieOdyssey.Map
                 {
                     NodeType = type,
                     RandomizeNodes = randomizeNodes,
-                    DistanceFromPreviousLayer = new FloatRange(140f, 170f),
-                    NodesApartDistance = 220f,
-                    RandomizePosition = i == FallbackLayerCount - 1 ? 0f : 0.25f
+                    DistanceFromPreviousLayer = new FloatRange(160f, 200f),
+                    NodesApartDistance = 175f,
+                    RandomizePosition = i == count - 1 ? 0f : 0.28f
                 });
             }
 
-            NumberOfStartingNodes.Max = Mathf.Max(NumberOfStartingNodes.Max, FallbackGridWidth);
-            NumberOfPreBossNodes.Max = Mathf.Max(NumberOfPreBossNodes.Max, FallbackGridWidth);
             return Layers;
         }
     }

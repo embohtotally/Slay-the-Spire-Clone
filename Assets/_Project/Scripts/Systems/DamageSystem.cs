@@ -38,6 +38,9 @@ namespace PlushieOdyssey.Combat.Systems
         {
             foreach (CombatantView target in dealDamageGA.Targets)
             {
+                if (target == null || target.CurrentHealth <= 0) continue;
+
+                int hpBefore = target.CurrentHealth;
                 target.Damage(dealDamageGA.Amount);
                 if (damageVFX != null)
                 {
@@ -45,6 +48,23 @@ namespace PlushieOdyssey.Combat.Systems
                 }
 
                 GameManager.GenerateFloatingText("-" + dealDamageGA.Amount.ToString(), target.transform);
+
+                if (target.CurrentHealth < hpBefore && BuffSystem.Instance != null)
+                {
+                    BuffSystem.Instance.OnCombatantLostUnblockedHealth(target);
+                }
+
+                if (!dealDamageGA.IsThornsDamage && dealDamageGA.Amount > 0 &&
+                    dealDamageGA.Caster != null && dealDamageGA.Caster != target &&
+                    dealDamageGA.Caster.CurrentHealth > 0 && BuffSystem.Instance != null)
+                {
+                    int thorns = BuffSystem.Instance.GetBuffStack(target, Models.BuffType.Thorns);
+                    if (thorns > 0)
+                    {
+                        ActionSystem.Instance.AddReaction(new DealDamageGA(
+                            thorns, new System.Collections.Generic.List<CombatantView> { dealDamageGA.Caster }, target, isThornsDamage: true));
+                    }
+                }
 
                 yield return damageWaitForSeconds;
 

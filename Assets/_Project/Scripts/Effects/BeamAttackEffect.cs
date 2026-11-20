@@ -21,6 +21,9 @@ namespace PlushieOdyssey.Combat.Effects
         [SerializeField] private int damageAmount = 6;
         [SerializeField] private BeamVfxConfig beamConfig;
 
+        public int DamageAmount => damageAmount;
+        public BeamVfxConfig BeamConfig => beamConfig;
+
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
             List<CombatantView> list = targets ?? new List<CombatantView>();

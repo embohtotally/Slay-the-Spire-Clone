@@ -11,6 +11,10 @@ Post-Jam Edition
 All needed code documentation will be written and listed here as the project goes!
 All links to external assets will be listed here too.
 
+## Project planning & backlog
+
+- [Implementation To-Do List](ProjectDocs/TODO.md) — prioritized backlog of unimplemented features, half-wired systems, UI/input gaps, and asset integration tasks.
+
 ## Code documentation
 
 [Code documentation index](ProjectDocs/code/README.md)

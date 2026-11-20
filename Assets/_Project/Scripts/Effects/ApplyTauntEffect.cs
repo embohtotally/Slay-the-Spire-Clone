@@ -11,6 +11,8 @@ namespace PlushieOdyssey.Combat.Effects
     {
         [SerializeField] private int duration;
 
+        public int Duration => duration;
+
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
             ApplyTauntGA applyTauntGA = new ApplyTauntGA(duration, targets, caster);

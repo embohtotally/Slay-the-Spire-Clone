@@ -22,11 +22,10 @@ namespace PlushieOdyssey.Core
         public void SetPaused(bool pause)
         {
             IsPaused = pause;
-
-            if (pause) Time.timeScale = 1f;
-            else Time.timeScale = 0f;
+            Time.timeScale = pause ? 0f : 1f;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Equals))
@@ -35,6 +34,7 @@ namespace PlushieOdyssey.Core
                 Debug.Log("PlayerPrefs deleted!");
             }
         }
+#endif
 
         public static void GenerateFloatingText(string text, Transform target, float duration = 1f, float speed = 1f, string colorHex = "")
         {

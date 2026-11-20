@@ -20,8 +20,8 @@ namespace PlushieOdyssey.Map
         [SerializeField] private Transform nodeParent;
 
         [Header("Layout")]
-        [Tooltip("Visual direction of map progress, matching the original repo orientation options.")]
-        [SerializeField] private MapOrientation orientation = MapOrientation.BottomToTop;
+        [Tooltip("Visual direction of map progress (Start Left -> Boss Right by default).")]
+        [SerializeField] private MapOrientation orientation = MapOrientation.LeftToRight;
 
         [Tooltip("Extra offset from the origin. Useful when changing map orientation in the inspector.")]
         [SerializeField] private Vector2 orientationOffset;

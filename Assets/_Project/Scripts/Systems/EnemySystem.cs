@@ -4,10 +4,8 @@ using PlushieOdyssey.Combat.States;
 using PlushieOdyssey.Combat.Views;
 using PlushieOdyssey.Core;
 using PlushieOdyssey.Data;
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using DG.Tweening;
 using UnityEngine;
 
 namespace PlushieOdyssey.Combat.Systems
@@ -16,6 +14,7 @@ namespace PlushieOdyssey.Combat.Systems
     public class EnemySystem : Singleton<EnemySystem>
     {
         public List<EnemyView> Enemies => enemyBoardView.EnemyViews;
+        public bool IsEnemyTurnActive { get; private set; }
 
         [SerializeField] private EnemyBoardView enemyBoardView;
         [SerializeField] private float attackXMoveAmount;
@@ -24,40 +23,85 @@ namespace PlushieOdyssey.Combat.Systems
 
         private void OnEnable()
         {
+            IsEnemyTurnActive = false;
             ActionSystem.AttachPerformer<EnemyTurnGA>(EnemyTurnPerformer);
             ActionSystem.AttachPerformer<ExecuteEnemyIntentGA>(ExecuteIntentPerformer);
             ActionSystem.AttachPerformer<KillEnemyGA>(KillEnemyPerformer);
             ActionSystem.AttachPerformer<SummonEnemyGA>(SummonEnemyPerformer);
             ActionSystem.AttachPerformer<SimultaneousGA>(SimultaneousPerformer);
+
+            ActionSystem.SubscribeReaction<EnemyTurnGA>(OnEnemyTurnPre, ReactionTiming.PRE);
+            ActionSystem.SubscribeReaction<EnemyTurnGA>(OnEnemyTurnPost, ReactionTiming.POST);
         }
 
         private void OnDisable()
         {
+            IsEnemyTurnActive = false;
             ActionSystem.DetachPerformer<EnemyTurnGA>();
             ActionSystem.DetachPerformer<ExecuteEnemyIntentGA>();
             ActionSystem.DetachPerformer<KillEnemyGA>();
             ActionSystem.DetachPerformer<SummonEnemyGA>();
             ActionSystem.DetachPerformer<SimultaneousGA>();
+
+            ActionSystem.UnsubscribeReaction<EnemyTurnGA>(OnEnemyTurnPre, ReactionTiming.PRE);
+            ActionSystem.UnsubscribeReaction<EnemyTurnGA>(OnEnemyTurnPost, ReactionTiming.POST);
         }
 
         public void Setup(List<EnemyData> enemyDataList)
         {
+            IsEnemyTurnActive = false;
             foreach (EnemyData enemyData in enemyDataList)
             {
                 enemyBoardView.AddEnemy(enemyData);
             }
         }
 
-    #region Performers
+        #region Turn Reactions
+        private void OnEnemyTurnPre(EnemyTurnGA _)
+        {
+            IsEnemyTurnActive = true;
+        }
+
+        private void OnEnemyTurnPost(EnemyTurnGA _)
+        {
+            IsEnemyTurnActive = false;
+
+            // Do not reveal new intents if the hero has already fallen
+            if (HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null && HeroSystem.Instance.HeroView.CurrentHealth <= 0)
+            {
+                return;
+            }
+
+            if (enemyBoardView == null || enemyBoardView.EnemyViews == null) return;
+
+            int revealOrder = 0;
+            for (int i = 0; i < enemyBoardView.EnemyViews.Count; i++)
+            {
+                EnemyView enemy = enemyBoardView.EnemyViews[i];
+                if (enemy == null || enemy.CurrentHealth <= 0) continue;
+
+                // Reveal each enemy's next action cleanly at Player Turn start with a staggered pop-up wave
+                enemy.PickNextIntent(animateReveal: true, revealDelay: 0.16f + revealOrder * 0.10f);
+                revealOrder++;
+            }
+        }
+        #endregion
+
+        #region Performers
         private IEnumerator EnemyTurnPerformer(EnemyTurnGA enemyTurnGA)
         {
+            IsEnemyTurnActive = true;
+
             foreach (EnemyView enemy in enemyBoardView.EnemyViews)
             {
+                if (enemy == null || enemy.CurrentHealth <= 0) continue;
+
                 enemy.DecreaseTaunt();
 
                 if (enemy.IsStunned)
                 {
                     enemy.DecreaseStun();
+                    enemy.ConsumeIntentForEnemyTurn();
                     continue;
                 }
 
@@ -76,6 +120,14 @@ namespace PlushieOdyssey.Combat.Systems
             EnemyView attacker = executeIntentGA.Attacker;
             EnemyIntent intent = executeIntentGA.Intent;
 
+            if (attacker == null || attacker.CurrentHealth <= 0)
+            {
+                yield break;
+            }
+
+            // Consume and animate away the executed intent; the next intent waits until Player Turn begins
+            attacker.ConsumeIntentForEnemyTurn();
+
             bool isAttackComplete = false;
             attacker.StateMachine.ChangeState(new CombatantAttackState(
                 attacker,
@@ -85,7 +137,7 @@ namespace PlushieOdyssey.Combat.Systems
 
             yield return new WaitUntil(() => isAttackComplete);
 
-            if (intent.Effects != null)
+            if (intent != null && intent.Effects != null)
             {
                 foreach (AutoTargetEffect effect in intent.Effects)
                 {
@@ -96,12 +148,15 @@ namespace PlushieOdyssey.Combat.Systems
                     }
                 }
             }
-
-            attacker.PickNextIntent();
         }
 
         private IEnumerator KillEnemyPerformer(KillEnemyGA killEnemyGA)
         {
+            if (killEnemyGA.EnemyView != null)
+            {
+                killEnemyGA.EnemyView.ConsumeIntentForEnemyTurn();
+            }
+
             yield return enemyBoardView.RemoveEnemy(killEnemyGA.EnemyView);
 
             if (enemyBoardView.EnemyViews.Count == 0)
@@ -114,7 +169,7 @@ namespace PlushieOdyssey.Combat.Systems
         {
             for (int i = 0; i < summonEnemyGA.Count; i++)
             {
-                if (enemyBoardView.HasAvailableSlot(out Transform slot))
+                if (enemyBoardView.HasAvailableSlot(out Transform _))
                 {
                     yield return enemyBoardView.SummonEnemy(summonEnemyGA.EnemyData);
                 }
@@ -136,6 +191,6 @@ namespace PlushieOdyssey.Combat.Systems
             }
             yield return null;
         }
-    #endregion
+        #endregion
     }
 }

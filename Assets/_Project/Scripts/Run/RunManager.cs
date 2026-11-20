@@ -12,7 +12,8 @@ namespace PlushieOdyssey.Run
     public class RunManager : PersistentSingleton<RunManager>
     {
         [Header("Run Defaults")]
-        [SerializeField] private int startingGold;
+        [SerializeField] private int startingGold = 150;
+        [SerializeField] private int startingCrystals = 100;
 
         private readonly List<RunHeroStressState> heroStressStates = new();
 
@@ -26,13 +27,23 @@ namespace PlushieOdyssey.Run
         public int HeroMaxHealth { get; private set; }
         public int HeroCurrentStress { get; private set; }
         public int HeroMaxStress { get; private set; }
+        public int HeroCurrentWill => Mathf.Clamp(HeroMaxStress - HeroCurrentStress, 0, Mathf.Max(1, HeroMaxStress));
+        public int HeroMaxWill => Mathf.Max(1, HeroMaxStress);
         public IReadOnlyList<RunHeroStressState> HeroStressStates => heroStressStates;
         public int Gold { get; private set; }
+        public int Crystals { get; private set; }
 
         public Dictionary<string, int> Counters { get; private set; } = new();
         public Dictionary<string, int> CardCostModifiers { get; private set; } = new();
 
         public event Action RunStateChanged;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            if (Gold == 0 && startingGold > 0) Gold = startingGold;
+            if (Crystals == 0 && startingCrystals > 0) Crystals = startingCrystals;
+        }
 
         // Backward-compatible access for older scripts that only cared about current HP.
         public int? CurrentHeroHealth
@@ -63,6 +74,7 @@ namespace PlushieOdyssey.Run
             SelectedEncounter = null;
             ClearHeroState();
             Gold = Mathf.Max(0, startingGold);
+            Crystals = Mathf.Max(0, startingCrystals);
             Counters.Clear();
             CardCostModifiers.Clear();
 
@@ -83,9 +95,42 @@ namespace PlushieOdyssey.Run
         {
             if (selectedNode == null) return;
 
+            CurrentMap?.MarkVisited(selectedNode.Id);
             CurrentMapNodeId = selectedNode.Id;
             SelectedEncounter = selectedNode.Encounter;
             NotifyRunStateChanged();
+        }
+
+        /// <summary>
+        /// Guarantees an active procedural map exists for the current run (useful when entering
+        /// Game.unity directly for testing or peeking at the current map mid-combat).
+        /// </summary>
+        public MapGraph EnsureActiveProceduralMap(
+            MapGeneratorConfig config,
+            MapEncounterPool encounterPool,
+            bool placeOnStartingCombatNode = false)
+        {
+            if (CurrentMap == null || CurrentMap.Nodes == null || CurrentMap.Nodes.Count == 0)
+            {
+                CurrentMap = ProceduralMapGenerator.Generate(config, encounterPool);
+                CurrentMapNodeId = null;
+            }
+
+            if (placeOnStartingCombatNode && string.IsNullOrEmpty(CurrentMapNodeId))
+            {
+                List<MapNode> initialNodes = CurrentMap.GetInitialNodes();
+                if (initialNodes != null && initialNodes.Count > 0)
+                {
+                    MapNode activeStart = initialNodes[0];
+                    CurrentMap.MarkVisited(activeStart.Id);
+                    CurrentMapNodeId = activeStart.Id;
+                    if (SelectedEncounter == null) SelectedEncounter = activeStart.Encounter;
+                }
+            }
+
+            CurrentMap.RefreshAvailability(CurrentMapNodeId);
+            NotifyRunStateChanged();
+            return CurrentMap;
         }
 
         public void ClearSelectedEncounter()
@@ -132,7 +177,7 @@ namespace PlushieOdyssey.Run
                 int validHeroCount = CountValidHeroes(heroTeam);
                 if (heroStressStates.Count == Mathf.Max(1, validHeroCount)) return;
 
-                RebuildHeroStressStates(heroTeam, maxStress, HeroCurrentStress);
+                RebuildHeroStressStates(heroTeam, maxStress, HeroCurrentWill);
                 HeroMaxHealth = Mathf.Max(1, maxHealth);
                 HeroCurrentHealth = Mathf.Clamp(HeroCurrentHealth, 0, HeroMaxHealth);
                 RefreshAggregateStress();
@@ -143,7 +188,7 @@ namespace PlushieOdyssey.Run
             HasHeroState = true;
             HeroMaxHealth = maxHealth;
             HeroCurrentHealth = maxHealth;
-            RebuildHeroStressStates(heroTeam, maxStress, 0);
+            RebuildHeroStressStates(heroTeam, maxStress, RunHeroStressState.DefaultStartingWill);
             RefreshAggregateStress();
             NotifyRunStateChanged();
         }
@@ -164,7 +209,7 @@ namespace PlushieOdyssey.Run
 
             if (heroStressStates.Count == 0)
             {
-                heroStressStates.Add(new RunHeroStressState(null, Mathf.Max(1, heroView.MaxStress), heroView.CurrentStress));
+                heroStressStates.Add(new RunHeroStressState(null, Mathf.Max(1, heroView.MaxStress), heroView.CurrentWill));
             }
 
             RefreshAggregateStress();
@@ -360,6 +405,27 @@ namespace PlushieOdyssey.Run
             return true;
         }
 
+        public void SetCrystals(int amount)
+        {
+            Crystals = Mathf.Max(0, amount);
+            NotifyRunStateChanged();
+        }
+
+        public void AddCrystals(int amount)
+        {
+            if (amount <= 0) return;
+            SetCrystals(Crystals + amount);
+        }
+
+        public bool SpendCrystals(int amount)
+        {
+            if (amount <= 0) return true;
+            if (Crystals < amount) return false;
+
+            SetCrystals(Crystals - amount);
+            return true;
+        }
+
         public void AbandonRun()
         {
             CurrentMap = null;
@@ -419,7 +485,7 @@ namespace PlushieOdyssey.Run
             return count;
         }
 
-        private void RebuildHeroStressStates(IReadOnlyList<HeroData> heroTeam, int maxStress, int currentStress)
+        private void RebuildHeroStressStates(IReadOnlyList<HeroData> heroTeam, int maxWill, int startingWill)
         {
             heroStressStates.Clear();
 
@@ -428,13 +494,13 @@ namespace PlushieOdyssey.Run
                 foreach (HeroData heroData in heroTeam)
                 {
                     if (heroData == null) continue;
-                    heroStressStates.Add(new RunHeroStressState(heroData, maxStress, currentStress));
+                    heroStressStates.Add(new RunHeroStressState(heroData, maxWill, startingWill));
                 }
             }
 
             if (heroStressStates.Count == 0)
             {
-                heroStressStates.Add(new RunHeroStressState(null, maxStress, currentStress));
+                heroStressStates.Add(new RunHeroStressState(null, maxWill, startingWill));
             }
         }
 

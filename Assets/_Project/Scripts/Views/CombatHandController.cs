@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using PlushieOdyssey.Audio;
 using PlushieOdyssey.Combat.Systems;
 using PlushieOdyssey.Inputs;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace PlushieOdyssey.Combat.Views
 {
@@ -13,9 +15,17 @@ namespace PlushieOdyssey.Combat.Views
         [Header("Presentation")]
         [SerializeField] private HandView _handView;
         [SerializeField] private CardViewHoverSystem _hoverPreview;
+        [Tooltip("Disabled by default so hovering elevates the card in hand and spreads neighbors instead of duplicating a ghost card.")]
+        [SerializeField] private bool _useHoverPreview = false;
         [SerializeField] private RectTransform _dragLayer;
         [SerializeField] private RectTransform _playRegion;
         [SerializeField] private Canvas _canvas;
+
+        [Header("Audio")]
+        [SerializeField] private SfxID _fallbackHoverSfx = SfxID.hover;
+        [SerializeField] private SfxID _pickupSfx = SfxID.card_pickup;
+        [SerializeField] private SfxID _targetStartSfx = SfxID.card_target_start;
+        [SerializeField] private SfxID _rejectedSfx = SfxID.card_release_invalid;
 
         [Header("Optional Integration")]
         [SerializeField] private CardPlayService _playService;
@@ -45,12 +55,18 @@ namespace PlushieOdyssey.Combat.Views
         private bool _originalBlocksRaycasts;
         private IDisposable _contextLease;
 
+        public bool IsCardInteracting => _active != null || _targeting;
+
         public event Action<CardView, CombatantView> PlayRequested;
         public event Action<CardView> PlayAccepted;
         public event Action<CardView, CardPlayFailure> PlayRejected;
         public event Action<CardView> InteractionCancelled;
         public event Action<CardView, Vector2> TargetingChanged;
         public event Action TargetingEnded;
+        public event Action<CardView, Vector2> HoverCardChanged;
+        public event Action HoverCardEnded;
+        public event Action<CardView, Vector2, bool> CardDragUpdated;
+        public event Action CardDragEnded;
 
         private bool CanReceiveInput => isActiveAndEnabled &&
             (_inputRouter == null || _inputRouter.CurrentContext == InputContext.Combat) &&
@@ -71,6 +87,7 @@ namespace PlushieOdyssey.Combat.Views
             _handView.CardRemoved += UnregisterCard;
             foreach (CardView card in _handView.Cards) RegisterCard(card);
             if (_playService != null) _playService.StateChanged += OnServiceStateChanged;
+            if (_inputRouter == null) _inputRouter = InputContextRouter.FromBootstrap;
             if (_inputRouter != null && _inputRouter.isActiveAndEnabled)
                 _contextLease = _inputRouter.EnterContext(this, InputContext.Combat, this);
             RefreshCardStates();
@@ -139,7 +156,7 @@ namespace PlushieOdyssey.Combat.Views
                 view.SetBlocked(_playService.GetFailure(view.Card, requireTarget: false) != CardPlayFailure.None);
             }
 
-            if (_hovered != null && _hovered.View != null && _hoverPreview != null)
+            if (_useHoverPreview && _hovered != null && _hovered.View != null && _hoverPreview != null)
                 _hoverPreview.Show(_hovered.View.DisplayData, _hoverPosition, _hovered.View.IsBlocked);
         }
 
@@ -159,6 +176,12 @@ namespace PlushieOdyssey.Combat.Views
                 Input = input,
                 Feedback = view.GetComponent<CardVisualFeedback>()
             };
+            // Disable child menu Buttons (e.g., Wrapper) so pointer/drag events route to CardPointerInput.
+            foreach (UnityEngine.UI.Button childButton in view.GetComponentsInChildren<UnityEngine.UI.Button>(true))
+            {
+                if (childButton != null) childButton.enabled = false;
+            }
+            EnsureHoverHitbox(view);
             _bindings.Add(input, binding);
             input.HoverEntered += OnHoverEntered;
             input.HoverExited += OnHoverExited;
@@ -195,13 +218,17 @@ namespace PlushieOdyssey.Combat.Views
         {
             if (!CanReceiveInput || _active != null ||
                 !_bindings.TryGetValue(input, out Binding binding) || !binding.View.HasContent) return;
-            ClearHover();
+            if (_hovered == binding) return;
+            ClearHover(false);
             _hovered = binding;
             _hoverPosition = eventData.position;
             binding.View.transform.SetAsLastSibling();
+            if (_handView != null) _handView.SetHoveredCard(binding.View);
             if (binding.Feedback != null) binding.Feedback.SetHovered(true);
-            if (_hoverPreview != null)
+            if (_useHoverPreview && _hoverPreview != null)
                 _hoverPreview.Show(binding.View.DisplayData, _hoverPosition, binding.View.IsBlocked);
+            PlayHoverAudio(binding.View);
+            HoverCardChanged?.Invoke(binding.View, _hoverPosition);
         }
 
         private void OnHoverExited(CardPointerInput input, PointerEventData eventData)
@@ -215,8 +242,12 @@ namespace PlushieOdyssey.Combat.Views
             _hovered = null;
             if (hovered?.Feedback != null) hovered.Feedback.SetHovered(false);
             if (_hoverPreview != null) _hoverPreview.Hide();
+            if (hovered != null) HoverCardEnded?.Invoke();
             if (restoreOrder && isActiveAndEnabled && _handView != null)
+            {
+                _handView.SetHoveredCard(null);
                 _handView.RefreshCardOrder();
+            }
         }
 
         private void OnPressed(CardPointerInput input, PointerEventData eventData)
@@ -230,6 +261,7 @@ namespace PlushieOdyssey.Combat.Views
                 : CardPlayFailure.None;
             if (failure != CardPlayFailure.None)
             {
+                PlaySfx(_rejectedSfx);
                 PlayRejected?.Invoke(binding.View, failure);
                 return;
             }
@@ -253,13 +285,19 @@ namespace PlushieOdyssey.Combat.Views
             _originalSibling = rect.GetSiblingIndex();
             _handView.SuspendCardLayout(binding.View);
             binding.View.SetSelected(true);
-            if (binding.Feedback != null) binding.Feedback.SetPressed(true);
+            PlaySfx(_pickupSfx);
 
             if (targeting)
             {
+                rect.localRotation = Quaternion.identity;
+                rect.SetAsLastSibling();
+                if (binding.Feedback != null) binding.Feedback.SetTargeted(true);
+                PlaySfx(_targetStartSfx);
                 TargetingChanged?.Invoke(binding.View, eventData.position);
                 return;
             }
+
+            if (binding.Feedback != null) binding.Feedback.SetPressed(true);
 
             _dragGroup = _dragLayer.GetComponent<CanvasGroup>();
             _originalBlocksRaycasts = _dragGroup.blocksRaycasts;
@@ -271,6 +309,7 @@ namespace PlushieOdyssey.Combat.Views
             TryGetDragPosition(eventData.position, out Vector2 pointer);
             _dragOffset = pointer - (Vector2)rect.localPosition;
             MoveDraggedCard(eventData.position);
+            CardDragUpdated?.Invoke(binding.View, eventData.position, IsInsidePlayRegion(eventData.position));
         }
 
         private void OnDragged(CardPointerInput input, PointerEventData eventData)
@@ -282,7 +321,11 @@ namespace PlushieOdyssey.Combat.Views
                 return;
             }
             if (_targeting) TargetingChanged?.Invoke(_active.View, eventData.position);
-            else MoveDraggedCard(eventData.position);
+            else
+            {
+                MoveDraggedCard(eventData.position);
+                CardDragUpdated?.Invoke(_active.View, eventData.position, IsInsidePlayRegion(eventData.position));
+            }
         }
 
         private void OnReleased(CardPointerInput input, PointerEventData eventData)
@@ -301,6 +344,7 @@ namespace PlushieOdyssey.Combat.Views
             EndInteraction();
             if (!validRegion)
             {
+                PlaySfx(_rejectedSfx);
                 PlayRejected?.Invoke(view, CardPlayFailure.InvalidDrop);
                 return;
             }
@@ -310,7 +354,10 @@ namespace PlushieOdyssey.Combat.Views
             if (_playService != null && _playService.TryPlay(view.Card, target, out failure))
                 PlayAccepted?.Invoke(view);
             else
+            {
+                PlaySfx(_rejectedSfx);
                 PlayRejected?.Invoke(view, failure);
+            }
             RefreshCardStates();
         }
 
@@ -337,6 +384,7 @@ namespace PlushieOdyssey.Combat.Views
             _targeting = false;
             if (_dragGroup != null) _dragGroup.blocksRaycasts = _originalBlocksRaycasts;
             _dragGroup = null;
+            if (binding?.Input != null) binding.Input.Cancel();
 
             if (binding?.View != null)
             {
@@ -358,6 +406,56 @@ namespace PlushieOdyssey.Combat.Views
             }
             if (_hoverPreview != null) _hoverPreview.Hide();
             if (targeting) TargetingEnded?.Invoke();
+            else if (binding != null) CardDragEnded?.Invoke();
+        }
+
+        private bool IsInsidePlayRegion(Vector2 screenPosition)
+        {
+            return _playRegion != null &&
+                RectTransformUtility.RectangleContainsScreenPoint(_playRegion, screenPosition, EventCamera);
+        }
+
+        private void PlayHoverAudio(CardView view)
+        {
+            SfxID id = SfxID.None;
+            if (view != null && view.Card != null && view.Card.HoverSfx != SfxID.None)
+                id = view.Card.HoverSfx;
+            else if (view != null && view.CardData != null && view.CardData.HoverSfx != SfxID.None)
+                id = view.CardData.HoverSfx;
+            else
+                id = _fallbackHoverSfx;
+
+            PlaySfx(id);
+        }
+
+        private static void PlaySfx(SfxID id)
+        {
+            if (id != SfxID.None) Tune.SFX(id);
+        }
+
+        private static void EnsureHoverHitbox(CardView view)
+        {
+            if (view == null || view.transform is not RectTransform cardRect) return;
+            if (cardRect.Find("HoverHitbox") != null) return;
+
+            RectTransform wrapper = cardRect.Find("Wrapper") as RectTransform;
+            Vector2 size = wrapper != null && wrapper.rect.width > 10f && wrapper.rect.height > 10f
+                ? wrapper.rect.size
+                : new Vector2(270f, 340f);
+
+            GameObject hitboxGo = new("HoverHitbox", typeof(RectTransform), typeof(Image));
+            hitboxGo.layer = view.gameObject.layer;
+            RectTransform hitboxRect = (RectTransform)hitboxGo.transform;
+            hitboxRect.SetParent(cardRect, false);
+            hitboxRect.SetAsFirstSibling();
+            hitboxRect.anchorMin = hitboxRect.anchorMax = new Vector2(0.5f, 0.5f);
+            hitboxRect.pivot = new Vector2(0.5f, 0.5f);
+            hitboxRect.anchoredPosition = Vector2.zero;
+            hitboxRect.sizeDelta = size;
+
+            Image img = hitboxGo.GetComponent<Image>();
+            img.color = Color.clear;
+            img.raycastTarget = true;
         }
 
         private bool TryGetDragPosition(Vector2 screenPosition, out Vector2 localPosition)
@@ -383,6 +481,8 @@ namespace PlushieOdyssey.Combat.Views
         {
             RaycastResult hit = eventData.pointerCurrentRaycast;
             if (hit.module is not UnityEngine.UI.GraphicRaycaster || hit.gameObject == null) return false;
+            Canvas hitCanvas = hit.gameObject.GetComponentInParent<Canvas>();
+            if (hitCanvas != null && hitCanvas.rootCanvas.renderMode == RenderMode.WorldSpace) return false;
             return _playRegion == null || !hit.gameObject.transform.IsChildOf(_playRegion);
         }
     }

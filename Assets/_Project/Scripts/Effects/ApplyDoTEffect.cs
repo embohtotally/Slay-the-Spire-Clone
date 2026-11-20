@@ -12,6 +12,9 @@ namespace PlushieOdyssey.Combat.Effects
         [SerializeField] private int damagePerTurn;
         [SerializeField] private int duration;
 
+        public int DamagePerTurn => damagePerTurn;
+        public int Duration => duration;
+
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
             // For multiple targets, typically Slay the Spire applies the same effect to each.

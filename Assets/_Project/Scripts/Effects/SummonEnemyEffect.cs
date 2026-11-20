@@ -13,6 +13,9 @@ namespace PlushieOdyssey.Combat.Effects
         [SerializeField] private EnemyData enemyToSummon;
         [SerializeField] private int summonCount = 1;
 
+        public EnemyData EnemyToSummon => enemyToSummon;
+        public int SummonCount => summonCount;
+
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
             SummonEnemyGA summonEnemyGA = new SummonEnemyGA(enemyToSummon, summonCount, caster);

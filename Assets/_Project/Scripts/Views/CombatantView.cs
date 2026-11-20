@@ -93,6 +93,7 @@ namespace PlushieOdyssey.Combat.Views
         public StateMachine StateMachine { get; private set; }
 
         public event Action StatusEffectsChanged;
+        public event Action HealthChanged;
 
         protected void SetupBase(int maxHealth, Sprite image)
         {
@@ -339,6 +340,7 @@ namespace PlushieOdyssey.Combat.Views
 
         protected virtual void UpdateHealthVisual(bool instant = false)
         {
+            HealthChanged?.Invoke();
             if (!hasHealthVisual) return;
 
             if (useSlider)

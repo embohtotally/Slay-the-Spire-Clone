@@ -12,10 +12,12 @@ namespace PlushieOdyssey.Combat.Models
     {
         private readonly CardData data;
 
+        public CardData SourceData => data;
         public string Title { get; private set; }
         public string Description { get; private set; }
         public Effect ManualTargetEffect { get; private set; }
         public CardType Type { get; private set; }
+        public CardKeywords Keywords { get; private set; }
         public CardTargetType TargetType { get; private set; }
         public List<AutoTargetEffect> OtherEffects { get; private set; }
         public Sprite Image { get; private set; }
@@ -42,6 +44,7 @@ namespace PlushieOdyssey.Combat.Models
             Description = data.Description;
             Mana = data.Mana;
             Type = data.Type;
+            Keywords = data.Keywords;
             ManualTargetEffect = data.ManualTargetEffect;
             TargetType = data.TargetType;
             OtherEffects = data.OtherEffects;
@@ -53,5 +56,7 @@ namespace PlushieOdyssey.Combat.Models
             HeroAnimationTrigger = data.HeroAnimationTrigger;
             TargetAnimationTrigger = data.TargetAnimationTrigger;
         }
+
+        public bool HasKeyword(CardKeywords keyword) => (Keywords & keyword) != 0;
     }
 }

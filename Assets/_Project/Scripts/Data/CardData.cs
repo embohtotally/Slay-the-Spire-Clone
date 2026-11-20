@@ -1,6 +1,7 @@
 using PlushieOdyssey.Audio;
 using PlushieOdyssey.Combat.Models;
 using PlushieOdyssey.Vfx;
+using System;
 using System.Collections.Generic;
 using SerializeReferenceEditor;
 using UnityEngine;
@@ -35,6 +36,17 @@ namespace PlushieOdyssey.Data
         Both
     }
 
+    [Flags]
+    public enum CardKeywords
+    {
+        None = 0,
+        Exhaust = 1 << 0,
+        Retain = 1 << 1,
+        Ethereal = 1 << 2,
+        Innate = 1 << 3,
+        Unplayable = 1 << 4
+    }
+
     [CreateAssetMenu(menuName = "Data/Card")]
     public class CardData : ScriptableObject
     {
@@ -44,6 +56,7 @@ namespace PlushieOdyssey.Data
         [field: SerializeField] public Tier Tier { get; private set; }
         [field: SerializeField] public int Mana { get; private set; }
         [field: SerializeField, Tooltip("Attack: Deals damage (blocked during breakdowns).\nBuff: Healing, Shielding, Utility.\nPower: Permanent passive effect.")] public CardType Type { get; private set; } = CardType.Attack;
+        [field: SerializeField] public CardKeywords Keywords { get; private set; } = CardKeywords.None;
         [field: SerializeField] public CardTargetType TargetType { get; private set; } = CardTargetType.Enemy;
         [field: SerializeReference, SR] public Effect ManualTargetEffect { get; private set; } = null;
         [field: SerializeField] public List<AutoTargetEffect> OtherEffects { get; private set; }

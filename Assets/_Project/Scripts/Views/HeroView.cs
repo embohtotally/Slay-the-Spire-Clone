@@ -1,3 +1,4 @@
+using PlushieOdyssey.Core;
 using PlushieOdyssey.Data;
 using PlushieOdyssey.Run;
 using System;
@@ -10,8 +11,12 @@ namespace PlushieOdyssey.Combat.Views
 {
     public class HeroView : CombatantView
     {
+        [Header("Will System (formerly Fear/Stress)")]
         [SerializeField] private Slider stressSlider;
         [SerializeField] private int maxStress = 100;
+        [SerializeField, Range(0, 100)] private int startingWill = RunHeroStressState.DefaultStartingWill;
+        [SerializeField, Tooltip("Positive multiplier on outgoing attack damage & shield when Will >= 75%.")]
+        private float highWillBonusMultiplier = 1.25f;
 
         private readonly List<GameObject> heroSprites = new();
         private readonly List<RunHeroStressState> stressStates = new();
@@ -20,6 +25,16 @@ namespace PlushieOdyssey.Combat.Views
         public int CurrentStress { get; private set; }
         public int MaxStress { get; private set; } = 100;
         public bool IsStressed { get; private set; }
+
+        // First-class Will API (0..MaxWill):
+        // >= 75% -> High Will (positive empowered bonus), < 25% -> Low Will (Fear breakdown penalty).
+        public int MaxWill => Mathf.Max(1, MaxStress);
+        public int CurrentWill => Mathf.Clamp(MaxWill - CurrentStress, 0, MaxWill);
+        public float WillNormalized => (float)CurrentWill / MaxWill;
+        public bool IsLowWill => IsStressed;
+        public bool IsHighWill { get; private set; }
+        public float HighWillBonusMultiplier => Mathf.Max(1f, highWillBonusMultiplier);
+
         public IReadOnlyList<RunHeroStressState> StressStates => stressStates;
         public IReadOnlyList<HeroData> HeroTeam => heroTeam;
 
@@ -56,46 +71,25 @@ namespace PlushieOdyssey.Combat.Views
             }
 
             int setupMaxHealth = Mathf.Max(1, totalHealth);
-            int setupMaxStress = Mathf.Max(1, maxStress);
+            int setupMaxWill = Mathf.Max(1, maxStress);
             bool shouldUseRunState = RunManager.Instance != null && RunManager.Instance.HasActiveRun;
 
             if (shouldUseRunState)
             {
-                RunManager.Instance.InitializeHeroState(heroTeam, setupMaxStress);
+                RunManager.Instance.InitializeHeroState(heroTeam, setupMaxWill);
                 setupMaxHealth = RunManager.Instance.HeroMaxHealth;
-                setupMaxStress = RunManager.Instance.HeroMaxStress > 0 ? RunManager.Instance.HeroMaxStress : setupMaxStress;
+                setupMaxWill = RunManager.Instance.HeroMaxStress > 0 ? RunManager.Instance.HeroMaxStress : setupMaxWill;
             }
 
-            MaxStress = setupMaxStress;
+            MaxStress = setupMaxWill;
             SetupBase(setupMaxHealth, null);
             ClearStats();
-
-            if (spriteRenderer != null)
-            {
-                //spriteRenderer.enabled = false;
-            }
 
             foreach (GameObject obj in heroSprites)
             {
                 if (obj != null) Destroy(obj);
             }
             heroSprites.Clear();
-
-            float spacing = 2.0f;
-            float startX = (heroTeam.Count - 1) * (spacing / 2.0f) * -1.0f;
-
-            // for (int i = 0; i < heroTeam.Count; i++)
-            // {
-            //     GameObject spriteObj = new($"HeroSprite_{i}");
-            //     spriteObj.transform.SetParent(transform);
-            //     spriteObj.transform.localPosition = new Vector3(startX + (i * spacing), 0, 0);
-            //
-            //     SpriteRenderer sr = spriteObj.AddComponent<SpriteRenderer>();
-            //     sr.sprite = heroTeam[i].Image;
-            //     sr.sortingOrder = 5;
-            //
-            //     heroSprites.Add(spriteObj);
-            // }
 
             if (shouldUseRunState && RunManager.Instance.HasHeroState)
             {
@@ -104,15 +98,16 @@ namespace PlushieOdyssey.Combat.Views
             }
             else
             {
-                InitializeStressStates(setupMaxStress);
+                InitializeStressStates(setupMaxWill);
             }
         }
 
         public override void ClearStats()
         {
             base.ClearStats();
-            CurrentStress = 0;
+            CurrentStress = MaxWill - Mathf.Clamp(startingWill, 0, MaxWill);
             IsStressed = false;
+            IsHighWill = false;
             HealthPenalty = 0;
             UpdateStressSlider();
             StressStateChanged?.Invoke();
@@ -121,12 +116,48 @@ namespace PlushieOdyssey.Combat.Views
         public override void Damage(int damageAmount)
         {
             base.Damage(damageAmount);
-            // Fear/stress from regular enemy damage is reduced to 0. It can now only be inflicted by intent effects.
         }
 
         public override void AddStress(int amount)
         {
-            AddStressToAllHeroes(amount);
+            // Enemy Fear/Will-drain hits lower Will.
+            DrainWillFromAllHeroes(amount);
+        }
+
+        public void DrainWillFromAllHeroes(int amount)
+        {
+            if (amount <= 0) return;
+            foreach (RunHeroStressState state in stressStates)
+            {
+                state.DrainWill(amount);
+            }
+            RefreshStressState();
+        }
+
+        public void AddWillToAllHeroes(int amount)
+        {
+            if (amount <= 0) return;
+            foreach (RunHeroStressState state in stressStates)
+            {
+                state.AddWill(amount);
+            }
+            RefreshStressState();
+        }
+
+        public void SetCurrentWill(int amount)
+        {
+            foreach (RunHeroStressState state in stressStates)
+            {
+                state.SetWill(amount);
+            }
+            RefreshStressState();
+        }
+
+        public void SetHeroWill(int heroIndex, int amount)
+        {
+            if (heroIndex < 0 || heroIndex >= stressStates.Count) return;
+            stressStates[heroIndex].SetWill(amount);
+            RefreshStressState();
         }
 
         public void AddStressToHero(int heroIndex, int amount)
@@ -139,26 +170,12 @@ namespace PlushieOdyssey.Combat.Views
 
         public void AddStressToAllHeroes(int amount)
         {
-            if (amount <= 0) return;
-
-            foreach (RunHeroStressState stressState in stressStates)
-            {
-                stressState.AddStress(amount);
-            }
-
-            RefreshStressState();
+            DrainWillFromAllHeroes(amount);
         }
 
         public void ReduceStressToAllHeroes(int amount)
         {
-            if (amount <= 0) return;
-
-            foreach (RunHeroStressState stressState in stressStates)
-            {
-                stressState.ReduceStress(amount);
-            }
-
-            RefreshStressState();
+            AddWillToAllHeroes(amount);
         }
 
         public void SetCurrentStress(int amount)
@@ -194,12 +211,13 @@ namespace PlushieOdyssey.Combat.Views
             return copies;
         }
 
-        private void InitializeStressStates(int setupMaxStress)
+        private void InitializeStressStates(int setupMaxWill)
         {
             stressStates.Clear();
+            int initWill = Mathf.Clamp(startingWill, 0, setupMaxWill);
             foreach (HeroData heroData in heroTeam)
             {
-                stressStates.Add(new RunHeroStressState(heroData, setupMaxStress));
+                stressStates.Add(new RunHeroStressState(heroData, setupMaxWill, initWill));
             }
 
             RefreshStressState(false);
@@ -218,7 +236,7 @@ namespace PlushieOdyssey.Combat.Views
 
             if (stressStates.Count == 0)
             {
-                InitializeStressStates(MaxStress);
+                InitializeStressStates(MaxWill);
                 return;
             }
 
@@ -227,25 +245,44 @@ namespace PlushieOdyssey.Combat.Views
 
         private void RefreshStressState(bool applyPenalty = true)
         {
-            CurrentStress = 0;
+            bool wasLowWill = IsStressed;
+            bool wasHighWill = IsHighWill;
+
             MaxStress = Mathf.Max(1, MaxStress);
-            IsStressed = false;
+            int maxStressFound = 0;
+            bool anyLowWill = false;
+            bool anyHighWill = false;
 
             foreach (RunHeroStressState stressState in stressStates)
             {
                 if (stressState == null) continue;
-                CurrentStress = Mathf.Max(CurrentStress, stressState.CurrentStress);
                 MaxStress = Mathf.Max(MaxStress, stressState.MaxStress);
-                IsStressed |= stressState.IsStressed;
+                maxStressFound = Mathf.Max(maxStressFound, stressState.CurrentStress);
+                anyLowWill |= stressState.IsLowWill;
+                anyHighWill |= stressState.IsHighWill;
             }
+
+            CurrentStress = stressStates.Count > 0 ? maxStressFound : MaxStress - Mathf.Clamp(startingWill, 0, MaxStress);
+            IsStressed = anyLowWill;
+            IsHighWill = !anyLowWill && anyHighWill;
 
             if (applyPenalty)
             {
                 ApplyStressPenaltyState();
+
+                if (IsHighWill && !wasHighWill)
+                {
+                    GameManager.GenerateFloatingText("High Will! (+25%)", transform, 1.2f, 1f, "#38D4FF");
+                }
+                else if (IsStressed && !wasLowWill)
+                {
+                    GameManager.GenerateFloatingText("Low Will! (Fear)", transform, 1.2f, 1f, "#FF4D5A");
+                }
             }
 
             UpdateStressSlider();
             StressStateChanged?.Invoke();
+            NotifyStatusEffectsChanged();
         }
 
         private void ApplyStressPenaltyState()
@@ -267,7 +304,7 @@ namespace PlushieOdyssey.Combat.Views
             int penaltyAmount = 0;
             for (int i = 0; i < stressStates.Count; i++)
             {
-                if (!stressStates[i].IsStressed) continue;
+                if (!stressStates[i].IsLowWill) continue;
 
                 int heroHealth = i < heroTeam.Count && heroTeam[i] != null ? heroTeam[i].Health : MaxHealth;
                 penaltyAmount += Mathf.Max(1, heroHealth / 5);
@@ -280,29 +317,13 @@ namespace PlushieOdyssey.Combat.Views
         {
             if (stressSlider != null)
             {
-                float targetStress = MaxStress > 0 ? (float)CurrentStress / MaxStress : 0f;
-
+                float targetWill = WillNormalized;
                 stressSlider.DOKill();
                 if (stressSlider.fillRect != null)
                 {
-                    if (CurrentStress > 0)
-                    {
-                        stressSlider.fillRect.gameObject.SetActive(true);
-                        stressSlider.DOValue(targetStress, 0.3f);
-                    }
-                    else
-                    {
-                        stressSlider.DOValue(0f, 0.3f).OnComplete(() =>
-                        {
-                            if (stressSlider.value <= 0.001f)
-                                stressSlider.fillRect.gameObject.SetActive(false);
-                        });
-                    }
+                    stressSlider.fillRect.gameObject.SetActive(targetWill > 0.001f);
                 }
-                else
-                {
-                    stressSlider.DOValue(targetStress, 0.3f);
-                }
+                stressSlider.DOValue(targetWill, 0.25f);
             }
         }
     }
