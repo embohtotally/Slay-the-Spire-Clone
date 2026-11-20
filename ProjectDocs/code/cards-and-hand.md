@@ -14,6 +14,9 @@ Canvas-only presentation. Local references/events; no singleton lookup in the vi
 | `CardFanLayout` | Per hand, on a UI container | Fan pose calculation and selected-object curve gizmo. |
 | `HandView` | Per hand, usually beside CardFanLayout | Registered views, layout animation, sibling order. |
 | `CombatHandController` | Per hand rig/prefab | Input subscriptions, selection, drag/target state, cancellation, play requests. |
+| `CardTargetingPresenter` | Per hand rig, with explicit local references | Converts card/pointer screen positions into arrow-local UI coordinates. |
+| `CanvasArrowView` | Full-stretch UI object in a targeting layer | Coordinates a line graphic and child Image head; owns path, pose and visibility, not artwork. |
+| `CanvasArrowLineGraphic` | Full-stretch child of CanvasArrowView | Textured/tapered uGUI strip with standard Graphic tint, UI material and masking. |
 | `CardViewHoverSystem` | Local preview owner, outside the preview card's hierarchy | One enlarged display-only card; **not a singleton**. |
 | `CardPlayService` | Per battle, on a scene services object | Membership/cost/rule checks and action submission. |
 | `CardTargetResolver` | Per battle, on a scene services object | Camera raycast and combatant validity/taunt checks. |
@@ -27,15 +30,18 @@ None creates persistent objects. Hand-internal references can live in a prefab; 
 CardRoot [CardView, CardPointerInput, optional CardVisualFeedback]
 └── VisualRoot [Images, TMP, optional state overlays]
 
-HandRig [CombatHandController]
+HandRig [CombatHandController, optional CardTargetingPresenter]
 ├── HandRoot [HandView, CardFanLayout]
 ├── PlayRegion [RectTransform]
 ├── DragLayer [RectTransform, CanvasGroup]
-└── PreviewLayer [RectTransform]
-    └── PreviewCard [CardView, CanvasGroup]
+├── PreviewLayer [RectTransform]
+│   └── PreviewCard [CardView, CanvasGroup]
+└── TargetingLayer [CanvasArrowView, full-stretch RectTransform]
+    ├── Line [CanvasArrowLineGraphic, full-stretch RectTransform]
+    └── Head [Image, fixed-size RectTransform]
 ```
 
-Keep hand/drag/preview under the same Canvas setup. Later siblings normally render above earlier ones. The hover owner stays outside PreviewCard; no Layout Group should also position hand cards.
+Keep hand/drag/preview under the same Canvas setup. Later siblings normally render above earlier ones; put TargetingLayer after cards/previews to draw above them. The hover owner stays outside PreviewCard; no Layout Group should also position hand cards.
 
 ## Reference fields
 
@@ -56,6 +62,16 @@ Keep hand/drag/preview under the same Canvas setup. Later siblings normally rend
 | | `_hoverPreview` | O: enlarged preview; null leaves local hover feedback available. |
 | | `_playService` | C: actual gameplay; null permits isolated presentation but cannot execute a card. |
 | | `_inputRouter` | O for pointer isolation; required for routed Back/context gating. Use the existing active router and [UIInputBridge](input.md). |
+| CardTargetingPresenter | `_handController`, `_canvasArrow`, `_canvas` | R: local controller, active CanvasArrowView, and Canvas containing the hand cards. |
+| | `_cardAnchor` | Normalized point in the CardView root rectangle; default `(0.5, 0.5)` (center). |
+| CanvasArrowView | `_line`, `_head` | Assign the child line graphic and Image; head must not be on the arrow root. Either visual can be omitted. |
+| | `_curveHeight` | Signed bend perpendicular to the chord, limited for short arrows; `0` = straight, default `60` UI units. |
+| | `_headGap`, `_headAngleOffset` | Line gap before head pivot (`24` UI units), clamped for short arrows; artwork rotation offset (`0` degrees for +X, `-90` for +Y). |
+| | `_previewInEditor`, `_previewStart`, `_previewEnd` | Editor-only sample visibility and local endpoints; ignored by runtime targeting. |
+| CanvasArrowLineGraphic | `_startWidth`, `_endWidth`, `_segments` | Shaft widths (`8`, `3` UI units) and subdivisions (`2–128`, default `32`). No automatic width scaling. |
+| | `_texture`, `_textureRepeatLength` | Optional standalone Texture2D strip; `0` stretches once, positive value sets UI units per repeat. Set texture Wrap Mode to Repeat for tiling. |
+| | `color`, `material` | Standard Graphic tint and optional UI-compatible material; unset texture uses material texture or white. |
+| Head Image | Sprite, color, material, RectTransform | Standard UI appearance and size. Pivot is placed at endpoint; coordinator changes only position, rotation, enabled and Raycast Target. |
 | CardViewHoverSystem | `cardViewHover` | R: separate Canvas CardView, parented under the visible preview bounds. |
 | | `_inputGroup` | R: CanvasGroup on PreviewCard or its preview-only ancestor; not shared with the hand. |
 | | `_canvas` | R: render Canvas; World Camera required outside Overlay mode. |
@@ -109,7 +125,8 @@ yield return handView.AddCard(view);
 CardPointerInput → CombatHandController → CardPlayService → gameplay backend
                          ├── HandView → CardFanLayout
                          ├── CardVisualFeedback
-                         └── CardViewHoverSystem → preview CardView
+                         ├── CardViewHoverSystem → preview CardView
+                         └── CardTargetingPresenter → CanvasArrowView
 ```
 
 - `ManualTargetEffect != null`: select/target, release over a valid combatant; otherwise restore.
@@ -127,7 +144,7 @@ Controller notifications are local **C# events**, not Inspector UnityEvents:
 | `PlayAccepted(view)` | ActionSystem accepted the action; effects may still be resolving. |
 | `PlayRejected(view, failure)` | Reason: `MissingBackend`, `NotInHand`, `Busy`, `Blocked`, `NotEnoughMana`, `InvalidTarget`, `TutorialBlocked`, or `InvalidDrop`. |
 | `InteractionCancelled(view)` | Back, focus loss, disabled input, or interrupted interaction. |
-| `TargetingChanged(view, screenPosition)`, `TargetingEnded()` | Hooks for a separate targeting presentation; no arrow drawn automatically. |
+| `TargetingChanged(view, screenPosition)`, `TargetingEnded()` | Manual-target feedback; CardTargetingPresenter subscribes locally. |
 
 ```csharp
 void OnEnable() => controller.PlayRejected += OnRejected;
@@ -135,6 +152,29 @@ void OnDisable() => controller.PlayRejected -= OnRejected;
 void OnRejected(CardView view, CardPlayFailure failure) =>
     Debug.Log($"{view.name}: {failure}");
 ```
+
+### Manual-target arrow
+
+Add CardTargetingPresenter to the hand rig. Under the Canvas, create a full-stretch CanvasArrowView root with two children:
+
+| Object | Setup |
+| --- | --- |
+| Line | Full-stretch RectTransform, zero offsets, CanvasArrowLineGraphic (not Image). Assign a texture and/or UI material for artwork. |
+| Head | Standard UI Image with artist-authored sprite, tint, material and fixed RectTransform size. For right-pointing artwork, pivot `(1, 0.5)` puts its tip at the endpoint. Up-pointing artwork can use pivot `(0.5, 1)` and Head Angle Offset `-90`. |
+
+Assign both children to CanvasArrowView, and the root/controller/card Canvas to CardTargetingPresenter. Keep these objects active, outside hand/preview-only CanvasGroups and masks. Use unit local scale; the CanvasScaler controls overall sizing. Put Head after Line to render it above the strip.
+
+- Uses controller pointer events, not additional input polling. Release, cancellation, or presenter disable hides the arrow.
+- Converts screen positions into the arrow's RectTransform space; updates each LateUpdate so the origin follows card movement. No world camera or depth setting is needed for Overlay UI.
+- Path/gap belong to CanvasArrowView; line width, texture, tint and material belong to Line; head sprite, size, pivot, tint and material belong to the Image. Head size/scale are never overwritten or automatically shrunk. Raycast Target is disabled automatically on both visuals.
+- Use a standalone line texture rather than an atlas sprite. Texture U runs along sampled arc length and V across width, so repeat spacing stays consistent around bends. With no texture/material it draws a plain tinted strip.
+- For visual authoring, enable **Preview In Editor** on CanvasArrowView. Select the root for **Start**, **End**, and perpendicular **Curve** Scene handles; select either child for normal visual editing. Enable Gizmos if handles are hidden. Changes update the preview live. Handles support Undo and prefab overrides; they appear only for a single selected arrow outside Play Mode.
+- Preview endpoints are editor-only. The Curve handle edits the shared `_curveHeight` style used at runtime; endpoints do not change card/pointer positions. Turn preview off to hide the sample.
+- Place the targeting layer after card/preview siblings for front rendering, or before them for back rendering. Separate/nested canvases still obey their sorting orders.
+- Works without Play Service for presentation checks. Does not resolve/snap targets, draw automatic-target arrows, or execute effects.
+- `CanvasArrowView.Show(startLocal, endLocal)` accepts root-local endpoints; `Hide()` hides the line mesh and Image without disabling their GameObjects. A world target can supply an endpoint by projecting its anchor to screen, then converting into arrow-local space.
+- Migrating the all-procedural Canvas arrow: keep the root script and presenter reference; assign the new child visuals. Move width/tint/material choices onto Line and author the head Image. The root is now a MonoBehaviour, not a Graphic; its former Graphic appearance and generated-head fields are no longer used. Remove the root's leftover CanvasRenderer manually. Curve/preview field names and script GUID remain unchanged.
+- Migrating the earlier world arrow: assign the new **Canvas Arrow** field and disable the old dedicated world-arrow object manually. The old `_arrow` reference is not reused across incompatible component types; `_worldCamera` and `_planeDistance` are removed. Controller/card Canvas references and the presenter script GUID remain unchanged. Legacy ArrowView/ManualTargetingSystem remain available for their existing callers.
 
 ## Presentation debug
 
@@ -160,4 +200,4 @@ Each clone binds a separate runtime Card, but is registered only with HandView, 
 
 ## Current boundary
 
-Scene/prefab wiring remains manual. Legacy draw/discard presentation, audio/VFX, and targeting-arrow rendering are not migrated here. The component refactor has not been verified in Play Mode.
+Scene/prefab wiring remains manual. Legacy draw/discard presentation, audio/VFX, and automatic-target previews are not migrated here. The component refactor and manual-target arrow have not been verified in Play Mode.

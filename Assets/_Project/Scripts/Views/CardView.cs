@@ -1,3 +1,4 @@
+using NaughtyAttributes;
 using PlushieOdyssey.Combat.Models;
 using PlushieOdyssey.Data;
 using TMPro;
@@ -31,8 +32,8 @@ namespace PlushieOdyssey.Combat.Views
         public CardData CardData { get; private set; }
         public CardDisplayData DisplayData { get; private set; }
         public bool HasContent { get; private set; }
-        public bool IsBlocked { get; private set; }
-        public bool IsSelected { get; private set; }
+        [ShowNativeProperty] public bool IsBlocked { get; private set; }
+        [ShowNativeProperty] public bool IsSelected { get; private set; }
 
         public void Setup(Card card)
         {

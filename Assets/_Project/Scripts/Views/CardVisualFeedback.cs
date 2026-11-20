@@ -1,4 +1,5 @@
 using DG.Tweening;
+using NaughtyAttributes;
 using UnityEngine;
 
 namespace PlushieOdyssey.Combat.Views
@@ -14,9 +15,9 @@ namespace PlushieOdyssey.Combat.Views
         [SerializeField] private Ease _ease = Ease.OutQuad;
 
         private Vector3 _baseScale;
-        private bool _initialized;
-        private bool _hovered;
-        private bool _pressed;
+        [ShowNonSerializedField] private bool _initialized;
+        [ShowNonSerializedField] private bool _hovered;
+        [ShowNonSerializedField] private bool _pressed;
         private Tween _scaleTween;
 
         private void Awake() => Initialize();

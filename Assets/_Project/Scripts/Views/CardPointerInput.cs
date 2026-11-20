@@ -1,4 +1,5 @@
 using System;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -11,7 +12,7 @@ namespace PlushieOdyssey.Combat.Views
         [SerializeField] private bool _interactable = true;
 
         private int? _pressedPointerId;
-        private bool _hovered;
+        [SerializeField, ReadOnly] private bool _hovered;
 
         public event Action<CardPointerInput, PointerEventData> HoverEntered;
         public event Action<CardPointerInput, PointerEventData> HoverExited;
@@ -19,6 +20,9 @@ namespace PlushieOdyssey.Combat.Views
         public event Action<CardPointerInput, PointerEventData> Released;
         public event Action<CardPointerInput, PointerEventData> Dragged;
         public event Action<CardPointerInput> Cancelled;
+
+        [ShowNativeProperty]
+        public int PressedPointerId => _pressedPointerId ?? -99;
 
         public void SetInteractable(bool interactable)
         {
