@@ -4,10 +4,13 @@ using DG.Tweening;
 using PlushieOdyssey.Combat.Models;
 using PlushieOdyssey.Combat.Systems;
 using PlushieOdyssey.Combat.Views;
+using PlushieOdyssey.Data;
 using PlushieOdyssey.Run;
+using PlushieOdyssey.UI.Relics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace PlushieOdyssey.UI.Combat
@@ -32,6 +35,10 @@ namespace PlushieOdyssey.UI.Combat
             public Image WillFillImage;
             public TMP_Text WillStateBadge;
             public List<StatusCell> StatusCells = new();
+
+            [NonSerialized] public Sprite FallbackPortraitSprite;
+            [NonSerialized] public bool FallbackCaptured;
+            [NonSerialized] public HeroData BoundHero;
         }
 
         [Serializable]
@@ -62,8 +69,10 @@ namespace PlushieOdyssey.UI.Combat
         [SerializeField] private TMP_Text _crystalText;
         [SerializeField] private TMP_Text _goldText;
 
-        [Header("3 Character Portrait / Will / Buff Slots")]
+        [Header("Modular Character Portrait / Will / Buff Slots")]
         [SerializeField] private List<CharacterWillSlot> _characterSlots = new();
+        [Tooltip("If enabled, hides portrait slots beyond the selected party count even for single-hero test runs. Multi-hero parties (2+) automatically match their exact slot count and expand dynamically if > 3.")]
+        [SerializeField] private bool _autoHideUnusedSlotsForSingleHero = false;
 
         [Header("Will Slider Colors")]
         [SerializeField] private Color _highWillFillColor = new(0.14f, 0.68f, 1f, 1f);
@@ -77,10 +86,176 @@ namespace PlushieOdyssey.UI.Combat
         private BuffSystem _subscribedBuffSystem;
         private DamageOverTimeSystem _subscribedDotSystem;
         private StatusCell _hoveredCell;
+        private Canvas _rootCanvas;
+        private CombatHandController _handController;
+        private RelicSwapModalUI _relicSwapModal;
+        private Vector2? _simulatedHoverScreenPos;
+
+        public void SetSimulatedHoverScreenPosition(Vector2? screenPos) => _simulatedHoverScreenPos = screenPos;
+
+        public bool TryGetActiveHeroStatusScreenCenter(int slotIndex, int badgeIndex, out Vector2 screenCenter)
+        {
+            screenCenter = Vector2.zero;
+            if (_characterSlots == null || slotIndex < 0 || slotIndex >= _characterSlots.Count) return false;
+            var cells = _characterSlots[slotIndex]?.StatusCells;
+            if (cells == null || badgeIndex < 0 || badgeIndex >= cells.Count) return false;
+            StatusCell cell = cells[badgeIndex];
+            if (cell?.BoundBadge == null || cell.Background == null || !cell.Background.gameObject.activeSelf) return false;
+
+            if (_rootCanvas == null) _rootCanvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            Camera uiCam = _rootCanvas != null && _rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? _rootCanvas.worldCamera : null;
+            RectTransform rt = cell.Background.rectTransform;
+            screenCenter = RectTransformUtility.WorldToScreenPoint(uiCam, rt.TransformPoint(rt.rect.center));
+            return true;
+        }
 
         private void Awake()
         {
             ResolveHeroView();
+            CaptureSlotFallbackPortraits();
+            _rootCanvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            _handController = FindFirstObjectByType<CombatHandController>();
+            _relicSwapModal = FindFirstObjectByType<RelicSwapModalUI>();
+        }
+
+        /// <summary>
+        /// Dynamically updates the portrait strip for any selected party roster (e.g., from Character Selection).
+        /// Expands slots automatically if the party is larger than the template count.
+        /// </summary>
+        public void BindParty(IReadOnlyList<HeroData> party)
+        {
+            CaptureSlotFallbackPortraits();
+            if (party != null && party.Count > _characterSlots.Count)
+            {
+                EnsureSlotCount(party.Count);
+            }
+            RefreshCharacterWillSlots();
+            RefreshStatusGrids();
+        }
+
+        public Sprite GetBoundPortraitSprite(int slotIndex)
+        {
+            if (_characterSlots == null || slotIndex < 0 || slotIndex >= _characterSlots.Count) return null;
+            return _characterSlots[slotIndex]?.PortraitImage != null
+                ? _characterSlots[slotIndex].PortraitImage.sprite
+                : null;
+        }
+
+        public int GetActiveSlotCount()
+        {
+            if (_characterSlots == null) return 0;
+            int count = 0;
+            for (int i = 0; i < _characterSlots.Count; i++)
+            {
+                if (_characterSlots[i]?.Root != null && _characterSlots[i].Root.activeSelf) count++;
+            }
+            return count;
+        }
+
+        private void CaptureSlotFallbackPortraits()
+        {
+            if (_characterSlots == null) return;
+            for (int i = 0; i < _characterSlots.Count; i++)
+            {
+                CharacterWillSlot slot = _characterSlots[i];
+                if (slot == null || slot.FallbackCaptured) continue;
+                slot.FallbackCaptured = true;
+                slot.FallbackPortraitSprite = slot.PortraitImage != null ? slot.PortraitImage.sprite : null;
+            }
+        }
+
+        private void EnsureSlotCount(int targetCount)
+        {
+            if (_characterSlots == null || _characterSlots.Count == 0) return;
+            CharacterWillSlot template = _characterSlots[0];
+            if (template?.Root == null || template.Root.transform.parent == null) return;
+
+            Transform parent = template.Root.transform.parent;
+            while (_characterSlots.Count < targetCount)
+            {
+                int newIdx = _characterSlots.Count;
+                GameObject clone = Instantiate(template.Root, parent);
+                clone.name = $"CharacterSlot_{newIdx + 1}";
+                CharacterWillSlot clonedSlot = BuildSlotFromClone(clone, template);
+                _characterSlots.Add(clonedSlot);
+            }
+        }
+
+        private static CharacterWillSlot BuildSlotFromClone(GameObject cloneRoot, CharacterWillSlot template)
+        {
+            var slot = new CharacterWillSlot
+            {
+                Root = cloneRoot,
+                FallbackCaptured = true
+            };
+
+            if (template.PortraitImage != null)
+            {
+                Transform t = FindChildByRelativePath(cloneRoot.transform, GetRelativePath(template.Root.transform, template.PortraitImage.transform));
+                if (t != null) slot.PortraitImage = t.GetComponent<Image>();
+                slot.FallbackPortraitSprite = slot.PortraitImage != null ? slot.PortraitImage.sprite : null;
+            }
+            if (template.PortraitBorder != null)
+            {
+                Transform t = FindChildByRelativePath(cloneRoot.transform, GetRelativePath(template.Root.transform, template.PortraitBorder.transform));
+                if (t != null) slot.PortraitBorder = t.GetComponent<Image>();
+            }
+            if (template.WillSlider != null)
+            {
+                Transform t = FindChildByRelativePath(cloneRoot.transform, GetRelativePath(template.Root.transform, template.WillSlider.transform));
+                if (t != null) slot.WillSlider = t.GetComponent<Slider>();
+            }
+            if (template.WillFillImage != null)
+            {
+                Transform t = FindChildByRelativePath(cloneRoot.transform, GetRelativePath(template.Root.transform, template.WillFillImage.transform));
+                if (t != null) slot.WillFillImage = t.GetComponent<Image>();
+            }
+            if (template.WillStateBadge != null)
+            {
+                Transform t = FindChildByRelativePath(cloneRoot.transform, GetRelativePath(template.Root.transform, template.WillStateBadge.transform));
+                if (t != null) slot.WillStateBadge = t.GetComponent<TMP_Text>();
+            }
+            if (template.StatusCells != null)
+            {
+                for (int c = 0; c < template.StatusCells.Count; c++)
+                {
+                    StatusCell srcCell = template.StatusCells[c];
+                    if (srcCell?.Background == null) continue;
+                    Transform bgT = FindChildByRelativePath(cloneRoot.transform, GetRelativePath(template.Root.transform, srcCell.Background.transform));
+                    Transform lblT = srcCell.Label != null
+                        ? FindChildByRelativePath(cloneRoot.transform, GetRelativePath(template.Root.transform, srcCell.Label.transform))
+                        : null;
+                    if (bgT != null)
+                    {
+                        slot.StatusCells.Add(new StatusCell
+                        {
+                            Background = bgT.GetComponent<Image>(),
+                            Label = lblT != null ? lblT.GetComponent<TMP_Text>() : null
+                        });
+                    }
+                }
+            }
+
+            return slot;
+        }
+
+        private static string GetRelativePath(Transform root, Transform target)
+        {
+            if (root == null || target == null || root == target) return string.Empty;
+            var stack = new Stack<string>();
+            Transform cur = target;
+            while (cur != null && cur != root)
+            {
+                stack.Push(cur.name);
+                cur = cur.parent;
+            }
+            return string.Join("/", stack);
+        }
+
+        private static Transform FindChildByRelativePath(Transform root, string path)
+        {
+            if (root == null) return null;
+            return string.IsNullOrEmpty(path) ? root : root.Find(path);
         }
 
         private void OnEnable()
@@ -105,6 +280,97 @@ namespace PlushieOdyssey.UI.Combat
                 UnsubscribeAll();
                 SubscribeAll();
                 RefreshAll();
+            }
+        }
+
+        private void LateUpdate()
+        {
+            UpdateStatusCellHover();
+        }
+
+        /// <summary>
+        /// Non-blocking cursor hit-test over all active Hero portrait buff/debuff icons.
+        /// Works reliably even when PartyWillPanel's CanvasGroup keeps blocksRaycasts=false so card drags are never blocked.
+        /// </summary>
+        private void UpdateStatusCellHover()
+        {
+            bool suppressHover =
+                (_handController != null && _handController.IsCardInteracting) ||
+                (_relicSwapModal != null && _relicSwapModal.IsOpen) ||
+                CombatMapOverlayUI.IsAnyOpen ||
+                CombatPileViewerUI.IsAnyOpen ||
+                Time.timeScale == 0f;
+
+            if (suppressHover)
+            {
+                if (_hoveredCell != null) ClearHoverTooltip();
+                return;
+            }
+
+            Vector2 pointerScreen;
+            if (_simulatedHoverScreenPos.HasValue)
+            {
+                pointerScreen = _simulatedHoverScreenPos.Value;
+            }
+            else if (Mouse.current != null)
+            {
+                pointerScreen = Mouse.current.position.ReadValue();
+            }
+            else
+            {
+                return;
+            }
+
+            if (_rootCanvas == null) _rootCanvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            Camera uiCam = _rootCanvas != null && _rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? _rootCanvas.worldCamera : null;
+
+            StatusCell hitCell = null;
+            if (_characterSlots != null)
+            {
+                for (int i = 0; i < _characterSlots.Count && hitCell == null; i++)
+                {
+                    CharacterWillSlot slot = _characterSlots[i];
+                    if (slot == null || (slot.Root != null && !slot.Root.activeInHierarchy)) continue;
+                    var cells = slot.StatusCells;
+                    if (cells == null) continue;
+                    for (int c = 0; c < cells.Count; c++)
+                    {
+                        StatusCell cell = cells[c];
+                        if (cell?.BoundBadge == null || cell.Background == null || !cell.Background.gameObject.activeSelf)
+                            continue;
+
+                        RectTransform rt = cell.Background.rectTransform;
+                        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(rt, pointerScreen, uiCam, out Vector2 localHit))
+                        {
+                            Rect r = rt.rect;
+                            r.xMin -= 5f;
+                            r.xMax += 5f;
+                            r.yMin -= 5f;
+                            r.yMax += 5f;
+                            if (r.Contains(localHit))
+                            {
+                                hitCell = cell;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (hitCell != _hoveredCell)
+            {
+                if (hitCell != null)
+                {
+                    HandleCellHoverEnter(hitCell);
+                }
+                else
+                {
+                    ClearHoverTooltip();
+                }
+            }
+            else if (hitCell != null && hitCell.BoundBadge != null && hitCell.Background != null)
+            {
+                CombatStatusTooltipUI.Instance?.Show(hitCell.BoundBadge, hitCell.Background.rectTransform, this, preferBelow: true, playHoverSfx: false);
             }
         }
 
@@ -214,13 +480,34 @@ namespace PlushieOdyssey.UI.Combat
         private void RefreshCharacterWillSlots()
         {
             if (_characterSlots == null || _characterSlots.Count == 0) return;
+            CaptureSlotFallbackPortraits();
 
             IReadOnlyList<RunHeroStressState> states = _heroView != null ? _heroView.StressStates : null;
+            IReadOnlyList<HeroData> heroTeam = _heroView != null && _heroView.HeroTeam != null && _heroView.HeroTeam.Count > 0
+                ? _heroView.HeroTeam
+                : (RunManager.Instance != null && RunManager.Instance.HasSelectedParty ? RunManager.Instance.SelectedParty : null);
+
+            int partyCount = Mathf.Max(states != null ? states.Count : 0, heroTeam != null ? heroTeam.Count : 0);
+            if (partyCount > _characterSlots.Count)
+            {
+                EnsureSlotCount(partyCount);
+            }
+
+            // Show exact party size for multi-hero teams (2, 3, 4+) or when _autoHideUnusedSlotsForSingleHero is on;
+            // keep the 3-slot Figma layout visible when using a single legacy Default Hero asset.
+            bool restrictToPartyCount = partyCount > 1 || (_autoHideUnusedSlotsForSingleHero && partyCount > 0);
 
             for (int i = 0; i < _characterSlots.Count; i++)
             {
                 CharacterWillSlot slot = _characterSlots[i];
                 if (slot == null) continue;
+
+                bool slotVisible = !restrictToPartyCount || i < partyCount;
+                if (slot.Root != null && slot.Root.activeSelf != slotVisible)
+                {
+                    slot.Root.SetActive(slotVisible);
+                }
+                if (!slotVisible) continue;
 
                 RunHeroStressState state = null;
                 if (states != null && states.Count > 0)
@@ -228,11 +515,32 @@ namespace PlushieOdyssey.UI.Combat
                     state = i < states.Count ? states[i] : states[0];
                 }
 
+                HeroData slotHero = state?.HeroData;
+                if (slotHero == null && heroTeam != null && i < heroTeam.Count)
+                {
+                    slotHero = heroTeam[i];
+                }
+                slot.BoundHero = slotHero;
+
                 float willNorm = state != null
                     ? state.WillNormalized
                     : (_heroView != null ? _heroView.WillNormalized : 0.5f);
                 bool isHighWill = state != null ? state.IsHighWill : (_heroView != null && _heroView.IsHighWill);
                 bool isLowWill = state != null ? state.IsLowWill : (_heroView != null && _heroView.IsLowWill);
+
+                // Dynamically bind character portrait (supports distinct selected heroes + High/Low Will expression swaps!)
+                if (slot.PortraitImage != null)
+                {
+                    Sprite targetPortrait = state?.CurrentPortrait ?? slotHero?.GetPortraitForWill(isHighWill, isLowWill);
+                    if (targetPortrait != null)
+                    {
+                        slot.PortraitImage.sprite = targetPortrait;
+                    }
+                    else if (slot.FallbackPortraitSprite != null)
+                    {
+                        slot.PortraitImage.sprite = slot.FallbackPortraitSprite;
+                    }
+                }
 
                 if (slot.WillSlider != null)
                 {
@@ -241,8 +549,17 @@ namespace PlushieOdyssey.UI.Combat
                     else slot.WillSlider.value = willNorm;
                 }
 
-                Color fillColor = isLowWill ? _lowWillFillColor : (isHighWill ? _highWillFillColor : _neutralWillFillColor);
-                Color borderColor = isLowWill ? _lowWillBorderColor : (isHighWill ? _highWillBorderColor : _normalBorderColor);
+                // Resolve modular per-character Will palette if configured, otherwise top-bar defaults
+                HeroWillProfile profile = state?.WillProfile ?? slotHero?.WillProfile;
+                Color highFill = profile != null && profile.UseCustomPalette ? profile.HighWillFillColor : _highWillFillColor;
+                Color neutralFill = profile != null && profile.UseCustomPalette ? profile.NeutralWillFillColor : _neutralWillFillColor;
+                Color lowFill = profile != null && profile.UseCustomPalette ? profile.LowWillFillColor : _lowWillFillColor;
+                Color normalBorder = profile != null && profile.UseCustomPalette ? profile.NormalBorderColor : _normalBorderColor;
+                Color highBorder = profile != null && profile.UseCustomPalette ? profile.HighWillBorderColor : _highWillBorderColor;
+                Color lowBorder = profile != null && profile.UseCustomPalette ? profile.LowWillBorderColor : _lowWillBorderColor;
+
+                Color fillColor = isLowWill ? lowFill : (isHighWill ? highFill : neutralFill);
+                Color borderColor = isLowWill ? lowBorder : (isHighWill ? highBorder : normalBorder);
 
                 if (slot.WillFillImage != null) slot.WillFillImage.color = fillColor;
                 if (slot.PortraitBorder != null) slot.PortraitBorder.color = borderColor;
@@ -264,7 +581,7 @@ namespace PlushieOdyssey.UI.Combat
         {
             if (_characterSlots == null || _characterSlots.Count == 0) return;
 
-            List<CombatStatusBadgeData> sharedBadges = CombatStatusBadgeData.CollectFor(_heroView, includeWillState: true);
+            List<CombatStatusBadgeData> sharedCombatBadges = CombatStatusBadgeData.CollectFor(_heroView, includeWillState: false);
             bool hoveredStillValid = false;
 
             for (int i = 0; i < _characterSlots.Count; i++)
@@ -272,7 +589,20 @@ namespace PlushieOdyssey.UI.Combat
                 CharacterWillSlot slot = _characterSlots[i];
                 if (slot == null || slot.StatusCells == null) continue;
 
-                List<CombatStatusBadgeData> slotBadges = i == 0 ? sharedBadges : BuildSecondarySlotBadges(i);
+                bool slotActive = slot.Root == null || slot.Root.activeSelf;
+                List<CombatStatusBadgeData> slotBadges;
+                if (!slotActive)
+                {
+                    slotBadges = new List<CombatStatusBadgeData>();
+                }
+                else
+                {
+                    slotBadges = BuildSlotWillBadges(i);
+                    if (i == 0 && sharedCombatBadges.Count > 0)
+                    {
+                        slotBadges.AddRange(sharedCombatBadges);
+                    }
+                }
 
                 for (int c = 0; c < slot.StatusCells.Count; c++)
                 {
@@ -330,7 +660,7 @@ namespace PlushieOdyssey.UI.Combat
             }
         }
 
-        private List<CombatStatusBadgeData> BuildSecondarySlotBadges(int slotIndex)
+        private List<CombatStatusBadgeData> BuildSlotWillBadges(int slotIndex)
         {
             if (_heroView == null || _heroView.StressStates == null || _heroView.StressStates.Count == 0)
                 return new List<CombatStatusBadgeData>();
@@ -527,6 +857,8 @@ namespace PlushieOdyssey.UI.Combat
             {
                 _subscribedRunManager.RunStateChanged -= RefreshCurrencies;
                 _subscribedRunManager.RunStateChanged += RefreshCurrencies;
+                _subscribedRunManager.SelectedPartyChanged -= BindParty;
+                _subscribedRunManager.SelectedPartyChanged += BindParty;
             }
 
             _subscribedBuffSystem = BuffSystem.Instance;
@@ -555,6 +887,7 @@ namespace PlushieOdyssey.UI.Combat
             if (_subscribedRunManager != null)
             {
                 _subscribedRunManager.RunStateChanged -= RefreshCurrencies;
+                _subscribedRunManager.SelectedPartyChanged -= BindParty;
                 _subscribedRunManager = null;
             }
             if (_subscribedBuffSystem != null)

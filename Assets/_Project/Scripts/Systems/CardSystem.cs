@@ -6,6 +6,7 @@ using PlushieOdyssey.Core;
 using PlushieOdyssey.Core.Extensions;
 using PlushieOdyssey.Data;
 using PlushieOdyssey.Run;
+using PlushieOdyssey.UI.Combat;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,8 +23,12 @@ namespace PlushieOdyssey.Combat.Systems
         public HandView HandView => handView;
         [SerializeField] private Transform drawPilePoint;
         [SerializeField] private Transform discardPilePoint;
-        [SerializeField] private float doTweenScaleDuration = 0.15f;
-        [SerializeField] private float doTweenMoveDuration = 0.15f;
+        [Header("Animation Pacing (Non-Blocking Visuals)")]
+        [SerializeField] private float doTweenScaleDuration = 0.20f;
+        [SerializeField] private float doTweenMoveDuration = 0.22f;
+        [SerializeField, Min(0f)] private float drawStaggerDelay = 0.095f;
+        [SerializeField, Min(0f)] private float discardStaggerDelay = 0.06f;
+        [SerializeField, Min(0.05f)] private float discardFlyDuration = 0.28f;
         [SerializeField] private int enemyDrawCardsAmount = 5;
         [SerializeField, Min(1)] private int maxHandSize = 10;
         [SerializeField] private TMP_Text drawPileText;
@@ -40,6 +45,7 @@ namespace PlushieOdyssey.Combat.Systems
         private readonly List<Card> discardPile = new();
         private readonly List<Card> exhaustPile = new();
         private readonly List<Card> hand = new();
+        private readonly HashSet<Card> reservedPlayedCards = new();
         private bool prioritizeInnateOnOpeningDraw;
 
         public IReadOnlyList<Card> DrawPile => drawPile;
@@ -93,6 +99,7 @@ namespace PlushieOdyssey.Combat.Systems
             discardPile.Clear();
             exhaustPile.Clear();
             hand.Clear();
+            reservedPlayedCards.Clear();
             prioritizeInnateOnOpeningDraw = true;
 
             if (deckData == null)
@@ -112,10 +119,24 @@ namespace PlushieOdyssey.Combat.Systems
             UpdatePileTexts();
         }
 
+        /// <summary>
+        /// Immediately removes a card from hand when queued for play, launches its non-blocking
+        /// exit animation in parallel, and marks it reserved so PlayCardPerformer executes cleanly in FIFO order.
+        /// </summary>
+        public void ReserveCardPlay(Card card)
+        {
+            if (card == null) return;
+            hand.Remove(card);
+            reservedPlayedCards.Add(card);
+            CardView cardView = handView != null ? handView.RemoveCard(card) : null;
+            LaunchPlayExitAnimation(cardView, card);
+        }
+
     #region Performers
         private IEnumerator DrawCardsPerformer(DrawCardsGA drawCardsGA)
         {
             int remainingToDraw = drawCardsGA.Amount;
+            WaitForSeconds staggerWait = drawStaggerDelay > 0f ? new WaitForSeconds(drawStaggerDelay) : null;
 
             for (int i = 0; i < remainingToDraw; i++)
             {
@@ -128,11 +149,15 @@ namespace PlushieOdyssey.Combat.Systems
                 if (drawPile.Count == 0)
                 {
                     if (discardPile.Count == 0) break;
-                    RefillDeck();
+                    yield return RefillDeckWithAnimation();
                 }
 
                 if (drawPile.Count == 0) break;
-                yield return DrawCard();
+                DrawCardNonBlocking();
+                if (i < remainingToDraw - 1 && staggerWait != null)
+                {
+                    yield return staggerWait;
+                }
             }
 
             prioritizeInnateOnOpeningDraw = false;
@@ -142,7 +167,9 @@ namespace PlushieOdyssey.Combat.Systems
         {
             List<Card> retained = new();
             List<Card> toProcess = new(hand);
+            hand.Clear();
 
+            int animIndex = 0;
             foreach (Card card in toProcess)
             {
                 if (card == null) continue;
@@ -153,41 +180,56 @@ namespace PlushieOdyssey.Combat.Systems
                     continue;
                 }
 
-                CardView cardView = handView.RemoveCard(card);
+                CardView cardView = handView != null ? handView.RemoveCard(card) : null;
+                float delay = animIndex * discardStaggerDelay;
+                animIndex++;
+
                 if (card.HasKeyword(CardKeywords.Ethereal))
                 {
-                    yield return ExhaustCard(cardView, card);
+                    LaunchExhaustAnimation(cardView, card, delay);
                 }
                 else
                 {
-                    yield return DiscardCard(cardView, card);
+                    LaunchDiscardAnimation(cardView, card, delay);
                 }
             }
 
-            hand.Clear();
             hand.AddRange(retained);
             UpdatePileTexts();
+
+            // Let the end-turn discard cascade visibly swoop before the enemy turn swings
+            if (animIndex > 0)
+            {
+                float breath = Mathf.Clamp(animIndex * discardStaggerDelay * 0.7f + discardFlyDuration * 0.45f, 0.14f, 0.34f);
+                yield return new WaitForSeconds(breath);
+            }
         }
 
         private IEnumerator PlayCardPerformer(PlayCardGA playCardGA)
         {
-            hand.Remove(playCardGA.Card);
-            CardView cardView = handView.RemoveCard(playCardGA.Card);
+            Card card = playCardGA.Card;
+            bool alreadyReserved = card != null && reservedPlayedCards.Remove(card);
+            if (!alreadyReserved && card != null)
+            {
+                hand.Remove(card);
+                CardView cardView = handView != null ? handView.RemoveCard(card) : null;
+                LaunchPlayExitAnimation(cardView, card);
+            }
 
             if (playCardSfx != global::PlushieOdyssey.Audio.SfxID.None) global::PlushieOdyssey.Audio.Tune.SFX(playCardSfx);
 
-            if (playCardGA.Card.PlaySfx != global::PlushieOdyssey.Audio.SfxID.None)
+            if (card != null && card.PlaySfx != global::PlushieOdyssey.Audio.SfxID.None)
             {
-                global::PlushieOdyssey.Audio.Tune.SFX(playCardGA.Card.PlaySfx);
+                global::PlushieOdyssey.Audio.Tune.SFX(card.PlaySfx);
             }
 
             PlayCardVisuals(playCardGA);
 
-            yield return PlayAndDiscardCard(cardView);
-
+            // Execute mana spend and card effects immediately in strict FIFO order without waiting for card fly-out!
             SpendMana(playCardGA);
             DoManualTargetEffect(playCardGA);
             DoAutoTargetEffect(playCardGA);
+            yield break;
         }
 
         private IEnumerator ApplyCostModifierPerformer(ApplyCostModifierGA applyCostModifierGA)
@@ -231,87 +273,105 @@ namespace PlushieOdyssey.Combat.Systems
     #endregion
 
     #region Helpers
-        private IEnumerator PlayAndDiscardCard(CardView cardView)
+        private void LaunchPlayExitAnimation(CardView cardView, Card fallbackCard)
         {
-            if (cardView == null) yield break;
-
-            bool exhaustOnPlay = cardView.Card != null && cardView.Card.HasKeyword(CardKeywords.Exhaust);
+            Card card = cardView != null && cardView.Card != null ? cardView.Card : fallbackCard;
+            bool exhaustOnPlay = card != null && card.HasKeyword(CardKeywords.Exhaust);
             if (exhaustOnPlay)
-                exhaustPile.Add(cardView.Card);
-            else if (cardView.Card != null)
-                discardPile.Add(cardView.Card);
+                exhaustPile.Add(card);
+            else if (card != null)
+                discardPile.Add(card);
             UpdatePileTexts();
+
+            if (cardView == null) return;
 
             Canvas rootCanvas = GetCardRootCanvas(cardView);
             PrepareCardForExitAnimation(cardView, rootCanvas);
 
             Vector3 playCenter = GetPlayCenterPosition(rootCanvas);
             Vector3 exitPos = exhaustOnPlay ? playCenter : GetDiscardPosition(rootCanvas, playCenter);
-            float playScale = rootCanvas != null ? 1.25f : 1.5f;
+            float playScale = rootCanvas != null ? 1.18f : 1.35f;
+            float moveDur = Mathf.Max(doTweenMoveDuration, 0.18f);
+            float scaleDur = Mathf.Max(doTweenScaleDuration, 0.18f);
 
-            cardView.transform.DOMove(playCenter, doTweenMoveDuration);
-            cardView.transform.DORotate(Vector3.zero, doTweenMoveDuration);
-            Tween scaleTween = cardView.transform.DOScale(Vector3.one * playScale, doTweenScaleDuration);
-            yield return scaleTween.WaitForCompletion();
-
-            yield return new WaitForSeconds(0.18f);
-
-            cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
-            Tween moveTween = cardView.transform.DOMove(exitPos, doTweenMoveDuration);
-            yield return moveTween.WaitForCompletion();
-
-            cardView.transform.DOKill();
-            Destroy(cardView.gameObject);
+            Sequence seq = DOTween.Sequence().SetUpdate(true);
+            seq.Append(cardView.transform.DOMove(playCenter, moveDur).SetEase(Ease.OutQuad));
+            seq.Join(cardView.transform.DORotate(Vector3.zero, moveDur));
+            seq.Join(cardView.transform.DOScale(Vector3.one * playScale, scaleDur).SetEase(Ease.OutBack));
+            seq.AppendInterval(0.09f);
+            seq.Append(cardView.transform.DOScale(Vector3.zero, scaleDur).SetEase(Ease.InBack));
+            seq.Join(cardView.transform.DOMove(exitPos, moveDur).SetEase(Ease.InQuad));
+            seq.OnComplete(() =>
+            {
+                if (cardView != null)
+                {
+                    cardView.transform.DOKill();
+                    Destroy(cardView.gameObject);
+                }
+            });
         }
 
-        private IEnumerator DiscardCard(CardView cardView, Card fallbackCard = null)
+        private void LaunchDiscardAnimation(CardView cardView, Card fallbackCard, float delay)
         {
-            Card card = cardView != null ? cardView.Card : fallbackCard;
+            Card card = cardView != null && cardView.Card != null ? cardView.Card : fallbackCard;
             if (card != null) discardPile.Add(card);
-            UpdatePileTexts();
 
-            if (cardView == null) yield break;
+            if (cardView == null) return;
 
             Canvas rootCanvas = GetCardRootCanvas(cardView);
             PrepareCardForExitAnimation(cardView, rootCanvas);
             Vector3 discardPos = GetDiscardPosition(rootCanvas, cardView.transform.position);
+            float dur = Mathf.Max(discardFlyDuration, 0.18f);
 
-            cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration);
-            Tween tween = cardView.transform.DOMove(discardPos, doTweenMoveDuration);
-            yield return tween.WaitForCompletion();
-
-            cardView.transform.DOKill();
-            Destroy(cardView.gameObject);
+            Sequence seq = DOTween.Sequence().SetUpdate(true);
+            if (delay > 0f) seq.AppendInterval(delay);
+            seq.Append(cardView.transform.DOMove(discardPos, dur).SetEase(Ease.InOutCubic));
+            seq.Join(cardView.transform.DOScale(Vector3.zero, dur).SetEase(Ease.InQuad));
+            seq.Join(cardView.transform.DORotate(new Vector3(0f, 0f, -24f), dur).SetEase(Ease.InQuad));
+            seq.OnComplete(() =>
+            {
+                if (cardView != null)
+                {
+                    cardView.transform.DOKill();
+                    Destroy(cardView.gameObject);
+                }
+            });
         }
 
-        private IEnumerator ExhaustCard(CardView cardView, Card fallbackCard = null)
+        private void LaunchExhaustAnimation(CardView cardView, Card fallbackCard, float delay)
         {
-            Card card = cardView != null ? cardView.Card : fallbackCard;
+            Card card = cardView != null && cardView.Card != null ? cardView.Card : fallbackCard;
             if (card != null) exhaustPile.Add(card);
-            UpdatePileTexts();
 
-            if (cardView == null) yield break;
+            if (cardView == null) return;
 
             Canvas rootCanvas = GetCardRootCanvas(cardView);
             PrepareCardForExitAnimation(cardView, rootCanvas);
+            float dur = Mathf.Max(discardFlyDuration, 0.18f);
 
-            Tween scaleTween = cardView.transform.DOScale(Vector3.zero, doTweenScaleDuration).SetEase(Ease.InBack);
-            yield return scaleTween.WaitForCompletion();
-
-            cardView.transform.DOKill();
-            Destroy(cardView.gameObject);
+            Sequence seq = DOTween.Sequence().SetUpdate(true);
+            if (delay > 0f) seq.AppendInterval(delay);
+            seq.Append(cardView.transform.DOScale(Vector3.zero, dur).SetEase(Ease.InBack));
+            seq.OnComplete(() =>
+            {
+                if (cardView != null)
+                {
+                    cardView.transform.DOKill();
+                    Destroy(cardView.gameObject);
+                }
+            });
         }
 
-        private IEnumerator DrawCard()
+        private void DrawCardNonBlocking()
         {
             if (hand.Count >= MaxHandSize)
             {
                 HandFullRejected?.Invoke();
-                yield break;
+                return;
             }
 
             Card card = PopNextCardToDraw();
-            if (card == null) yield break;
+            if (card == null) return;
 
             UpdatePileTexts();
             if (drawCardSfx != global::PlushieOdyssey.Audio.SfxID.None) global::PlushieOdyssey.Audio.Tune.SFX(drawCardSfx);
@@ -319,7 +379,7 @@ namespace PlushieOdyssey.Combat.Systems
             CardView cardView = CardViewCreator.Instance.CreateCardView(card, spawnPos, spawnRot);
             hand.Add(card);
             UpdatePileTexts();
-            yield return handView.AddCard(cardView);
+            handView.AddCardImmediate(cardView);
         }
 
         private Card PopNextCardToDraw()
@@ -476,9 +536,14 @@ namespace PlushieOdyssey.Combat.Systems
         }
 #endif
 
-        private void RefillDeck()
+        private IEnumerator RefillDeckWithAnimation()
         {
+            int countToShuffle = discardPile.Count;
+            if (countToShuffle <= 0) yield break;
+
             if (shuffleSfx != global::PlushieOdyssey.Audio.SfxID.None) global::PlushieOdyssey.Audio.Tune.SFX(shuffleSfx);
+
+            // Shuffle discard pile into draw pile immediately in data so combat state stays consistent
             for (int i = 0; i < discardPile.Count; i++)
             {
                 int randomIndex = UnityEngine.Random.Range(i, discardPile.Count);
@@ -489,7 +554,38 @@ namespace PlushieOdyssey.Combat.Systems
 
             drawPile.AddRange(discardPile);
             discardPile.Clear();
-            UpdatePileTexts();
+            PilesChanged?.Invoke();
+
+            Canvas rootCanvas = GetHandRootCanvas();
+            DeckShuffleAnimatorUI animator = DeckShuffleAnimatorUI.GetOrCreate(rootCanvas);
+            if (animator != null && discardPilePoint != null && drawPilePoint != null)
+            {
+                // Animate the counters ticking live from Discard -> Draw as the cards fly across the screen!
+                if (discardPileText != null) discardPileText.text = countToShuffle.ToString();
+                if (drawPileText != null) drawPileText.text = "0";
+                bool resumedDrawing = false;
+
+                float resumeDrawWait = animator.PlayShuffle(
+                    discardPilePoint,
+                    drawPilePoint,
+                    countToShuffle,
+                    onDiscardTick: remaining => { if (!resumedDrawing && discardPileText != null) discardPileText.text = remaining.ToString(); },
+                    onDrawTick: arrived => { if (!resumedDrawing && drawPileText != null) drawPileText.text = arrived.ToString(); },
+                    onAllLanded: UpdatePileTexts);
+
+                if (resumeDrawWait > 0f)
+                {
+                    yield return new WaitForSecondsRealtime(resumeDrawWait);
+                }
+
+                resumedDrawing = true;
+                // Sync live pile texts before the next card immediately draws out of the freshly refilled deck
+                UpdatePileTexts();
+            }
+            else
+            {
+                UpdatePileTexts();
+            }
         }
 
         private void SpendMana(PlayCardGA playCardGA)

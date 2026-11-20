@@ -113,13 +113,21 @@ namespace PlushieOdyssey.UI.Combat
             _headerTag.text = $"<color=#{hex}>[{kindTag}]</color>";
             _titleText.text = string.IsNullOrEmpty(badge.StackLabel)
                 ? badge.Title
-                : $"{badge.Title}  <color=#{hex}>({badge.StackLabel})</color>";
+                : $"{badge.Title}  <color=#{hex}>×{badge.StackLabel}</color>";
             _titleText.color = Color.Lerp(accent, Color.white, 0.35f);
             _bodyText.text = badge.Description;
 
-            bool hasFooter = !string.IsNullOrEmpty(badge.DurationFooter);
+            string stackSummary = !string.IsNullOrEmpty(badge.StackLabel)
+                ? $"Stacks: {badge.StackLabel}"
+                : string.Empty;
+            string footerCombined = !string.IsNullOrEmpty(stackSummary) && !string.IsNullOrEmpty(badge.DurationFooter) &&
+                                    !badge.DurationFooter.Contains("stack")
+                ? $"{stackSummary}  •  {badge.DurationFooter}"
+                : (!string.IsNullOrEmpty(badge.DurationFooter) ? badge.DurationFooter : stackSummary);
+
+            bool hasFooter = !string.IsNullOrEmpty(footerCombined);
             _footerText.gameObject.SetActive(hasFooter);
-            if (hasFooter) _footerText.text = badge.DurationFooter;
+            if (hasFooter) _footerText.text = footerCombined;
 
             float bodyH = _bodyText.GetPreferredValues(badge.Description, 272f, 0f).y;
             float totalH = Mathf.Clamp(bodyH + (hasFooter ? 78f : 58f), 96f, 210f);

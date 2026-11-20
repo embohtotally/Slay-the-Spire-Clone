@@ -16,11 +16,20 @@ namespace PlushieOdyssey.Run
         [SerializeField] private int startingCrystals = 100;
 
         private readonly List<RunHeroStressState> heroStressStates = new();
+        private readonly List<HeroData> selectedParty = new();
 
         public MapGraph CurrentMap { get; private set; }
         public string CurrentMapNodeId { get; private set; }
         public EncounterData SelectedEncounter { get; private set; }
         public bool HasActiveRun => CurrentMap != null;
+        public IReadOnlyList<HeroData> SelectedParty => selectedParty;
+        public bool HasSelectedParty => selectedParty.Count > 0;
+        public int CurrentChapterNumber { get; private set; } = 1;
+        public string CurrentChapterName { get; private set; } = string.Empty;
+        public bool IsCurrentNodeBoss =>
+            CurrentMap != null &&
+            !string.IsNullOrEmpty(CurrentMapNodeId) &&
+            CurrentMap.GetNode(CurrentMapNodeId)?.Type == MapNodeType.Boss;
 
         public bool HasHeroState { get; private set; }
         public int HeroCurrentHealth { get; private set; }
@@ -37,6 +46,34 @@ namespace PlushieOdyssey.Run
         public Dictionary<string, int> CardCostModifiers { get; private set; } = new();
 
         public event Action RunStateChanged;
+        public event Action<IReadOnlyList<HeroData>> SelectedPartyChanged;
+
+        /// <summary>
+        /// Sets the player's selected character party (called by future Character Selection screens).
+        /// Combat, HP, Deck, Will meters, and Top Bar portraits automatically adapt to this roster.
+        /// </summary>
+        public void SetSelectedParty(IEnumerable<HeroData> party)
+        {
+            selectedParty.Clear();
+            if (party != null)
+            {
+                foreach (HeroData hero in party)
+                {
+                    if (hero != null) selectedParty.Add(hero);
+                }
+            }
+
+            SelectedPartyChanged?.Invoke(selectedParty);
+            NotifyRunStateChanged();
+        }
+
+        public void ClearSelectedParty()
+        {
+            if (selectedParty.Count == 0) return;
+            selectedParty.Clear();
+            SelectedPartyChanged?.Invoke(selectedParty);
+            NotifyRunStateChanged();
+        }
 
         protected override void Awake()
         {
@@ -72,6 +109,8 @@ namespace PlushieOdyssey.Run
             CurrentMap = mapGraph;
             CurrentMapNodeId = null;
             SelectedEncounter = null;
+            CurrentChapterNumber = 1;
+            CurrentChapterName = string.Empty;
             ClearHeroState();
             Gold = Mathf.Max(0, startingGold);
             Crystals = Mathf.Max(0, startingCrystals);
@@ -89,6 +128,41 @@ namespace PlushieOdyssey.Run
             }
 
             NotifyRunStateChanged();
+        }
+
+        public void SetChapterInfo(int chapterNumber, string chapterName)
+        {
+            CurrentChapterNumber = Mathf.Max(1, chapterNumber);
+            CurrentChapterName = string.IsNullOrWhiteSpace(chapterName) ? string.Empty : chapterName.Trim();
+            NotifyRunStateChanged();
+        }
+
+        /// <summary>
+        /// Replaces the active map with the next chapter's fresh procedural map while preserving
+        /// the player's run state (HP, Will, Gold, Crystals, Deck, Relics, Potions) in campaign mode.
+        /// </summary>
+        public void AdvanceToNextChapterMap(MapGraph nextChapterMap, int chapterNumber, string chapterName, bool resetPlayerState = false)
+        {
+            if (resetPlayerState)
+            {
+                StartNewRun(nextChapterMap);
+                SetChapterInfo(chapterNumber, chapterName);
+                return;
+            }
+
+            CurrentMap = nextChapterMap;
+            CurrentMapNodeId = null;
+            SelectedEncounter = null;
+            CurrentChapterNumber = Mathf.Max(1, chapterNumber);
+            CurrentChapterName = string.IsNullOrWhiteSpace(chapterName) ? string.Empty : chapterName.Trim();
+            NotifyRunStateChanged();
+        }
+
+        public string GetChapterHeaderLabel()
+        {
+            return string.IsNullOrWhiteSpace(CurrentChapterName)
+                ? $"CHAPTER {CurrentChapterNumber}"
+                : $"CHAPTER {CurrentChapterNumber}: {CurrentChapterName.ToUpperInvariant()}";
         }
 
         public void SelectMapNode(MapNode selectedNode)
@@ -188,7 +262,7 @@ namespace PlushieOdyssey.Run
             HasHeroState = true;
             HeroMaxHealth = maxHealth;
             HeroCurrentHealth = maxHealth;
-            RebuildHeroStressStates(heroTeam, maxStress, RunHeroStressState.DefaultStartingWill);
+            RebuildHeroStressStates(heroTeam, maxStress, null);
             RefreshAggregateStress();
             NotifyRunStateChanged();
         }
@@ -231,7 +305,8 @@ namespace PlushieOdyssey.Run
             int currentHealth,
             int maxHealth,
             IReadOnlyList<RunHeroStressState> restoredStressStates,
-            int goldAmount)
+            int goldAmount,
+            int? crystalsAmount = null)
         {
             HeroMaxHealth = Mathf.Max(1, maxHealth);
             HeroCurrentHealth = Mathf.Clamp(currentHealth, 0, HeroMaxHealth);
@@ -255,6 +330,10 @@ namespace PlushieOdyssey.Run
             }
 
             Gold = Mathf.Max(0, goldAmount);
+            if (crystalsAmount.HasValue)
+            {
+                Crystals = Mathf.Max(0, crystalsAmount.Value);
+            }
             RefreshAggregateStress();
             NotifyRunStateChanged();
         }
@@ -431,6 +510,8 @@ namespace PlushieOdyssey.Run
             CurrentMap = null;
             CurrentMapNodeId = null;
             SelectedEncounter = null;
+            CurrentChapterNumber = 1;
+            CurrentChapterName = string.Empty;
             ClearHeroState();
             Gold = 0;
             Counters.Clear();
@@ -485,7 +566,7 @@ namespace PlushieOdyssey.Run
             return count;
         }
 
-        private void RebuildHeroStressStates(IReadOnlyList<HeroData> heroTeam, int maxWill, int startingWill)
+        private void RebuildHeroStressStates(IReadOnlyList<HeroData> heroTeam, int maxWill, int? startingWill = null)
         {
             heroStressStates.Clear();
 
@@ -494,13 +575,15 @@ namespace PlushieOdyssey.Run
                 foreach (HeroData heroData in heroTeam)
                 {
                     if (heroData == null) continue;
-                    heroStressStates.Add(new RunHeroStressState(heroData, maxWill, startingWill));
+                    int resolvedMax = heroData.WillProfile != null ? heroData.EffectiveMaxWill : maxWill;
+                    int? resolvedStart = startingWill ?? heroData.EffectiveStartingWill;
+                    heroStressStates.Add(new RunHeroStressState(heroData, resolvedMax, resolvedStart));
                 }
             }
 
             if (heroStressStates.Count == 0)
             {
-                heroStressStates.Add(new RunHeroStressState(null, maxWill, startingWill));
+                heroStressStates.Add(new RunHeroStressState(null, maxWill, startingWill ?? RunHeroStressState.DefaultStartingWill));
             }
         }
 

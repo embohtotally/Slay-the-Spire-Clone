@@ -219,6 +219,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad1c697b23ea0ae4482800d5d1030ab9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  defaultLevels:
+  - {fileID: 11400000, guid: b5601d0c4e77ad5438272b19d35935f2, type: 2}
+  - {fileID: 11400000, guid: b52c7070d139b1043b743e9f540e55a8, type: 2}
+  - {fileID: 11400000, guid: d21a8aa809475a2439b4e65732aa7a29, type: 2}
+  - {fileID: 11400000, guid: 0dabe37db8871484d834d0a5a8b4465f, type: 2}
   playerProgressScope: 1
   persistProgress: 1
   highestUnlockedSaveKey: SlayClone.HighestUnlockedLevelIndex

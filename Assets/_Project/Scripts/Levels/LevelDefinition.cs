@@ -1,4 +1,5 @@
 using NaughtyAttributes;
+using PlushieOdyssey.Map;
 using UnityEngine;
 
 namespace PlushieOdyssey.Levels
@@ -22,6 +23,14 @@ namespace PlushieOdyssey.Levels
         [Scene] [SerializeField] private string mapSceneName = "Map";
 
         [BoxGroup("Dungeon Run")]
+        [Tooltip("Optional per-chapter procedural map config override. Leave empty to use MapSystem's default config.")]
+        [SerializeField] private MapGeneratorConfig mapGeneratorConfigOverride;
+
+        [BoxGroup("Dungeon Run")]
+        [Tooltip("Optional per-chapter enemy/elite/boss encounter pool override. Leave empty to use MapSystem's default pool.")]
+        [SerializeField] private MapEncounterPool encounterPoolOverride;
+
+        [BoxGroup("Dungeon Run")]
         [Tooltip("ManualMapLayoutRegistry id to load for this level. Example: loneliness.")]
         [SerializeField] private string manualMapLayoutId;
 
@@ -42,10 +51,20 @@ namespace PlushieOdyssey.Levels
         public int LevelNumber => Mathf.Max(1, levelNumber);
         public string Description => description;
         public string MapSceneName => mapSceneName;
+        public MapGeneratorConfig MapGeneratorConfigOverride => mapGeneratorConfigOverride;
+        public MapEncounterPool EncounterPoolOverride => encounterPoolOverride;
         public string ManualMapLayoutId => manualMapLayoutId;
         public bool HasManualMapLayout => !string.IsNullOrWhiteSpace(manualMapLayoutId);
         public bool ClearMapProgressOnStart => clearMapProgressOnStart;
         public bool AbandonExistingRunOnStart => abandonExistingRunOnStart;
+
+        public string GetChapterHeaderLabel()
+        {
+            string subtitle = string.IsNullOrWhiteSpace(description) ? string.Empty : description.Trim();
+            return string.IsNullOrEmpty(subtitle)
+                ? $"CHAPTER {LevelNumber}"
+                : $"CHAPTER {LevelNumber}: {subtitle.ToUpperInvariant()}";
+        }
 
         public string GetProgressMapId()
         {

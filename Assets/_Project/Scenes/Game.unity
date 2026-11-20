@@ -355,7 +355,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -7795,7 +7795,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -13111,6 +13111,9 @@ MonoBehaviour:
   _canvas: {fileID: 535934884}
   _cardViewPrefab: {fileID: 5294183449594141227, guid: 37061d15be501244ea05ac7775120033, type: 3}
   _font: {fileID: 11400000, guid: 33d1c0e660fceac4bb16a1137a01eeaa, type: 2}
+  _panelSprite: {fileID: 816480020, guid: c8d5f36f218b3d14a88d3f212bef8738, type: 3}
+  _headerBannerSprite: {fileID: -110145039, guid: 5d8f141028bd611408d621389c65cc40, type: 3}
+  _buttonSprite: {fileID: 1147154880, guid: d061496e95b57b44d85f3177fbad7703, type: 3}
 --- !u!114 &1266599324
 MonoBehaviour:
   m_ObjectHideFlags: 0

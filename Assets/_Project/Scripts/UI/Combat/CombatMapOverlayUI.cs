@@ -1,5 +1,6 @@
 using DG.Tweening;
 using PlushieOdyssey.Audio;
+using PlushieOdyssey.Levels;
 using PlushieOdyssey.Map;
 using PlushieOdyssey.Run;
 using PlushieOdyssey.UI.Map;
@@ -122,7 +123,11 @@ namespace PlushieOdyssey.UI.Combat
 
             if (_headerTitle != null)
             {
-                _headerTitle.text = $"JOURNEY MAP   •   STEP {currentStep} / {totalSteps}";
+                LevelDefinition activeChapter = LevelProgressionManager.Instance?.CurrentLevel;
+                string chapterPrefix = activeChapter != null
+                    ? activeChapter.GetChapterHeaderLabel()
+                    : (RunManager.Instance != null ? RunManager.Instance.GetChapterHeaderLabel() : "JOURNEY MAP");
+                _headerTitle.text = $"{chapterPrefix}   •   STEP {currentStep} / {totalSteps}";
             }
             if (_headerSubtitle != null)
             {

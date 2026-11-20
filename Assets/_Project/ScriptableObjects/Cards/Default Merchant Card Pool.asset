@@ -12,15 +12,82 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c009a32c723482bb828324d59a770ba, type: 3}
   m_Name: Default Merchant Card Pool
   m_EditorClassIdentifier: 
-  defaultNewCardPrice: 75
+  defaultNewCardPrice: 100
   defaultUpgradePrice: 100
-  cardPriceOverrides: []
+  cardPriceOverrides:
+  - Card: {fileID: 11400000, guid: e94f25a565ee0f644954a2eae74df28b, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: 0a9ddaf6d7968e240bcba775b6584084, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: b238726a30278ad44aa7b88e80b2f80f, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: 83f11f76c5aa2784b9bf2f9f21289e21, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: 6e8ead7758e89c948aaa75a192112f39, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: 6fe6bd8dd3bac5741820dd56dba6ffa2, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: 5ada5494f9c69fb49a6ddcd1be54c5a4, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: 021c5b6459ebd3348afb513a3c6f9788, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: f08c5962a3de27e45a157d3a564f2515, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: a81c0db19c8a8f54baa93596cc950d59, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: 1fa928edeae56014d80a09a2986dbd46, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: 36b68b93b01ca3b43a5a57af0c13c610, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: ab6063ad5553dc4448cef51bbe49cf8b, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: d8661133516699846a43f6e5feeb1f41, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: 1b49c1cf0e67a0a4e807f21eafd600bb, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: 40d5c49d6604f2c478e5a736e1f9973c, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: d5ba679f2ef5c13459e021d26a1841b4, type: 2}
+    Price: 90
+  - Card: {fileID: 11400000, guid: d0541efdf2bfbcd49b84bfa5fafa3b25, type: 2}
+    Price: 100
+  - Card: {fileID: 11400000, guid: 37dd437683c9ed748845ad7ae6af72d3, type: 2}
+    Price: 120
+  - Card: {fileID: 11400000, guid: 062751ac9b8a19148a02d69ac848e1eb, type: 2}
+    Price: 130
   cardsForSale:
-  - {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
+  - {fileID: 11400000, guid: e94f25a565ee0f644954a2eae74df28b, type: 2}
   - {fileID: 11400000, guid: 5a32581751bd4074f9aded33ead00570, type: 2}
+  - {fileID: 11400000, guid: 0a9ddaf6d7968e240bcba775b6584084, type: 2}
+  - {fileID: 11400000, guid: fa0515e4da0e78345956715b00a6cd06, type: 2}
+  - {fileID: 11400000, guid: b238726a30278ad44aa7b88e80b2f80f, type: 2}
   - {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
+  - {fileID: 11400000, guid: 83f11f76c5aa2784b9bf2f9f21289e21, type: 2}
+  - {fileID: 11400000, guid: 6e8ead7758e89c948aaa75a192112f39, type: 2}
+  - {fileID: 11400000, guid: 6fe6bd8dd3bac5741820dd56dba6ffa2, type: 2}
   - {fileID: 11400000, guid: 6555cc7be2f971541aa0b4e8314a7180, type: 2}
+  - {fileID: 11400000, guid: 5ada5494f9c69fb49a6ddcd1be54c5a4, type: 2}
+  - {fileID: 11400000, guid: 021c5b6459ebd3348afb513a3c6f9788, type: 2}
+  - {fileID: 11400000, guid: f08c5962a3de27e45a157d3a564f2515, type: 2}
+  - {fileID: 11400000, guid: a81c0db19c8a8f54baa93596cc950d59, type: 2}
+  - {fileID: 11400000, guid: 1fa928edeae56014d80a09a2986dbd46, type: 2}
+  - {fileID: 11400000, guid: 36b68b93b01ca3b43a5a57af0c13c610, type: 2}
+  - {fileID: 11400000, guid: ab6063ad5553dc4448cef51bbe49cf8b, type: 2}
+  - {fileID: 11400000, guid: d8661133516699846a43f6e5feeb1f41, type: 2}
+  - {fileID: 11400000, guid: 1b49c1cf0e67a0a4e807f21eafd600bb, type: 2}
+  - {fileID: 11400000, guid: 40d5c49d6604f2c478e5a736e1f9973c, type: 2}
   - {fileID: 11400000, guid: d5ba679f2ef5c13459e021d26a1841b4, type: 2}
+  - {fileID: 11400000, guid: d0541efdf2bfbcd49b84bfa5fafa3b25, type: 2}
+  - {fileID: 11400000, guid: 37dd437683c9ed748845ad7ae6af72d3, type: 2}
+  - {fileID: 11400000, guid: 062751ac9b8a19148a02d69ac848e1eb, type: 2}
   upgradeRecipes:
   - BaseCard: {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
     UpgradedCard: {fileID: 11400000, guid: 80af5434f9a9498c908361cc60b0a981, type: 2}

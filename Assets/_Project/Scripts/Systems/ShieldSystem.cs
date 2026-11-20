@@ -33,7 +33,7 @@ namespace PlushieOdyssey.Combat.Systems
                 target.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 5, 1f);
             }
 
-            yield return new WaitForSeconds(0.4f);
+            yield break;
         }
 
         private void EnemyTurnPreReaction(EnemyTurnGA enemyTurnGA)

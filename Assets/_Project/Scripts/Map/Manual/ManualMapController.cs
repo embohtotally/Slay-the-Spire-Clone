@@ -62,6 +62,7 @@ namespace PlushieOdyssey.Map.Manual
         [Header("Level Completion")]
         [Tooltip("If true, a cleared terminal node completes the current LevelProgressionManager level.")]
         [SerializeField] private bool completeCurrentLevelWhenCleared;
+        [SerializeField, ShowIf("completeCurrentLevelWhenCleared")] private bool autoAdvanceToNextChapter = true;
         [SerializeField, ShowIf("completeCurrentLevelWhenCleared"), Scene] private string levelSelectSceneName = "Levels";
         [SerializeField, ShowIf("completeCurrentLevelWhenCleared")] private bool returnToLevelSelectOnComplete = true;
         [SerializeField, ShowIf("completeCurrentLevelWhenCleared")] private UnityEvent OnMapCompleted;
@@ -132,9 +133,10 @@ namespace PlushieOdyssey.Map.Manual
             mapId = newMapId.Trim();
         }
 
-        public void ConfigureLevelCompletion(bool enabled, string returnSceneName, bool autoReturn)
+        public void ConfigureLevelCompletion(bool enabled, string returnSceneName, bool autoReturn, bool autoAdvance = true)
         {
             completeCurrentLevelWhenCleared = enabled;
+            autoAdvanceToNextChapter = autoAdvance;
             if (!string.IsNullOrWhiteSpace(returnSceneName))
             {
                 levelSelectSceneName = returnSceneName.Trim();
@@ -701,7 +703,18 @@ namespace PlushieOdyssey.Map.Manual
 
             if (LevelProgressionManager.Instance != null)
             {
-                LevelProgressionManager.Instance.CompleteCurrentLevel();
+                if (autoAdvanceToNextChapter && LevelProgressionManager.Instance.HasCurrentLevel)
+                {
+                    if (LevelProgressionManager.Instance.CompleteCurrentLevelAndAdvance(out LevelDefinition nextLevel, loadMapScene: true, abandonRunForNextChapter: true))
+                    {
+                        global::PlushieOdyssey.Core.Logger.Log(this, $"Manual map cleared. Auto-advancing directly into '{nextLevel.DisplayName}'.");
+                        return;
+                    }
+                }
+                else
+                {
+                    LevelProgressionManager.Instance.CompleteCurrentLevel();
+                }
             }
             else
             {

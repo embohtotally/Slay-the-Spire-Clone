@@ -13,7 +13,9 @@ namespace PlushieOdyssey.Combat.Views
         [SerializeField] private CardFanLayout _fanLayout;
         [Tooltip("Card count that fills the fan width; this is not a hand limit.")]
         [SerializeField, Min(1)] private int maxHandSize = 10;
-        [SerializeField, Min(0f)] private float doTweenUpdatePositionDuration = 0.15f;
+        [SerializeField, Min(0f)] private float doTweenUpdatePositionDuration = 0.18f;
+        [Tooltip("Smooth glide duration when a newly drawn card flies from the draw pile into the hand fan.")]
+        [SerializeField, Min(0.05f)] private float drawCardFlyDuration = 0.28f;
 
         [Header("Modern Hover Spread")]
         [Tooltip("Horizontal spread applied to immediate neighbors of the hovered card.")]
@@ -76,23 +78,33 @@ namespace PlushieOdyssey.Combat.Views
 
         public IEnumerator AddCard(CardView cardView)
         {
-            if (cardView == null || cards.Contains(cardView)) yield break;
-            if (!TryGetLayout()) yield break;
+            AddCardImmediate(cardView);
+            if (_layoutTween != null) yield return _layoutTween.WaitForCompletion();
+        }
+
+        /// <summary>
+        /// Adds a card to the hand immediately and triggers the fan layout tween without blocking callers.
+        /// </summary>
+        public void AddCardImmediate(CardView cardView)
+        {
+            if (cardView == null || cards.Contains(cardView)) return;
+            if (!TryGetLayout()) return;
 
             if (cardView.transform is not RectTransform cardRect)
             {
                 Debug.LogWarning("HandView requires a Canvas card prefab with a RectTransform.", this);
-                yield break;
+                return;
             }
 
             cardRect.SetParent(_fanLayout.RectTransform, false);
             Vector3 localPosition = cardRect.localPosition;
             cardRect.anchorMin = cardRect.anchorMax = new Vector2(0.5f, 0.5f);
             cardRect.localPosition = localPosition;
+            cardRect.localScale = Vector3.one * 0.45f;
+            cardRect.DOScale(Vector3.one, drawCardFlyDuration).SetEase(Ease.OutCubic).SetUpdate(true);
             cards.Add(cardView);
             CardAdded?.Invoke(cardView);
-            Tween tween = UpdateCardPositions(doTweenUpdatePositionDuration);
-            if (tween != null) yield return tween.WaitForCompletion();
+            UpdateCardPositions(drawCardFlyDuration);
         }
 
         private Tween UpdateCardPositions(float duration)

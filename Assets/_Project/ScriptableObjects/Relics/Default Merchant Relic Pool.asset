@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b114841982df8554ea506a148d9cc1fa, type: 3}
+  m_Name: Default Merchant Relic Pool
+  m_EditorClassIdentifier: 
+  excludeOwnedUniqueRelics: 1
+  relics:
+  - Enabled: 1
+    Relic: {fileID: 11400000, guid: 62805ed4a2818234ebfc02b01aa03f4d, type: 2}
+    Weight: 1
+  - Enabled: 1
+    Relic: {fileID: 11400000, guid: a9ee0bc16f6da9a46973abad0ed505cc, type: 2}
+    Weight: 1
+  - Enabled: 1
+    Relic: {fileID: 11400000, guid: 4478ac2a4e5d03240b36f71cb84bdf1a, type: 2}
+    Weight: 1
+  - Enabled: 1
+    Relic: {fileID: 11400000, guid: 77224071d89d76a4c8f95f84e2ef75f8, type: 2}
+    Weight: 1
+  - Enabled: 1
+    Relic: {fileID: 11400000, guid: b8b9ad032324bc54e8c0af5a2fcd98b0, type: 2}
+    Weight: 1
+  - Enabled: 1
+    Relic: {fileID: 11400000, guid: 6b4b7b9674cfac041b35f2af6e4d1a41, type: 2}
+    Weight: 1

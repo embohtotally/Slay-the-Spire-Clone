@@ -10,12 +10,34 @@ namespace PlushieOdyssey.Combat.Actions
     [System.Serializable]
     public class ActionSystem : Singleton<ActionSystem>
     {
+        private readonly struct QueuedAction
+        {
+            public readonly GameAction Action;
+            public readonly Action OnFinished;
+
+            public QueuedAction(GameAction action, Action onFinished)
+            {
+                Action = action;
+                OnFinished = onFinished;
+            }
+        }
+
         public bool IsPerforming { get; private set; } = false;
+        public bool IsEnemyTurnQueuedOrActive { get; private set; } = false;
+        public int PendingQueueCount => pendingQueue.Count;
+
         public event Action<bool> BusyChanged;
+        public event Action TurnStateChanged;
+
+        private readonly Queue<QueuedAction> pendingQueue = new();
 
         protected override void Awake()
         {
             base.Awake();
+            IsPerforming = false;
+            IsEnemyTurnQueuedOrActive = false;
+            pendingQueue.Clear();
+
             if (DamageOverTimeSystem.Instance == null && GetComponent<DamageOverTimeSystem>() == null)
             {
                 gameObject.AddComponent<DamageOverTimeSystem>();
@@ -48,6 +70,9 @@ namespace PlushieOdyssey.Combat.Actions
 
         private void OnDestroy()
         {
+            pendingQueue.Clear();
+            IsPerforming = false;
+            IsEnemyTurnQueuedOrActive = false;
             preSubs.Clear();
             performers.Clear();
             postSubs.Clear();
@@ -59,10 +84,8 @@ namespace PlushieOdyssey.Combat.Actions
             Type type = typeof(T);
             IEnumerator wrappedPerformer(GameAction action) => performer((T)action);
 
-            if
-                (performers.ContainsKey(type)) performers[type] = wrappedPerformer;
-            else
-                performers.Add(type, wrappedPerformer);
+            if (performers.ContainsKey(type)) performers[type] = wrappedPerformer;
+            else performers.Add(type, wrappedPerformer);
         }
 
         public static void DetachPerformer<T>() where T : GameAction
@@ -100,21 +123,65 @@ namespace PlushieOdyssey.Combat.Actions
             }
         }
 
+        /// <summary>
+        /// Immediately starts the action if idle, or appends it to the FIFO execution queue so
+        /// rapid card plays and End Turn clicks execute cleanly in strict order without stalling.
+        /// </summary>
         public bool Perform(GameAction action, Action OnPerformFinished = null)
         {
-            if (IsPerforming) return false;
+            return Enqueue(action, OnPerformFinished);
+        }
 
-            IsPerforming = true;
-            BusyChanged?.Invoke(true);
+        public bool Enqueue(GameAction action, Action onPerformFinished = null)
+        {
+            if (action == null) return false;
+
+            // Prevent queueing duplicate EnemyTurnGA while one is already queued or running
+            if (action is EnemyTurnGA)
+            {
+                if (IsEnemyTurnQueuedOrActive) return false;
+                IsEnemyTurnQueuedOrActive = true;
+                TurnStateChanged?.Invoke();
+            }
+
+            if (IsPerforming)
+            {
+                pendingQueue.Enqueue(new QueuedAction(action, onPerformFinished));
+                return true;
+            }
+
+            StartActionFlow(action, onPerformFinished);
+            return true;
+        }
+
+        private void StartActionFlow(GameAction action, Action onPerformFinished)
+        {
+            if (!IsPerforming)
+            {
+                IsPerforming = true;
+                BusyChanged?.Invoke(true);
+            }
 
             StartCoroutine(Flow(action, () =>
             {
+                if (action is EnemyTurnGA)
+                {
+                    IsEnemyTurnQueuedOrActive = false;
+                    TurnStateChanged?.Invoke();
+                }
+
+                onPerformFinished?.Invoke();
+
+                if (pendingQueue.Count > 0)
+                {
+                    QueuedAction next = pendingQueue.Dequeue();
+                    StartActionFlow(next.Action, next.OnFinished);
+                    return;
+                }
+
                 IsPerforming = false;
                 BusyChanged?.Invoke(false);
-                OnPerformFinished?.Invoke();
             }));
-
-            return true;
         }
 
         public void AddReaction(GameAction gameAction)

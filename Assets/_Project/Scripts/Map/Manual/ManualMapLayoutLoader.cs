@@ -41,8 +41,9 @@ namespace PlushieOdyssey.Map.Manual
         [Header("Level Progression")]
         [Tooltip("If a LevelProgressionManager current level exists, use its Manual Map Layout Id instead of random/fallback selection.")]
         [SerializeField] private bool preferCurrentLevelLayout = true;
-        [Tooltip("When the spawned map reaches its final node, unlock the next level and return to the Levels scene.")]
+        [Tooltip("When the spawned map reaches its final node, complete the current chapter and immediately enter the next chapter (returning to Levels only after the final chapter).")]
         [SerializeField] private bool completeCurrentLevelWhenMapCleared = true;
+        [SerializeField] private bool autoAdvanceToNextChapter = true;
         [SerializeField, Scene] private string levelSelectSceneName = "Levels";
         [SerializeField] private bool returnToLevelSelectOnMapComplete = true;
 
@@ -402,7 +403,8 @@ namespace PlushieOdyssey.Map.Manual
             spawnedMap.ConfigureLevelCompletion(
                 completeCurrentLevelWhenMapCleared && currentLevel != null,
                 levelSelectSceneName,
-                returnToLevelSelectOnMapComplete);
+                returnToLevelSelectOnMapComplete,
+                autoAdvanceToNextChapter);
             spawnedMap.name = layout.SafeDisplayName;
 
             if (stretchRectTransformToParent && spawnedMap.transform is RectTransform rectTransform)

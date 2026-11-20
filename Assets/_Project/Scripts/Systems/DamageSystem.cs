@@ -66,8 +66,6 @@ namespace PlushieOdyssey.Combat.Systems
                     }
                 }
 
-                yield return damageWaitForSeconds;
-
                 if (target.CurrentHealth <= 0)
                 {
                     if (target is EnemyView enemyView)
@@ -89,6 +87,8 @@ namespace PlushieOdyssey.Combat.Systems
                     }
                 }
             }
+
+            yield break;
         }
     }
 }

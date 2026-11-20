@@ -30,18 +30,40 @@ namespace PlushieOdyssey.Combat.Systems
         [SerializeField] private CardTargetResolver _targetResolver;
         [SerializeField] private TutorialManager _tutorial;
 
+        /// <summary>
+        /// True while ActionSystem is executing any action. No longer blocks hovering or FIFO card queueing.
+        /// </summary>
         public bool IsBusy => _actionSystem != null && _actionSystem.IsPerforming;
+
+        /// <summary>
+        /// True only when Enemy Turn is active or already queued — blocks card plays while letting
+        /// the player rapidly chain cards and End Turn during their own turn.
+        /// </summary>
+        public bool IsTurnLocked =>
+            (_actionSystem != null && _actionSystem.IsEnemyTurnQueuedOrActive) ||
+            (EnemySystem.Instance != null && EnemySystem.Instance.IsEnemyTurnActive);
+
         public event Action StateChanged;
 
         private void OnEnable()
         {
-            if (_actionSystem != null) _actionSystem.BusyChanged += OnBusyChanged;
+            if (_actionSystem != null)
+            {
+                _actionSystem.BusyChanged += OnBusyChanged;
+                _actionSystem.TurnStateChanged += RefreshState;
+            }
+            if (_manaSystem != null) _manaSystem.ManaChanged += OnManaChanged;
             if (_heroView != null) _heroView.StatusEffectsChanged += RefreshState;
         }
 
         private void OnDisable()
         {
-            if (_actionSystem != null) _actionSystem.BusyChanged -= OnBusyChanged;
+            if (_actionSystem != null)
+            {
+                _actionSystem.BusyChanged -= OnBusyChanged;
+                _actionSystem.TurnStateChanged -= RefreshState;
+            }
+            if (_manaSystem != null) _manaSystem.ManaChanged -= OnManaChanged;
             if (_heroView != null) _heroView.StatusEffectsChanged -= RefreshState;
             RefreshState();
         }
@@ -57,7 +79,7 @@ namespace PlushieOdyssey.Combat.Systems
                 _heroView == null || !_heroView.isActiveAndEnabled)
                 return CardPlayFailure.MissingBackend;
             if (!_cardSystem.ContainsCard(card)) return CardPlayFailure.NotInHand;
-            if (IsBusy) return CardPlayFailure.Busy;
+            if (IsTurnLocked) return CardPlayFailure.Busy;
             if (_heroView.CurrentHealth <= 0 ||
                 card.HasKeyword(PlushieOdyssey.Data.CardKeywords.Unplayable) ||
                 (card.Type == PlushieOdyssey.Data.CardType.Attack && _heroView.HealthPenalty > 0))
@@ -83,12 +105,26 @@ namespace PlushieOdyssey.Combat.Systems
         {
             failure = GetFailure(card, target);
             if (failure != CardPlayFailure.None) return false;
-            if (_actionSystem.Perform(new PlayCardGA(card, target))) return true;
+
+            int manaCost = GetEffectiveManaCost(card);
+            // Immediately detach card from hand, reserve mana, and launch non-blocking exit tween
+            // so the hand fans shut on frame 0 and the next card can be hovered/played instantaneously!
+            _manaSystem.ReserveMana(manaCost);
+            _cardSystem.ReserveCardPlay(card);
+
+            if (_actionSystem.Enqueue(new PlayCardGA(card, target)))
+            {
+                RefreshState();
+                return true;
+            }
+
+            _manaSystem.ReleaseReservedMana(manaCost);
             failure = CardPlayFailure.Busy;
             return false;
         }
 
         public void RefreshState() => StateChanged?.Invoke();
         private void OnBusyChanged(bool busy) => RefreshState();
+        private void OnManaChanged(int _, int __) => RefreshState();
     }
 }

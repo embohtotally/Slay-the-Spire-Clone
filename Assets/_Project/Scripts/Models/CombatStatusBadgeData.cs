@@ -46,16 +46,17 @@ namespace PlushieOdyssey.Combat.Models
             var results = new List<CombatStatusBadgeData>();
             if (target == null) return results;
 
-            // 1. Will state badge (Hero only)
+            // 1. Will state badge (Hero only — uses slot 0's modular HeroWillProfile when present)
             if (includeWillState && target is HeroView hero)
             {
+                RunHeroStressState primaryState = hero.GetWillState(0);
                 if (hero.IsHighWill)
                 {
-                    results.Add(CreateHighWillBadge());
+                    results.Add(CreateHighWillBadge(primaryState));
                 }
                 else if (hero.IsLowWill)
                 {
-                    results.Add(CreateLowWillBadge());
+                    results.Add(CreateLowWillBadge(primaryState));
                 }
             }
 
@@ -174,44 +175,64 @@ namespace PlushieOdyssey.Combat.Models
         {
             var results = new List<CombatStatusBadgeData>();
             if (state == null) return results;
-            if (state.IsHighWill) results.Add(CreateHighWillBadge());
-            else if (state.IsLowWill) results.Add(CreateLowWillBadge());
+            if (state.IsHighWill) results.Add(CreateHighWillBadge(state));
+            else if (state.IsLowWill) results.Add(CreateLowWillBadge(state));
             return results;
         }
 
-        private static CombatStatusBadgeData CreateHighWillBadge()
+        private static CombatStatusBadgeData CreateHighWillBadge(RunHeroStressState state = null)
         {
+            Data.HeroWillProfile profile = state?.WillProfile;
+            int thresholdPct = Mathf.RoundToInt((state != null ? state.HighThreshold : RunHeroStressState.HighWillThreshold) * 100f);
+            int bonusPct = Mathf.RoundToInt(((state != null ? state.HighWillBonusMultiplier : 1.25f) - 1f) * 100f);
+            string title = profile != null ? profile.HighWillTitle : "High Will";
+            string desc = profile != null
+                ? profile.FormatHighWillDescription()
+                : $"Will ≥ {thresholdPct}%: Grants <color=#64E8FF><b>+{bonusPct}% attack damage</b></color> and <color=#64E8FF><b>+{bonusPct}% Shield gain</b></color>.";
+
             return new CombatStatusBadgeData
             {
                 Id = "HighWill",
-                Title = "High Will",
+                Title = title,
                 ShortCode = "W+",
                 StackLabel = string.Empty,
-                StackValue = 25,
+                StackValue = bonusPct,
                 RemainingTurns = 999,
                 IsDebuff = false,
                 IconKey = StatusIconKey.WillPositive,
-                AccentColor = new Color(0.24f, 0.84f, 1.00f, 1f),
-                Description = "Will ≥ 75%: Grants <color=#64E8FF><b>+25% attack damage</b></color> and <color=#64E8FF><b>+25% Shield gain</b></color>.",
-                DurationFooter = "Active while Will ≥ 75%"
+                AccentColor = profile != null && profile.UseCustomPalette
+                    ? profile.HighWillBorderColor
+                    : new Color(0.24f, 0.84f, 1.00f, 1f),
+                Description = desc,
+                DurationFooter = $"Active while Will ≥ {thresholdPct}%"
             };
         }
 
-        private static CombatStatusBadgeData CreateLowWillBadge()
+        private static CombatStatusBadgeData CreateLowWillBadge(RunHeroStressState state = null)
         {
+            Data.HeroWillProfile profile = state?.WillProfile;
+            int thresholdPct = Mathf.RoundToInt((state != null ? state.LowThreshold : RunHeroStressState.LowWillThreshold) * 100f);
+            int penaltyPct = Mathf.RoundToInt((state != null ? state.LowWillPenaltyFraction : 0.20f) * 100f);
+            string title = profile != null ? profile.LowWillTitle : "Fear (Low Will)";
+            string desc = profile != null
+                ? profile.FormatLowWillDescription()
+                : $"Will < {thresholdPct}%: Effective Max HP is reduced by <color=#FF6B6B><b>{penaltyPct}% Fear</b></color> until Will recovers.";
+
             return new CombatStatusBadgeData
             {
                 Id = "LowWill",
-                Title = "Fear (Low Will)",
+                Title = title,
                 ShortCode = "F!",
                 StackLabel = string.Empty,
-                StackValue = 1,
+                StackValue = penaltyPct,
                 RemainingTurns = 999,
                 IsDebuff = true,
                 IconKey = StatusIconKey.WillFear,
-                AccentColor = new Color(1.00f, 0.34f, 0.38f, 1f),
-                Description = "Will < 25%: Effective Max HP is reduced by <color=#FF6B6B><b>Fear</b></color> until Will recovers.",
-                DurationFooter = "Active while Will < 25%"
+                AccentColor = profile != null && profile.UseCustomPalette
+                    ? profile.LowWillBorderColor
+                    : new Color(1.00f, 0.34f, 0.38f, 1f),
+                Description = desc,
+                DurationFooter = $"Active while Will < {thresholdPct}%"
             };
         }
 

@@ -21,6 +21,10 @@ namespace PlushieOdyssey.Levels
     {
         private const int NoLevelIndex = -1;
 
+        [BoxGroup("Chapters")]
+        [Tooltip("Ordered list of campaign chapters (Level 1..N). Used automatically when starting directly in Map or advancing between bosses without revisiting Levels.")]
+        [SerializeField] private List<LevelDefinition> defaultLevels = new();
+
         [BoxGroup("Player Progress Scope")]
         [Tooltip("PerDungeon = HP/stress/gold/deck reset for every dungeon. Campaign = carry HP/stress/gold/deck across Level 1-4.")]
         [SerializeField] private PlayerProgressScope playerProgressScope = PlayerProgressScope.Campaign;
@@ -48,12 +52,26 @@ namespace PlushieOdyssey.Levels
         public event Action ProgressChanged;
 
         public IReadOnlyList<LevelDefinition> Levels => levels;
+        public int CurrentLevelIndex => currentLevelIndex;
         public LevelDefinition CurrentLevel => IsValidIndex(currentLevelIndex) ? levels[currentLevelIndex] : null;
+        public int CurrentChapterNumber => HasCurrentLevel ? CurrentLevel.LevelNumber : 1;
+        public bool HasNextLevel => HasCurrentLevel && currentLevelIndex + 1 < levels.Count;
+        public LevelDefinition NextLevel => HasNextLevel ? levels[currentLevelIndex + 1] : null;
+        public LevelDefinition PendingChapterIntro { get; private set; }
         public int HighestUnlockedIndex => Mathf.Clamp(highestUnlockedIndex, 0, Mathf.Max(0, levels.Count - 1));
         public bool HasCurrentLevel => CurrentLevel != null;
         public PlayerProgressScope PlayerProgressScope => playerProgressScope;
         public bool UsesCampaignPlayerState => playerProgressScope == PlayerProgressScope.Campaign;
         public bool HasCampaignPlayerState => campaignRunState.HasState;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            if (levels.Count == 0 && defaultLevels != null && defaultLevels.Count > 0)
+            {
+                ConfigureLevels(defaultLevels);
+            }
+        }
 
         public static LevelProgressionManager GetOrCreate()
         {
@@ -63,8 +81,9 @@ namespace PlushieOdyssey.Levels
             return managerObject.AddComponent<LevelProgressionManager>();
         }
 
-        public void ConfigureLevels(IEnumerable<LevelDefinition> definitions)
+        public void ConfigureLevels(IEnumerable<LevelDefinition> definitions, bool resetCurrentLevel = true)
         {
+            LevelDefinition previousCurrent = CurrentLevel;
             levels.Clear();
             if (definitions != null)
             {
@@ -75,8 +94,48 @@ namespace PlushieOdyssey.Levels
             }
 
             LoadProgress();
-            currentLevelIndex = NoLevelIndex;
+            if (resetCurrentLevel)
+            {
+                currentLevelIndex = NoLevelIndex;
+            }
+            else if (previousCurrent != null)
+            {
+                currentLevelIndex = GetLevelIndex(previousCurrent);
+            }
+
             ProgressChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Ensures a chapter is active when entering Map/Game directly without going through Levels.unity.
+        /// </summary>
+        public LevelDefinition EnsureActiveLevel(IEnumerable<LevelDefinition> fallbackDefinitions = null)
+        {
+            if (levels.Count == 0)
+            {
+                IEnumerable<LevelDefinition> source = (defaultLevels != null && defaultLevels.Count > 0)
+                    ? defaultLevels
+                    : fallbackDefinitions;
+                if (source != null)
+                {
+                    ConfigureLevels(source, resetCurrentLevel: false);
+                }
+            }
+
+            if (!HasCurrentLevel && levels.Count > 0)
+            {
+                currentLevelIndex = 0;
+                ProgressChanged?.Invoke();
+            }
+
+            return CurrentLevel;
+        }
+
+        public LevelDefinition ConsumePendingChapterIntro()
+        {
+            LevelDefinition pending = PendingChapterIntro;
+            PendingChapterIntro = null;
+            return pending;
         }
 
         public void SetDebug(bool debug, string layoutId)
@@ -140,6 +199,45 @@ namespace PlushieOdyssey.Levels
             }
 
             CompleteLevel(CurrentLevel);
+        }
+
+        /// <summary>
+        /// Completes the current chapter and immediately advances to the next chapter in sequence
+        /// (e.g. Chapter 1 -> Chapter 2 -> Chapter 3 -> Chapter 4) without returning to the chapter-select screen.
+        /// Returns true if a next chapter exists and was activated; returns false if the final chapter was cleared.
+        /// </summary>
+        public bool CompleteCurrentLevelAndAdvance(out LevelDefinition nextLevel, bool loadMapScene = false, bool abandonRunForNextChapter = false)
+        {
+            nextLevel = null;
+            if (!HasCurrentLevel)
+            {
+                global::PlushieOdyssey.Core.Logger.LogWarning(this, "Cannot advance chapter because no current level is active.");
+                return false;
+            }
+
+            CompleteLevel(CurrentLevel);
+
+            if (!HasNextLevel)
+            {
+                PendingChapterIntro = null;
+                global::PlushieOdyssey.Core.Logger.Log(this, $"Final chapter '{CurrentLevel.DisplayName}' cleared! Campaign complete.");
+                return false;
+            }
+
+            currentLevelIndex++;
+            nextLevel = CurrentLevel;
+            PendingChapterIntro = nextLevel;
+
+            PrepareDungeonSelection(nextLevel, allowAbandonRun: abandonRunForNextChapter || !UsesCampaignPlayerState);
+            global::PlushieOdyssey.Core.Logger.Log(this, $"Auto-advancing directly into '{nextLevel.DisplayName}' ({nextLevel.Description}).");
+            ProgressChanged?.Invoke();
+
+            if (loadMapScene && !string.IsNullOrWhiteSpace(nextLevel.MapSceneName))
+            {
+                SceneLoader.LoadScene(nextLevel.MapSceneName);
+            }
+
+            return true;
         }
 
         public void CompleteLevel(LevelDefinition level)
@@ -209,7 +307,7 @@ namespace PlushieOdyssey.Levels
                 return;
             }
 
-            campaignRunState.CaptureFrom(RunManager.Instance, RunDeckManager.Instance);
+            campaignRunState.CaptureFrom(RunManager.Instance, RunDeckManager.Instance, RunPotionManager.Instance, RunRelicManager.Instance);
             global::PlushieOdyssey.Core.Logger.Log(this, "Captured campaign player state from active run.");
         }
 
@@ -223,7 +321,7 @@ namespace PlushieOdyssey.Levels
                 return false;
             }
 
-            campaignRunState.RestoreTo(RunManager.Instance, RunDeckManager.Instance);
+            campaignRunState.RestoreTo(RunManager.Instance, RunDeckManager.Instance, RunPotionManager.Instance, RunRelicManager.Instance);
             global::PlushieOdyssey.Core.Logger.Log(this, "Restored campaign player state to active run.");
             return true;
         }
@@ -234,7 +332,7 @@ namespace PlushieOdyssey.Levels
             ProgressChanged?.Invoke();
         }
 
-        private void PrepareDungeonSelection(LevelDefinition level)
+        private void PrepareDungeonSelection(LevelDefinition level, bool allowAbandonRun = true)
         {
             EnsureManualMapSelectionExists();
 
@@ -259,7 +357,7 @@ namespace PlushieOdyssey.Levels
                 }
             }
 
-            if (level.AbandonExistingRunOnStart && RunManager.Instance != null)
+            if (allowAbandonRun && level.AbandonExistingRunOnStart && RunManager.Instance != null)
             {
                 RunManager.Instance.AbandonRun();
             }
@@ -311,10 +409,13 @@ namespace PlushieOdyssey.Levels
             [SerializeField] private int heroCurrentHealth;
             [SerializeField] private int heroMaxHealth;
             [SerializeField] private int gold;
+            [SerializeField] private int crystals;
             [SerializeField] private List<RunHeroStressState> stressStates = new();
             [SerializeField] private List<CardData> deck = new();
+            [SerializeField] private List<PotionData> potions = new();
+            [SerializeField] private List<RelicData> relics = new();
 
-            public void CaptureFrom(RunManager runManager, RunDeckManager deckManager)
+            public void CaptureFrom(RunManager runManager, RunDeckManager deckManager, RunPotionManager potionManager, RunRelicManager relicManager)
             {
                 if (runManager == null) return;
 
@@ -322,6 +423,7 @@ namespace PlushieOdyssey.Levels
                 heroCurrentHealth = runManager.HeroCurrentHealth;
                 heroMaxHealth = runManager.HeroMaxHealth;
                 gold = runManager.Gold;
+                crystals = runManager.Crystals;
 
                 stressStates.Clear();
                 foreach (RunHeroStressState stressState in runManager.GetHeroStressStateCopies())
@@ -334,17 +436,39 @@ namespace PlushieOdyssey.Levels
                 {
                     deck.AddRange(deckManager.GetDeckCopy().Where(cardData => cardData != null));
                 }
+
+                potions.Clear();
+                if (potionManager != null)
+                {
+                    potions.AddRange(potionManager.GetPotionsCopy().Where(p => p != null));
+                }
+
+                relics.Clear();
+                if (relicManager != null)
+                {
+                    relics.AddRange(relicManager.GetRelicsCopy().Where(r => r != null));
+                }
             }
 
-            public void RestoreTo(RunManager runManager, RunDeckManager deckManager)
+            public void RestoreTo(RunManager runManager, RunDeckManager deckManager, RunPotionManager potionManager, RunRelicManager relicManager)
             {
                 if (!HasState || runManager == null) return;
 
-                runManager.RestorePlayerState(heroCurrentHealth, heroMaxHealth, stressStates, gold);
+                runManager.RestorePlayerState(heroCurrentHealth, heroMaxHealth, stressStates, gold, crystals);
 
-                if (deckManager != null)
+                if (deckManager != null && deck.Count > 0)
                 {
                     deckManager.ResetDeck(deck);
+                }
+
+                if (potionManager != null && potions.Count > 0)
+                {
+                    potionManager.ResetPotions(potions);
+                }
+
+                if (relicManager != null && relics.Count > 0)
+                {
+                    relicManager.ResetRelics(relics);
                 }
             }
 
@@ -354,8 +478,11 @@ namespace PlushieOdyssey.Levels
                 heroCurrentHealth = 0;
                 heroMaxHealth = 0;
                 gold = 0;
+                crystals = 0;
                 stressStates.Clear();
                 deck.Clear();
+                potions.Clear();
+                relics.Clear();
             }
         }
     }

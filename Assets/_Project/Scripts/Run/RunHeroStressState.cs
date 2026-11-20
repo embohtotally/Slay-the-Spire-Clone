@@ -15,25 +15,40 @@ namespace PlushieOdyssey.Run
         [field: SerializeField] public int CurrentStress { get; private set; }
         [field: SerializeField] public int MaxStress { get; private set; }
 
+        // Modular per-character Will thresholds & profile accessors:
+        // Falls back cleanly to defaults (Max 100, Start 50, >=75% High Will, <25% Fear) when no WillProfile is assigned.
+        public HeroWillProfile WillProfile => HeroData != null ? HeroData.WillProfile : null;
+        public string CharacterDisplayName => HeroData != null ? HeroData.EffectiveDisplayName : "Hero";
+        public float HighThreshold => HeroData != null ? HeroData.EffectiveHighWillThreshold : HighWillThreshold;
+        public float LowThreshold => HeroData != null ? HeroData.EffectiveLowWillThreshold : LowWillThreshold;
+        public float HighWillBonusMultiplier => HeroData != null ? HeroData.EffectiveHighWillBonusMultiplier : 1.25f;
+        public float LowWillPenaltyFraction => HeroData != null ? HeroData.EffectiveLowWillPenaltyFraction : 0.20f;
+
         // Will system (renamed from Fear/Stress):
         // 100% Will = 0 Stress, 0% Will = MaxStress.
-        // >= 75% Will grants a positive empowered effect; < 25% Will triggers the Fear breakdown effect.
         public int MaxWill => Mathf.Max(1, MaxStress);
         public int CurrentWill => Mathf.Clamp(MaxWill - CurrentStress, 0, MaxWill);
         public float WillNormalized => (float)CurrentWill / MaxWill;
-        public bool IsLowWill => WillNormalized < LowWillThreshold;
-        public bool IsHighWill => WillNormalized >= HighWillThreshold;
+        public bool IsLowWill => WillNormalized < LowThreshold;
+        public bool IsHighWill => WillNormalized >= HighThreshold;
+        public WillTier CurrentTier => IsLowWill ? WillTier.Low : (IsHighWill ? WillTier.High : WillTier.Neutral);
+        public Sprite CurrentPortrait => HeroData != null ? HeroData.GetPortraitForWill(IsHighWill, IsLowWill) : null;
 
-        // Backward-compatible property: Fear effect triggers when Will drops below 25%.
+        // Backward-compatible property: Fear effect triggers when Will drops below LowThreshold.
         public bool IsStressed => IsLowWill;
 
         public RunHeroStressState(HeroData heroData, int maxWill, int? startingWill = null)
         {
             HeroData = heroData;
-            MaxStress = Mathf.Max(1, maxWill);
+            int resolvedMax = heroData != null && heroData.WillProfile != null
+                ? heroData.EffectiveMaxWill
+                : Mathf.Max(1, maxWill);
+            MaxStress = Mathf.Max(1, resolvedMax);
+
+            int defaultStart = heroData != null ? heroData.EffectiveStartingWill : DefaultStartingWill;
             int initialWill = startingWill.HasValue
                 ? Mathf.Clamp(startingWill.Value, 0, MaxStress)
-                : Mathf.Clamp(DefaultStartingWill, 0, MaxStress);
+                : Mathf.Clamp(defaultStart, 0, MaxStress);
             CurrentStress = MaxStress - initialWill;
         }
 
@@ -81,7 +96,8 @@ namespace PlushieOdyssey.Run
 
         public void ClearStress()
         {
-            SetWill(Mathf.Clamp(DefaultStartingWill, 0, MaxWill));
+            int defaultStart = HeroData != null ? HeroData.EffectiveStartingWill : DefaultStartingWill;
+            SetWill(Mathf.Clamp(defaultStart, 0, MaxWill));
         }
 
         public void ChangeMaxStress(int amount)

@@ -48,7 +48,7 @@ namespace PlushieOdyssey.Combat.Systems
                 GameManager.GenerateFloatingText("-" + addStressGA.Amount + " Will", target.transform, 1f, 1f, "#CE93D8");
                 target.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 5, 1f);
             }
-            yield return new WaitForSeconds(0.4f);
+            yield break;
         }
 
         private IEnumerator ModifyStressPerformer(ModifyStressGA modifyStressGA)
@@ -77,7 +77,7 @@ namespace PlushieOdyssey.Combat.Systems
                     }
                 }
             }
-            yield return new WaitForSeconds(0.4f);
+            yield break;
         }
 
         private IEnumerator SetStressPerformer(SetStressGA setStressGA)
@@ -104,7 +104,7 @@ namespace PlushieOdyssey.Combat.Systems
                     target.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 5, 1f);
                 }
             }
-            yield return new WaitForSeconds(0.4f);
+            yield break;
         }
     }
 }

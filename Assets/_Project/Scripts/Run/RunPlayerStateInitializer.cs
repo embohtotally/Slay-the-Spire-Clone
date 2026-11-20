@@ -47,17 +47,28 @@ namespace PlushieOdyssey.Run
 
             if (runManager != null)
             {
-                int totalHealth = GetTotalHeroHealth();
+                IReadOnlyList<HeroData> activeTeam = ResolveHeroTeam(runManager);
+                int totalHealth = GetTotalHeroHealth(activeTeam);
                 if (totalHealth <= 0)
                 {
                     global::PlushieOdyssey.Core.Logger.LogWarning(this, "RunPlayerStateInitializer needs at least one HeroData with Health above 0.");
                     return;
                 }
 
-                runManager.InitializeHeroState(heroTeam, maxStress);
+                runManager.InitializeHeroState(activeTeam, maxStress);
             }
 
             InitializeRunDeckIfNeeded();
+        }
+
+        private IReadOnlyList<HeroData> ResolveHeroTeam(RunManager runManager)
+        {
+            if (runManager != null && runManager.HasSelectedParty)
+            {
+                return runManager.SelectedParty;
+            }
+
+            return heroTeam;
         }
 
         private void InitializeRunDeckIfNeeded()
@@ -78,7 +89,7 @@ namespace PlushieOdyssey.Run
                 return;
             }
 
-            List<CardData> combinedDeck = BuildStartingDeck();
+            List<CardData> combinedDeck = BuildStartingDeck(ResolveHeroTeam(RunManager.Instance));
             if (combinedDeck.Count == 0)
             {
                 global::PlushieOdyssey.Core.Logger.LogWarning(this, "RunPlayerStateInitializer found no cards in the assigned HeroData decks.");
@@ -95,10 +106,11 @@ namespace PlushieOdyssey.Run
             }
         }
 
-        private List<CardData> BuildStartingDeck()
+        private static List<CardData> BuildStartingDeck(IReadOnlyList<HeroData> activeTeam)
         {
             List<CardData> combinedDeck = new();
-            foreach (HeroData hero in heroTeam)
+            if (activeTeam == null) return combinedDeck;
+            foreach (HeroData hero in activeTeam)
             {
                 if (hero?.Deck == null) continue;
                 foreach (CardData cardData in hero.Deck)
@@ -113,10 +125,11 @@ namespace PlushieOdyssey.Run
             return combinedDeck;
         }
 
-        private int GetTotalHeroHealth()
+        private static int GetTotalHeroHealth(IReadOnlyList<HeroData> activeTeam)
         {
             int totalHealth = 0;
-            foreach (HeroData heroData in heroTeam)
+            if (activeTeam == null) return totalHealth;
+            foreach (HeroData heroData in activeTeam)
             {
                 if (heroData != null)
                 {

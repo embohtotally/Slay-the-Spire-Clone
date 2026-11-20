@@ -28,7 +28,7 @@ namespace PlushieOdyssey.Combat.Systems
                 GameManager.GenerateFloatingText("+" + healGA.Amount, target.transform, 1f, 1f, "#00FF00");
             }
 
-            yield return new WaitForSeconds(0.4f);
+            yield break;
         }
     }
 }

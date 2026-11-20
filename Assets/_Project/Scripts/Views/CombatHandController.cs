@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using PlushieOdyssey.Audio;
 using PlushieOdyssey.Combat.Systems;
 using PlushieOdyssey.Inputs;
+using PlushieOdyssey.UI.Combat;
+using PlushieOdyssey.UI.Relics;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace PlushieOdyssey.Combat.Views
@@ -54,8 +58,13 @@ namespace PlushieOdyssey.Combat.Views
         private CanvasGroup _dragGroup;
         private bool _originalBlocksRaycasts;
         private IDisposable _contextLease;
+        private RelicSwapModalUI _relicSwapModal;
+        private Vector2? _simulatedPointerPos;
 
         public bool IsCardInteracting => _active != null || _targeting;
+        public CardView HoveredCard => _hovered?.View;
+
+        public void SetSimulatedPointerPosition(Vector2? screenPos) => _simulatedPointerPos = screenPos;
 
         public event Action<CardView, CombatantView> PlayRequested;
         public event Action<CardView> PlayAccepted;
@@ -68,9 +77,21 @@ namespace PlushieOdyssey.Combat.Views
         public event Action<CardView, Vector2, bool> CardDragUpdated;
         public event Action CardDragEnded;
 
+        private bool IsModalBlocking =>
+            CombatMapOverlayUI.IsAnyOpen ||
+            CombatPileViewerUI.IsAnyOpen ||
+            (_relicSwapModal != null && _relicSwapModal.IsOpen) ||
+            Time.timeScale == 0f;
+
         private bool CanReceiveInput => isActiveAndEnabled &&
+            !IsModalBlocking &&
             (_inputRouter == null || _inputRouter.CurrentContext == InputContext.Combat) &&
-            (_playService == null || !_playService.IsBusy);
+            (_playService == null || !_playService.IsTurnLocked);
+
+        private bool CanHoverCards => isActiveAndEnabled &&
+            !IsModalBlocking &&
+            (_inputRouter == null || _inputRouter.CurrentContext == InputContext.Combat) &&
+            (_playService == null || !_playService.IsTurnLocked);
 
         private Camera EventCamera => _canvas != null &&
             _canvas.renderMode != RenderMode.ScreenSpaceOverlay ? _canvas.worldCamera : null;
@@ -88,6 +109,7 @@ namespace PlushieOdyssey.Combat.Views
             foreach (CardView card in _handView.Cards) RegisterCard(card);
             if (_playService != null) _playService.StateChanged += OnServiceStateChanged;
             if (_inputRouter == null) _inputRouter = InputContextRouter.FromBootstrap;
+            if (_relicSwapModal == null) _relicSwapModal = FindFirstObjectByType<RelicSwapModalUI>();
             if (_inputRouter != null && _inputRouter.isActiveAndEnabled)
                 _contextLease = _inputRouter.EnterContext(this, InputContext.Combat, this);
             RefreshCardStates();
@@ -111,11 +133,103 @@ namespace PlushieOdyssey.Combat.Views
 
         private void LateUpdate()
         {
-            if (!CanReceiveInput && (_active != null || _hovered != null))
+            if (!CanReceiveInput && _active != null)
             {
                 CancelInteraction();
+            }
+
+            if (!CanHoverCards)
+            {
+                if (_hovered != null) ClearHover();
+                return;
+            }
+
+            // Continuously reconcile hovered card under cursor so playing a card or shifting the hand
+            // immediately hovers the next card under a stationary cursor (no need to hover out & back!).
+            if (_active == null)
+            {
+                SyncHoverUnderPointer();
+            }
+        }
+
+        private void SyncHoverUnderPointer()
+        {
+            if (_handView == null || _handView.Cards == null || _handView.Cards.Count == 0)
+            {
+                if (_hovered != null) ClearHover();
+                return;
+            }
+
+            Vector2 pointerPos;
+            if (_simulatedPointerPos.HasValue)
+            {
+                pointerPos = _simulatedPointerPos.Value;
+            }
+            else if (Mouse.current != null)
+            {
+                pointerPos = Mouse.current.position.ReadValue();
+            }
+            else
+            {
+                return;
+            }
+
+            // Keep currently hovered card sticky while pointer remains inside its unmoving HoverHitbox
+            // OR its lifted Wrapper visual so moving the mouse onto the elevated card never flickers off.
+            if (_hovered != null && _hovered.View != null && _hovered.View.HasContent &&
+                IsPointerOverCard(_hovered.View, pointerPos, includeElevatedVisual: true))
+            {
+                _hoverPosition = pointerPos;
+                return;
+            }
+
+            // Pick top-most card (highest sibling index) under the cursor
+            Binding best = null;
+            int bestSibling = int.MinValue;
+
+            foreach (Binding binding in _bindings.Values)
+            {
+                if (binding?.View == null || !binding.View.HasContent || !binding.View.gameObject.activeInHierarchy)
+                    continue;
+
+                if (!IsPointerOverCard(binding.View, pointerPos, includeElevatedVisual: false)) continue;
+
+                int sibling = binding.View.transform.GetSiblingIndex();
+                if (sibling > bestSibling)
+                {
+                    bestSibling = sibling;
+                    best = binding;
+                }
+            }
+
+            if (best == _hovered) return;
+
+            if (best != null)
+            {
+                ApplyHover(best, pointerPos);
+            }
+            else if (_hovered != null)
+            {
                 ClearHover();
             }
+        }
+
+        private bool IsPointerOverCard(CardView view, Vector2 screenPos, bool includeElevatedVisual)
+        {
+            if (view == null || view.transform is not RectTransform cardRect) return false;
+            RectTransform hitbox = cardRect.Find("HoverHitbox") as RectTransform;
+            RectTransform targetRect = hitbox != null ? hitbox : cardRect;
+            if (RectTransformUtility.RectangleContainsScreenPoint(targetRect, screenPos, EventCamera))
+                return true;
+
+            if (includeElevatedVisual)
+            {
+                RectTransform wrapper = cardRect.Find("Wrapper") as RectTransform;
+                if (wrapper != null && RectTransformUtility.RectangleContainsScreenPoint(wrapper, screenPos, EventCamera))
+                    return true;
+            }
+
+            return false;
         }
 
         private void OnApplicationFocus(bool focused)
@@ -216,12 +330,17 @@ namespace PlushieOdyssey.Combat.Views
 
         private void OnHoverEntered(CardPointerInput input, PointerEventData eventData)
         {
-            if (!CanReceiveInput || _active != null ||
+            if (!CanHoverCards || _active != null ||
                 !_bindings.TryGetValue(input, out Binding binding) || !binding.View.HasContent) return;
-            if (_hovered == binding) return;
+            ApplyHover(binding, eventData.position);
+        }
+
+        private void ApplyHover(Binding binding, Vector2 pointerPosition)
+        {
+            if (binding == null || _hovered == binding) return;
             ClearHover(false);
             _hovered = binding;
-            _hoverPosition = eventData.position;
+            _hoverPosition = pointerPosition;
             binding.View.transform.SetAsLastSibling();
             if (_handView != null) _handView.SetHoveredCard(binding.View);
             if (binding.Feedback != null) binding.Feedback.SetHovered(true);
@@ -276,12 +395,14 @@ namespace PlushieOdyssey.Combat.Views
             ClearHover();
             _active = binding;
             _targeting = targeting;
+            rect.DOKill();
+            rect.localScale = Vector3.one;
             _originalParent = rect.parent;
             _originalAnchorMin = rect.anchorMin;
             _originalAnchorMax = rect.anchorMax;
             _originalPosition = rect.anchoredPosition3D;
             _originalRotation = rect.localRotation;
-            _originalScale = rect.localScale;
+            _originalScale = Vector3.one;
             _originalSibling = rect.GetSiblingIndex();
             _handView.SuspendCardLayout(binding.View);
             binding.View.SetSelected(true);
@@ -372,7 +493,7 @@ namespace PlushieOdyssey.Combat.Views
             if (_active != null && _playService != null &&
                 _playService.GetFailure(_active.View.Card, requireTarget: false) != CardPlayFailure.None)
                 CancelInteraction();
-            if (_playService != null && _playService.IsBusy) ClearHover();
+            if (_playService != null && _playService.IsTurnLocked) ClearHover();
             RefreshCardStates();
         }
 

@@ -28,7 +28,8 @@ namespace PlushieOdyssey.Combat.Systems
 
         private void Start()
         {
-            HeroSystem.Instance.Setup(heroTeam);
+            List<HeroData> activeParty = ResolveActiveParty();
+            HeroSystem.Instance.Setup(activeParty);
 
             List<EnemyData> enemiesForThisMatch = enemyDataList;
             if (!forceInspectorEnemies && RunManager.Instance != null && RunManager.Instance.SelectedEncounter != null)
@@ -38,14 +39,14 @@ namespace PlushieOdyssey.Combat.Systems
 
             EnemySystem.Instance.Setup(enemiesForThisMatch);
 
-            List<CardData> combinedDeck = BuildStartingDeck();
+            List<CardData> combinedDeck = BuildStartingDeck(activeParty);
             EnsureRunDeckManagerExists();
             RunDeckManager.Instance.InitializeIfEmpty(combinedDeck);
             CardSystem.Instance.Setup(RunDeckManager.Instance.GetDeckCopy());
 
-            foreach (var hero in heroTeam)
+            foreach (var hero in activeParty)
             {
-                if (hero.StartingPerks != null)
+                if (hero != null && hero.StartingPerks != null)
                 {
                     foreach (PerkData perkData in hero.StartingPerks)
                     {
@@ -56,6 +57,16 @@ namespace PlushieOdyssey.Combat.Systems
             ActionSystem.Instance.Perform(new CombatStartedGA(), DrawStartingHand);
         }
 
+        private List<HeroData> ResolveActiveParty()
+        {
+            if (RunManager.Instance != null && RunManager.Instance.HasSelectedParty)
+            {
+                return new List<HeroData>(RunManager.Instance.SelectedParty);
+            }
+
+            return heroTeam ?? new List<HeroData>();
+        }
+
         private void DrawStartingHand()
         {
             if (yourTurnSfx != global::PlushieOdyssey.Audio.SfxID.None) global::PlushieOdyssey.Audio.Tune.SFX(yourTurnSfx);
@@ -63,7 +74,7 @@ namespace PlushieOdyssey.Combat.Systems
             ActionSystem.Instance.Perform(drawCardsGA);
         }
 
-        private List<CardData> BuildStartingDeck()
+        private List<CardData> BuildStartingDeck(List<HeroData> activeParty)
         {
             List<CardData> combinedDeck = new();
 
@@ -77,11 +88,14 @@ namespace PlushieOdyssey.Combat.Systems
             }
 #endif
 
-            foreach (HeroData hero in heroTeam)
+            if (activeParty != null)
             {
-                if (hero != null && hero.Deck != null)
+                foreach (HeroData hero in activeParty)
                 {
-                    combinedDeck.AddRange(hero.Deck);
+                    if (hero != null && hero.Deck != null)
+                    {
+                        combinedDeck.AddRange(hero.Deck);
+                    }
                 }
             }
 
