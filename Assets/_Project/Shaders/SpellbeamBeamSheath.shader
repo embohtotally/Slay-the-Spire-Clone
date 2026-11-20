@@ -2,18 +2,18 @@ Shader "Gameseed/Spellbeam/BeamSheath"
 {
     Properties
     {
-        [HDR] _SheathColor ("Sheath Color", Color) = (0.72, 0.3, 1, 1)
-        _SheathIntensity ("Sheath Intensity", Float) = 2.5
+        [HDR] _SheathColor ("Sheath Color", Color) = (0.68, 0.18, 1.0, 1)
+        _SheathIntensity ("Sheath Intensity", Float) = 1.35
         _Arms ("Helix Arms", Float) = 3
-        _TwistTiles ("Helix Twist Tiles", Float) = 2.5
-        _HelixSpeed ("Helix Speed", Float) = 7
-        _TendrilSharp ("Tendril Sharpness", Range(1, 16)) = 4
-        _TendrilStrength ("Tendril Strength", Range(0, 2)) = 1.0
-        _RingTiles ("Ring Tiles", Float) = 14
-        _RingSpeed ("Ring Speed", Float) = 24
-        _RingStrength ("Ring Strength", Range(0, 2)) = 0.55
+        _TwistTiles ("Helix Twist Tiles", Float) = 2.8
+        _HelixSpeed ("Helix Speed", Float) = 9
+        _TendrilSharp ("Tendril Sharpness", Range(1, 16)) = 3.5
+        _TendrilStrength ("Tendril Strength", Range(0, 2)) = 1.15
+        _RingTiles ("Ring Tiles", Float) = 12
+        _RingSpeed ("Ring Speed", Float) = 26
+        _RingStrength ("Ring Strength", Range(0, 2)) = 0.75
         _NoiseFrequency ("Axial Noise Frequency", Float) = 5
-        _FlowSpeed ("Flow Speed", Float) = 6
+        _FlowSpeed ("Flow Speed", Float) = 7
         _HeadT ("Head T", Range(0, 1)) = 0
         _TailT ("Tail T", Range(0, 1)) = 0
         _PowerT ("Power T", Range(0, 1)) = 0
@@ -21,12 +21,12 @@ Shader "Gameseed/Spellbeam/BeamSheath"
     }
     SubShader
     {
-        Tags { "RenderType"="Transparent" "Queue"="Transparent+110" "RenderPipeline"="UniversalPipeline" "IgnoreProjector"="True" }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent+115" "RenderPipeline"="UniversalPipeline" "IgnoreProjector"="True" }
         Pass
         {
             Name "SpellbeamSheath"
             Tags { "LightMode"="SRPDefaultUnlit" }
-            Blend One One
+            Blend SrcAlpha OneMinusSrcAlpha
             ZWrite Off
             ZTest LEqual
             Cull Back
@@ -80,16 +80,19 @@ Shader "Gameseed/Spellbeam/BeamSheath"
                 float tendril = pow(saturate(helix), _TendrilSharp)
                               * (0.45 + 0.55 * vnoise(IN.axial * _NoiseFrequency - t * _FlowSpeed));
 
-                float rings = pow(saturate(sin(IN.axial * _RingTiles * TAU - t * _RingSpeed)), 6.0) * _RingStrength;
+                float rings = pow(saturate(sin(IN.axial * _RingTiles * TAU - t * _RingSpeed)), 7.0) * _RingStrength;
 
-                float mask = max(tendril * _TendrilStrength, rings);
+                float mask = saturate(max(tendril * _TendrilStrength, rings));
                 float body = smoothstep(_TailT - 0.06, _TailT + 0.02, IN.axial)
                            * (1.0 - smoothstep(_HeadT - 0.03, _HeadT, IN.axial));
-                float rim = pow(1.0 - facing, 2.0);
 
-                float3 col = _SheathColor.rgb * (0.55 + 0.9 * mask + 0.45 * rim);
-                float intensity = _SheathIntensity * (0.28 + 0.72 * mask) * body * _PowerT;
-                return half4(col * intensity, 1.0);
+                // Soft feathered silhouette so the outer plasma sheath wraps around the white core with vivid violet color
+                float feather = smoothstep(0.0, 0.35, facing);
+                float3 col = lerp(_SheathColor.rgb * 0.72, lerp(_SheathColor.rgb, float3(1.0, 0.78, 1.0), 0.38), mask);
+                col *= clamp(_SheathIntensity, 0.8, 1.6);
+
+                float alpha = saturate((0.20 + 0.68 * mask) * feather * body * _PowerT);
+                return half4(col, alpha);
             }
             ENDHLSL
         }

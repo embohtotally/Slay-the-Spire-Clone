@@ -25,7 +25,7 @@ namespace PlushieOdyssey.Combat.Systems
             foreach (CombatantView target in healGA.Targets)
             {
                 target.Heal(healGA.Amount);
-                GameManager.GenerateFloatingText("+" + healGA.Amount, target.transform, 1f, 1f, "#00FF00");
+                GameManager.GenerateFloatingText("+" + healGA.Amount + " HP", target.transform, 1.0f, 1.05f, "#54F08B", 1.08f);
             }
 
             yield break;

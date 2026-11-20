@@ -11,6 +11,8 @@ namespace PlushieOdyssey.Combat.Actions
     {
         public CombatantView ManualTarget { get; private set; }
         public Card Card { get; set; }
+        public int ManaSpent { get; private set; }
+        public bool HasManaSpentOverride { get; private set; }
 
         public PlayCardGA(Card card)
         {
@@ -22,6 +24,14 @@ namespace PlushieOdyssey.Combat.Actions
         {
             Card = card;
             ManualTarget = target;
+        }
+
+        public PlayCardGA(Card card, CombatantView target, int manaSpentOverride)
+        {
+            Card = card;
+            ManualTarget = target;
+            ManaSpent = Mathf.Max(0, manaSpentOverride);
+            HasManaSpentOverride = true;
         }
     }
 }

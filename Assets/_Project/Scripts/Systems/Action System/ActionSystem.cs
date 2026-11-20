@@ -38,26 +38,20 @@ namespace PlushieOdyssey.Combat.Actions
             IsEnemyTurnQueuedOrActive = false;
             pendingQueue.Clear();
 
-            if (DamageOverTimeSystem.Instance == null && GetComponent<DamageOverTimeSystem>() == null)
-            {
-                gameObject.AddComponent<DamageOverTimeSystem>();
-            }
-            if (BuffSystem.Instance == null && GetComponent<BuffSystem>() == null)
-            {
-                gameObject.AddComponent<BuffSystem>();
-            }
-            if (BeamVfxSystem.Instance == null && GetComponent<BeamVfxSystem>() == null)
-            {
-                gameObject.AddComponent<BeamVfxSystem>();
-            }
-            if (FrierenShieldSystem.Instance == null && GetComponent<FrierenShieldSystem>() == null)
-            {
-                gameObject.AddComponent<FrierenShieldSystem>();
-            }
-            if (SimultaneousSystem.Instance == null && GetComponent<SimultaneousSystem>() == null)
-            {
-                gameObject.AddComponent<SimultaneousSystem>();
-            }
+            EnsureCombatSystem<DamageOverTimeSystem>();
+            EnsureCombatSystem<BuffSystem>();
+            EnsureCombatSystem<BeamVfxSystem>();
+            EnsureCombatSystem<FrierenShieldSystem>();
+            EnsureCombatSystem<SimultaneousSystem>();
+            EnsureCombatSystem<CombatJuiceDirector>();
+            EnsureCombatSystem<PlushieOdyssey.Audio.CharacterVoiceDirector>();
+        }
+
+        private void EnsureCombatSystem<T>() where T : UnityEngine.MonoBehaviour
+        {
+            if (GetComponent<T>() != null) return;
+            if (FindFirstObjectByType<T>(UnityEngine.FindObjectsInactive.Include) != null) return;
+            gameObject.AddComponent<T>();
         }
 
         private static Dictionary<Type, List<Action<GameAction>>> preSubs = new();

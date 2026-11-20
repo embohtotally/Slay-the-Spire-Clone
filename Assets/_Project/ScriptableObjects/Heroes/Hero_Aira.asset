@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f1fcb3e2409ae24991f76c01b5877f6, type: 3}
+  m_Name: Hero_Aira
+  m_EditorClassIdentifier: 
+  <Deck>k__BackingField:
+  - {fileID: 11400000, guid: 37dd437683c9ed748845ad7ae6af72d3, type: 2}
+  - {fileID: 11400000, guid: 0a9ddaf6d7968e240bcba775b6584084, type: 2}
+  - {fileID: 11400000, guid: a81c0db19c8a8f54baa93596cc950d59, type: 2}
+  - {fileID: 11400000, guid: 1fa928edeae56014d80a09a2986dbd46, type: 2}
+  - {fileID: 11400000, guid: 36b68b93b01ca3b43a5a57af0c13c610, type: 2}
+  - {fileID: 11400000, guid: e94f25a565ee0f644954a2eae74df28b, type: 2}
+  - {fileID: 11400000, guid: 8122809098da372478039e3584de2aeb, type: 2}
+  - {fileID: 11400000, guid: 062751ac9b8a19148a02d69ac848e1eb, type: 2}
+  <Image>k__BackingField: {fileID: 2054458977, guid: 4a8da9c5204bc1e498bcbd08804668e4, type: 3}
+  <Health>k__BackingField: 52
+  <StartingPerks>k__BackingField: []
+  characterId: aura
+  displayName: Aura
+  roleTitle: ARCANE SUPPORT
+  themeColor: {r: 0.46, g: 0.88, b: 0.42, a: 1}
+  startingRelic: {fileID: 11400000, guid: 62805ed4a2818234ebfc02b01aa03f4d, type: 2}
+  portrait: {fileID: 2054458977, guid: 4a8da9c5204bc1e498bcbd08804668e4, type: 3}
+  rosterIcon: {fileID: 2054458977, guid: 4a8da9c5204bc1e498bcbd08804668e4, type: 3}
+  highWillPortrait: {fileID: 2054458977, guid: 4a8da9c5204bc1e498bcbd08804668e4, type: 3}
+  lowWillPortrait: {fileID: 2054458977, guid: 4a8da9c5204bc1e498bcbd08804668e4, type: 3}
+  tarotPortraitOffset: {x: 18, y: -148}
+  tarotPortraitScale: 1.62
+  splashPortraitOffset: {x: 12, y: -40}
+  splashPortraitScale: 1.06
+  rosterIconOffset: {x: 8, y: -112}
+  rosterIconScale: 3.1
+  ultimate:
+    Title: Astral Starfall
+    UltimatePointCost: 3
+    Description: Channel starlight through Aura's living staff, dealing heavy Arcane
+      damage to all enemies, restoring +12 Party Will, and drawing 2 cards.
+    Icon: {fileID: 0}
+  talents:
+  - Title: Lantern's Foresight
+    Description: When Aura is in the party, automatically draw +1 extra card at the
+      start of combat.
+    Icon: {fileID: 0}
+    IsInnate: 1
+    IsUnlocked: 1
+    UnlockRequirement: Innate Talent
+    BonusOpeningDraw: 1
+    BonusStartingShield: 0
+  - Title: Starlit Harmony
+    Description: Playing 3 Skill cards in a single turn restores +8 Will to every
+      member in the party.
+    Icon: {fileID: 0}
+    IsInnate: 0
+    IsUnlocked: 0
+    UnlockRequirement: Clear Chapter 2
+    BonusOpeningDraw: 0
+    BonusStartingShield: 0
+  - Title: Soothing Aria
+    Description: Whenever Aura restores HP, also grant +4 Party Shield and cleanse
+      1 active debuff.
+    Icon: {fileID: 0}
+    IsInnate: 0
+    IsUnlocked: 0
+    UnlockRequirement: Reach Hero Mastery Lv. 2
+    BonusOpeningDraw: 0
+    BonusStartingShield: 0
+  - Title: Celestial Resonance
+    Description: Aura's Ultimate costs 1 fewer Ultimate Point and inflicts 2 Vulnerable
+      on all enemies.
+    Icon: {fileID: 0}
+    IsInnate: 0
+    IsUnlocked: 0
+    UnlockRequirement: Defeat 3 Elite Bosses
+    BonusOpeningDraw: 0
+    BonusStartingShield: 0
+  previewIdleFrames:
+  - {fileID: 31115987, guid: 694cc5e7dc4c9f845b5dc5aad4fd231c, type: 3}
+  - {fileID: -2115614832, guid: e1e04f032455c4e40919b0f333cf3a32, type: 3}
+  previewActionFrames:
+  - {fileID: 1390179125, guid: 12f46582b6347fa47bbede27bbf98844, type: 3}
+  - {fileID: -380974101, guid: cce434433b0373a4da1447d5a9eabccc, type: 3}
+  - {fileID: 2000165855, guid: db3b7f38388adeb4abda8ba94a2fe916, type: 3}
+  - {fileID: 137005985, guid: 50a13fba97040c54095cc7750d701c94, type: 3}
+  - {fileID: 1734498707, guid: d9f023391224ec447888bff7da96fef5, type: 3}
+  - {fileID: 392702764, guid: ad9be55726e4aaa48acbe870bb926600, type: 3}
+  - {fileID: -1577755404, guid: 0ad5dd21b49f9d543b75f7823c8d06ed, type: 3}
+  previewIdleFps: 2.4
+  previewActionFps: 8.5
+  willProfile: {fileID: 11400000, guid: dd4bc348d8dbc0e40aaa18a731c87221, type: 2}

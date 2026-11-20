@@ -23,11 +23,19 @@ namespace PlushieOdyssey.Combat.Systems
     #region Performers
         private IEnumerator PerformEffectPerformer(PerformEffectGA performEffectGA)
         {
+            if (performEffectGA?.Effect == null) yield break;
+
             CombatantView caster = performEffectGA.Caster != null
                 ? performEffectGA.Caster
                 : (HeroSystem.Instance != null ? HeroSystem.Instance.HeroView : null);
-            GameAction effectAction = performEffectGA.Effect.GetGameAction(performEffectGA.Targets, caster);
-            ActionSystem.Instance.AddReaction(effectAction);
+            GameAction effectAction = performEffectGA.Effect.GetGameAction(
+                performEffectGA.Targets,
+                caster,
+                performEffectGA.XMultiplier);
+            if (effectAction != null)
+            {
+                ActionSystem.Instance.AddReaction(effectAction);
+            }
             yield return null;
         }
     #endregion

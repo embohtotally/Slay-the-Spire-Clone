@@ -158,6 +158,30 @@ adder.RemoveAllCard();  // Clear only this adder's clones.
 
 Each clone binds a separate runtime Card, but is registered only with HandView, not CardSystem. Leave `CombatHandController._playService` empty for isolated hover/drag checks; use CardSystem's injection path for actual playable cards.
 
+## X-Cost cards and modular effect scaling
+
+Cards flagged with `CardKeywords.XCost` (or authored with `mana_cost: X` in [`CardsDatabase.yaml`](../../Assets/_Project/Data/CardsDatabase.yaml)) display **`X`** instead of a numeric cost everywhere (`CardView`, `RunDeckCardView`, hover preview, pile/deck browsers, rewards, Rest Smith, Merchant inspector, and [`CardDataEditor`](../../Assets/_Project/Scripts/Editor/CardDataEditor.cs)).
+
+### Execution contract
+
+1. **FIFO-safe Mana consumption:** `CardPlayService.TryPlay` snapshots `ManaSystem.AvailableMana`, reserves all of it immediately on frame 0, and enqueues `PlayCardGA(card, target, manaSpentOverride)`. `CardSystem.PlayCardPerformer` spends that exact snapshot via `SpendManaGA` and computes `xMultiplier = card.GetEffectiveX(manaSpent)` (`manaSpent + XBonus`).
+2. **Zero-Mana safety:** Playing an X-cost card with `effectiveX == 0` is allowed (matching *Slay the Spire*), consumes `0` Mana, skips play VFX, and every effect returns `null` (no action fired). Upgraded `X+N` cards with `XBonus > 0` still trigger with `XBonus` even at `0` Mana.
+3. **Single-action modular effect scaling:** `EffectSystem` calls `Effect.GetGameAction(targets, caster, xMultiplier)` so scaled buffs, debuffs, and statuses apply in a single `GameAction` (one VFX, one SFX, one Artifact check).
+
+| Effect category | Concrete classes | Scaling behavior (`× X`) |
+| --- | --- | --- |
+| Damage | `DealDamageEffect`, `BeamAttackEffect`, `ConditionalDamageEffect` | Multiplies damage by `X` (live damage/lethal preview in `CombatTargetingPresenter`). |
+| Healing & Shield | `HealEffect`, `GainShieldEffect` | Multiplies HP healed / Shield gained by `X` (live `+HP` / `+SHIELD` reticle preview). |
+| Poison & Statuses | `ApplyStatusEffect` (`xScaling`) | `Auto`: `Poison` scales **stacks** (`duration ≥ stacks`); `Vulnerable`/`Weakness` scale **duration**. Override per effect with `Value`, `Duration`, `Both`, or `None`. |
+| Buffs & Debuffs | `ApplyBuffEffect` (`xScaling`) | `Auto`: Value-stacking buffs (`Strength`, `Dexterity`, `Poison`, `Thorns`, `Metallicize`, `PlatedArmor`, `Artifact`, `DamageReduction`, `Barricade`) scale **value**; duration-stacking (`Weak`, `Vulnerable`, `Frail`, `Intangible`, `FearImmunity`, `Redirect`) scale **duration**. Override per effect with `XScalingAxis`. |
+| DoTs, Control & Utility | `ApplyDoTEffect`, `ApplyStunEffect`, `ApplyTauntEffect`, `DrawEffect`, `DrawCardsEffect`, `GainAPEffect`, `AddStressEffect`, `ReduceFearEffect`, `RemoveDebuffEffect`, `RedirectDamageEffect`, `CostReductionEffect`, `SummonEnemyEffect`, `CopyFearEffect` | Directly multiplies the effect's primary parameter (`damagePerTurn`/`duration`, turns, draw count, AP, fear delta, cleanse count, summon count) by `X`. |
+| Composite & Custom | `SimultaneousEffect`, `ScalingEffect`, future `Effect` subclasses | Composites forward `xMultiplier` to all child effects; any future `Effect` subclass that doesn't override `GetGameAction(..., int xMultiplier)` automatically falls back to repeating `X` times via `SequentialGameAction` (and no-ops at `0`). |
+
+### Authoring a new X-Cost card
+
+- **Unity Inspector:** Select any `CardData` asset, check **Is X-Cost** (replaces numeric `Mana` with `X (Consumes all remaining Mana)`), optionally set **X Bonus** (e.g., `1` for `X+1`), and attach any `ManualTargetEffect` / `OtherEffects`. On `ApplyBuffEffect`, `ApplyStatusEffect`, or `ApplyDoTEffect`, keep `xScaling = Auto` or pick an explicit `XScalingAxis`.
+- **YAML (`CardsDatabase.yaml` + `Tools → Import Cards from YAML`):** Set `mana_cost: X` (and optionally `x_bonus: 1`, `keywords: Exhaust`, and per-effect `x_scaling: Value|Duration|Both|None`).
+
 ## Current boundary
 
-Scene/prefab wiring remains manual. Legacy draw/discard presentation, audio/VFX, and targeting-arrow rendering are not migrated here. The component refactor has not been verified in Play Mode.
+Scene/prefab wiring remains manual. Legacy draw/discard presentation, audio/VFX, and targeting-arrow rendering are not migrated here.

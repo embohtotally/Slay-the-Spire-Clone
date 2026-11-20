@@ -61,7 +61,7 @@ namespace PlushieOdyssey.Combat.Systems
 
         public int GetEffectiveManaCost(Card card)
         {
-            if (card == null) return 0;
+            if (card == null || card.IsXCost) return 0;
             int cost = card.Mana;
             if (RunManager.Instance != null &&
                 RunManager.Instance.CardCostModifiers.TryGetValue(card.Title, out int modifier))
@@ -223,12 +223,18 @@ namespace PlushieOdyssey.Combat.Systems
                 global::PlushieOdyssey.Audio.Tune.SFX(card.PlaySfx);
             }
 
-            PlayCardVisuals(playCardGA);
+            int spentMana = ResolveManaToSpend(playCardGA);
+            int xMultiplier = card != null ? card.GetEffectiveX(spentMana) : 1;
+
+            if (!(card != null && card.IsXCost && xMultiplier <= 0))
+            {
+                PlayCardVisuals(playCardGA);
+            }
 
             // Execute mana spend and card effects immediately in strict FIFO order without waiting for card fly-out!
-            SpendMana(playCardGA);
-            DoManualTargetEffect(playCardGA);
-            DoAutoTargetEffect(playCardGA);
+            SpendMana(spentMana);
+            DoManualTargetEffect(playCardGA, xMultiplier);
+            DoAutoTargetEffect(playCardGA, xMultiplier);
             yield break;
         }
 
@@ -588,28 +594,46 @@ namespace PlushieOdyssey.Combat.Systems
             }
         }
 
-        private void SpendMana(PlayCardGA playCardGA)
+        private int ResolveManaToSpend(PlayCardGA playCardGA)
         {
-            int cost = GetEffectiveManaCost(playCardGA.Card);
-            SpendManaGA spendManaGA = new(cost);
+            if (playCardGA == null || playCardGA.Card == null) return 0;
+            if (playCardGA.HasManaSpentOverride) return playCardGA.ManaSpent;
+            if (playCardGA.Card.IsXCost)
+            {
+                return ManaSystem.Instance != null ? ManaSystem.Instance.AvailableMana : 0;
+            }
+            return GetEffectiveManaCost(playCardGA.Card);
+        }
+
+        private void SpendMana(int cost)
+        {
+            SpendManaGA spendManaGA = new(Mathf.Max(0, cost));
             ActionSystem.Instance.AddReaction(spendManaGA);
         }
 
-        private void DoManualTargetEffect(PlayCardGA playCardGA)
+        private void DoManualTargetEffect(PlayCardGA playCardGA, int xMultiplier)
         {
             if (playCardGA.Card.ManualTargetEffect != null)
             {
-                PerformEffectGA performEffectGA = new(playCardGA.Card.ManualTargetEffect, new() { playCardGA.ManualTarget });
+                PerformEffectGA performEffectGA = new(
+                    playCardGA.Card.ManualTargetEffect,
+                    new() { playCardGA.ManualTarget },
+                    caster: null,
+                    xMultiplier: xMultiplier);
                 ActionSystem.Instance.AddReaction(performEffectGA);
             }
         }
 
-        private void DoAutoTargetEffect(PlayCardGA playCardGA)
+        private void DoAutoTargetEffect(PlayCardGA playCardGA, int xMultiplier)
         {
             foreach (AutoTargetEffect effectWrapper in playCardGA.Card.OtherEffects)
             {
                 List<CombatantView> targets = effectWrapper.TargetMode.GetTargets(HeroSystem.Instance.HeroView);
-                PerformEffectGA performEffectGA = new(effectWrapper.Effect, targets);
+                PerformEffectGA performEffectGA = new(
+                    effectWrapper.Effect,
+                    targets,
+                    caster: null,
+                    xMultiplier: xMultiplier);
                 ActionSystem.Instance.AddReaction(performEffectGA);
             }
         }

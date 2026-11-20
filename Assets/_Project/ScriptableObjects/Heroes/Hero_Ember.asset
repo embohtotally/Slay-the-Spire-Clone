@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f1fcb3e2409ae24991f76c01b5877f6, type: 3}
+  m_Name: Hero_Ember
+  m_EditorClassIdentifier: 
+  <Deck>k__BackingField:
+  - {fileID: 11400000, guid: 83f11f76c5aa2784b9bf2f9f21289e21, type: 2}
+  - {fileID: 11400000, guid: a991e3a11c0f3024397ee32b7fe04587, type: 2}
+  - {fileID: 11400000, guid: 5ada5494f9c69fb49a6ddcd1be54c5a4, type: 2}
+  - {fileID: 11400000, guid: 82d9bf796c36b974681c7e44fede0ae6, type: 2}
+  - {fileID: 11400000, guid: d8661133516699846a43f6e5feeb1f41, type: 2}
+  - {fileID: 11400000, guid: 45463b897189d844e9f88bcd62c3c130, type: 2}
+  - {fileID: 11400000, guid: d433d206b7c35404b899dc7ace58a5d3, type: 2}
+  - {fileID: 11400000, guid: b238726a30278ad44aa7b88e80b2f80f, type: 2}
+  <Image>k__BackingField: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
+  <Health>k__BackingField: 62
+  <StartingPerks>k__BackingField: []
+  characterId: ember
+  displayName: Ember
+  roleTitle: VANGUARD KNIGHT
+  themeColor: {r: 0.9, g: 0.34, b: 0.32, a: 1}
+  startingRelic: {fileID: 11400000, guid: a9ee0bc16f6da9a46973abad0ed505cc, type: 2}
+  portrait: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
+  rosterIcon: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
+  highWillPortrait: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
+  lowWillPortrait: {fileID: 1597602930, guid: 7e64a477c34aaf44f85651dfbc05de95, type: 3}
+  tarotPortraitOffset: {x: 4, y: -108}
+  tarotPortraitScale: 1.46
+  splashPortraitOffset: {x: -12, y: -40}
+  splashPortraitScale: 1.04
+  rosterIconOffset: {x: -2, y: -76}
+  rosterIconScale: 2.65
+  ultimate:
+    Title: Vanguard's Aegis
+    UltimatePointCost: 3
+    Description: Raise Ember's tempered greatsword in an unbreakable stance, granting
+      +24 Party Shield and striking all enemies for damage equal to your Shield.
+    Icon: {fileID: 0}
+  talents:
+  - Title: Steadfast Guard
+    Description: When Ember is in the party, automatically begin every combat with
+      +6 Shield.
+    Icon: {fileID: 0}
+    IsInnate: 1
+    IsUnlocked: 1
+    UnlockRequirement: Innate Talent
+    BonusOpeningDraw: 0
+    BonusStartingShield: 6
+  - Title: Twin-Blade Momentum
+    Description: Every 3rd Attack card played in a turn deals 50% bonus damage and
+      generates +1 Ultimate Point.
+    Icon: {fileID: 0}
+    IsInnate: 0
+    IsUnlocked: 0
+    UnlockRequirement: Clear Chapter 2
+    BonusOpeningDraw: 0
+    BonusStartingShield: 0
+  - Title: Unbreakable Will
+    Description: Retain up to 10 unused Shield between turns whenever Ember is at
+      + High Will.
+    Icon: {fileID: 0}
+    IsInnate: 0
+    IsUnlocked: 0
+    UnlockRequirement: Reach Hero Mastery Lv. 2
+    BonusOpeningDraw: 0
+    BonusStartingShield: 0
+  - Title: Knight's Oath
+    Description: Once per combat, prevent lethal damage and rally the party with
+      +15 Shield and +20 Will.
+    Icon: {fileID: 0}
+    IsInnate: 0
+    IsUnlocked: 0
+    UnlockRequirement: Defeat 3 Elite Bosses
+    BonusOpeningDraw: 0
+    BonusStartingShield: 0
+  previewIdleFrames:
+  - {fileID: 21300000, guid: f2ba7fa9c89f2ff47be9f7aba6986a8f, type: 3}
+  - {fileID: 21300000, guid: 9f2ee6aadeffdc549bf392e50e1488e2, type: 3}
+  previewActionFrames:
+  - {fileID: 21300000, guid: 8b65839d613af28489ecda4ce4f1a414, type: 3}
+  - {fileID: 21300000, guid: 90205216700c1d04e8d9331b75979c66, type: 3}
+  - {fileID: 21300000, guid: 27cd45eb484c28e4c9db537b8a04551c, type: 3}
+  - {fileID: 21300000, guid: 484b8960a13484e4fb4bd5722b4bd81d, type: 3}
+  - {fileID: 21300000, guid: c73fee7383bf8b644bac76ac69ce0121, type: 3}
+  previewIdleFps: 2.4
+  previewActionFps: 9
+  willProfile: {fileID: 11400000, guid: df72860764a1e474983d11aa60e74ebe, type: 2}

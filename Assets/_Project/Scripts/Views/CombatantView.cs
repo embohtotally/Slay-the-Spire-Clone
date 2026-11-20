@@ -64,6 +64,19 @@ namespace PlushieOdyssey.Combat.Views
         private bool hasHealthVisual;
         private Canvas combatantCanvas;
 
+        // === Procedural Juice & Live Damage Preview ===
+        private Transform _visualRoot;
+        private Vector3 _visualHomeLocalPos;
+        private Vector3 _visualHomeLocalScale = Vector3.one;
+        private bool _visualHomeCaptured;
+        private float _idlePhaseOffset;
+        private float _idleElapsed;
+        private bool _isPlayingActionMotion;
+        private Sequence _proceduralMotionSeq;
+        private Image _damagePreviewFill;
+        private int _previewIncomingDamage;
+        private static Sprite s_previewSolidSprite;
+
         // === Frieren Shield VFX (auto-attached by FrierenShieldSystem) ===
         private FrierenShieldController shieldVfx;
 
@@ -105,6 +118,202 @@ namespace PlushieOdyssey.Combat.Views
 
             SetupHealthVisual();
             UpdateHealthVisual(true);
+            _idlePhaseOffset = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+            CaptureProceduralVisualHomeIfNeeded(forceRecapture: true);
+        }
+
+        public void CaptureProceduralVisualHomeIfNeeded(bool forceRecapture = false)
+        {
+            Transform candidate = spriteRenderer != null ? spriteRenderer.transform : transform;
+            if (!forceRecapture && _visualHomeCaptured && _visualRoot == candidate) return;
+
+            _visualRoot = candidate;
+            _visualHomeLocalPos = _visualRoot.localPosition;
+            _visualHomeLocalScale = _visualRoot.localScale;
+            if (_visualHomeLocalScale.sqrMagnitude < 0.0001f) _visualHomeLocalScale = Vector3.one;
+            _visualHomeCaptured = true;
+        }
+
+        public void UpdateProceduralIdle(float dt)
+        {
+            if (_isPlayingActionMotion || CurrentHealth <= 0) return;
+            CaptureProceduralVisualHomeIfNeeded();
+            if (_visualRoot == null) return;
+
+            _idleElapsed += dt;
+            float wave = Mathf.Sin(_idleElapsed * 2.5f + _idlePhaseOffset);
+            float breatheX = 1f + wave * 0.024f;
+            float breatheY = 1f - wave * 0.026f;
+            float bobY = Mathf.Sin(_idleElapsed * 2.5f + _idlePhaseOffset - 0.5f) * 0.045f;
+
+            _visualRoot.localPosition = _visualHomeLocalPos + new Vector3(0f, bobY, 0f);
+            _visualRoot.localScale = new Vector3(
+                _visualHomeLocalScale.x * breatheX,
+                _visualHomeLocalScale.y * breatheY,
+                _visualHomeLocalScale.z);
+        }
+
+        public void PlayProceduralAttackLunge(Vector3 targetWorldPos, float duration = 0.34f)
+        {
+            CaptureProceduralVisualHomeIfNeeded();
+            if (_visualRoot == null) return;
+
+            _proceduralMotionSeq?.Kill();
+            _isPlayingActionMotion = true;
+
+            Vector3 worldDir = targetWorldPos - transform.position;
+            worldDir.z = 0f;
+            float sign = worldDir.x >= 0f ? 1f : -1f;
+            Vector3 localForward = transform.InverseTransformDirection(new Vector3(sign, 0f, 0f));
+            if (localForward.sqrMagnitude < 0.01f) localForward = Vector3.right * sign;
+            localForward.Normalize();
+
+            float lungeDist = 0.72f;
+            float windupDist = -0.22f;
+            float windupT = duration * 0.24f;
+            float dashT = duration * 0.28f;
+            float returnT = duration * 0.48f;
+
+            _proceduralMotionSeq = DOTween.Sequence().SetUpdate(true);
+            _proceduralMotionSeq.Append(_visualRoot.DOLocalMove(_visualHomeLocalPos + localForward * windupDist, windupT).SetEase(Ease.InQuad));
+            _proceduralMotionSeq.Join(_visualRoot.DOScale(new Vector3(_visualHomeLocalScale.x * 1.12f, _visualHomeLocalScale.y * 0.88f, _visualHomeLocalScale.z), windupT));
+            _proceduralMotionSeq.Append(_visualRoot.DOLocalMove(_visualHomeLocalPos + localForward * lungeDist, dashT).SetEase(Ease.OutExpo));
+            _proceduralMotionSeq.Join(_visualRoot.DOScale(new Vector3(_visualHomeLocalScale.x * 0.90f, _visualHomeLocalScale.y * 1.12f, _visualHomeLocalScale.z), dashT));
+            _proceduralMotionSeq.Append(_visualRoot.DOLocalMove(_visualHomeLocalPos, returnT).SetEase(Ease.OutBack));
+            _proceduralMotionSeq.Join(_visualRoot.DOScale(_visualHomeLocalScale, returnT).SetEase(Ease.OutBack));
+            _proceduralMotionSeq.OnComplete(() => _isPlayingActionMotion = false);
+        }
+
+        public void PlayProceduralSupportPulse()
+        {
+            CaptureProceduralVisualHomeIfNeeded();
+            if (_visualRoot == null) return;
+
+            _proceduralMotionSeq?.Kill();
+            _isPlayingActionMotion = true;
+
+            _proceduralMotionSeq = DOTween.Sequence().SetUpdate(true);
+            _proceduralMotionSeq.Append(_visualRoot.DOScale(new Vector3(_visualHomeLocalScale.x * 0.92f, _visualHomeLocalScale.y * 1.12f, _visualHomeLocalScale.z), 0.12f).SetEase(Ease.OutQuad));
+            _proceduralMotionSeq.Join(_visualRoot.DOLocalMoveY(_visualHomeLocalPos.y + 0.22f, 0.12f).SetEase(Ease.OutQuad));
+            _proceduralMotionSeq.Append(_visualRoot.DOScale(_visualHomeLocalScale, 0.18f).SetEase(Ease.OutBack));
+            _proceduralMotionSeq.Join(_visualRoot.DOLocalMove(_visualHomeLocalPos, 0.18f).SetEase(Ease.OutCubic));
+            _proceduralMotionSeq.OnComplete(() => _isPlayingActionMotion = false);
+        }
+
+        public void PlayProceduralHurtRecoil(float duration = 0.22f, float strength = 0.24f)
+        {
+            CaptureProceduralVisualHomeIfNeeded();
+            if (_visualRoot == null) return;
+
+            _proceduralMotionSeq?.Kill();
+            _isPlayingActionMotion = true;
+
+            float knockSign = this is EnemyView ? 1f : -1f;
+            Vector3 localBack = transform.InverseTransformDirection(new Vector3(knockSign, 0f, 0f));
+            if (localBack.sqrMagnitude < 0.01f) localBack = Vector3.right * knockSign;
+            localBack.Normalize();
+
+            float dist = Mathf.Clamp(strength, 0.16f, 0.45f);
+            _proceduralMotionSeq = DOTween.Sequence().SetUpdate(true);
+            _proceduralMotionSeq.Append(_visualRoot.DOLocalMove(_visualHomeLocalPos + localBack * dist + new Vector3(0f, 0.08f, 0f), duration * 0.28f).SetEase(Ease.OutExpo));
+            _proceduralMotionSeq.Join(_visualRoot.DOScale(new Vector3(_visualHomeLocalScale.x * 1.14f, _visualHomeLocalScale.y * 0.84f, _visualHomeLocalScale.z), duration * 0.28f));
+            _proceduralMotionSeq.Append(_visualRoot.DOLocalMove(_visualHomeLocalPos, duration * 0.72f).SetEase(Ease.OutElastic));
+            _proceduralMotionSeq.Join(_visualRoot.DOScale(_visualHomeLocalScale, duration * 0.72f).SetEase(Ease.OutBack));
+            _proceduralMotionSeq.OnComplete(() => _isPlayingActionMotion = false);
+        }
+
+        public Sequence PlayProceduralDeathDissolve(float duration = 0.36f)
+        {
+            CaptureProceduralVisualHomeIfNeeded();
+            _proceduralMotionSeq?.Kill();
+            _isPlayingActionMotion = true;
+            ClearDamagePreview();
+
+            Sequence seq = DOTween.Sequence().SetUpdate(true);
+            if (_visualRoot != null)
+            {
+                seq.Join(_visualRoot.DOLocalRotate(new Vector3(0f, 0f, this is EnemyView ? -18f : 18f), duration).SetEase(Ease.InQuad));
+                seq.Join(_visualRoot.DOLocalMoveY(_visualHomeLocalPos.y + 0.35f, duration).SetEase(Ease.OutCubic));
+                seq.Join(_visualRoot.DOScale(new Vector3(_visualHomeLocalScale.x * 1.18f, 0f, _visualHomeLocalScale.z), duration).SetEase(Ease.InBack));
+            }
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.DOKill();
+                spriteRenderer.color = new Color(1f, 0.42f, 0.36f, 1f);
+                seq.Join(spriteRenderer.DOFade(0f, duration).SetEase(Ease.InQuad));
+            }
+            foreach (SpriteRenderer sr in additionalSpriteRenderers)
+            {
+                if (sr == null) continue;
+                sr.DOKill();
+                seq.Join(sr.DOFade(0f, duration).SetEase(Ease.InQuad));
+            }
+            _proceduralMotionSeq = seq;
+            return seq;
+        }
+
+        public void ShowDamagePreview(int incomingDamage)
+        {
+            _previewIncomingDamage = Mathf.Max(0, incomingDamage);
+            if (!useSlider || healthSlider == null || healthSlider.fillRect == null || _previewIncomingDamage <= 0 || CurrentHealth <= 0)
+            {
+                ClearDamagePreview();
+                return;
+            }
+
+            int hpLoss = Mathf.Max(0, _previewIncomingDamage - CurrentShield);
+            if (hpLoss <= 0)
+            {
+                ClearDamagePreview();
+                return;
+            }
+
+            EnsureDamagePreviewOverlay();
+            if (_damagePreviewFill == null) return;
+
+            float currentNorm = Mathf.Clamp01((float)CurrentHealth / Mathf.Max(1, MaxHealth));
+            float afterNorm = Mathf.Clamp01((float)Mathf.Max(0, CurrentHealth - hpLoss) / Mathf.Max(1, MaxHealth));
+
+            RectTransform rt = _damagePreviewFill.rectTransform;
+            rt.anchorMin = new Vector2(afterNorm, 0f);
+            rt.anchorMax = new Vector2(currentNorm, 1f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            bool lethal = hpLoss >= CurrentHealth;
+            _damagePreviewFill.gameObject.SetActive(true);
+            float pulse = 0.55f + 0.35f * Mathf.Sin(Time.unscaledTime * 8.5f);
+            _damagePreviewFill.color = lethal
+                ? new Color(1f, 0.18f, 0.24f, pulse)
+                : new Color(1f, 0.88f, 0.32f, pulse * 0.92f);
+        }
+
+        public void ClearDamagePreview()
+        {
+            _previewIncomingDamage = 0;
+            if (_damagePreviewFill != null) _damagePreviewFill.gameObject.SetActive(false);
+        }
+
+        private void EnsureDamagePreviewOverlay()
+        {
+            if (_damagePreviewFill != null || healthSlider == null || healthSlider.fillRect == null) return;
+            Transform fillArea = healthSlider.fillRect.parent;
+            if (fillArea == null) return;
+
+            GameObject go = new("DamagePreviewBar", typeof(RectTransform), typeof(Image));
+            go.layer = fillArea.gameObject.layer;
+            RectTransform rt = (RectTransform)go.transform;
+            rt.SetParent(fillArea, false);
+            rt.SetAsLastSibling();
+            _damagePreviewFill = go.GetComponent<Image>();
+            if (s_previewSolidSprite == null)
+            {
+                Texture2D tex = Texture2D.whiteTexture;
+                s_previewSolidSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            }
+            _damagePreviewFill.sprite = s_previewSolidSprite;
+            _damagePreviewFill.raycastTarget = false;
+            go.SetActive(false);
         }
 
         public void SetCurrentHealth(int health)

@@ -16,5 +16,11 @@ namespace PlushieOdyssey.Combat.Effects
         {
             return new ApplyCostModifierGA(targetCardName, reduction, caster);
         }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+            return new ApplyCostModifierGA(targetCardName, reduction * xMultiplier, caster);
+        }
     }
 }

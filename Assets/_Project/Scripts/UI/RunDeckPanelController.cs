@@ -228,7 +228,7 @@ namespace PlushieOdyssey.UI
             }
 
             return entries
-                .OrderBy(entry => entry.CardData.Mana)
+                .OrderBy(entry => entry.CardData.IsXCost ? int.MaxValue : entry.CardData.Mana)
                 .ThenBy(entry => entry.CardData.Type)
                 .ThenBy(entry => entry.CardData.Title)
                 .ToList();

@@ -15,5 +15,11 @@ namespace PlushieOdyssey.Combat.Effects
         {
             return new ApplyBuffGA(targets, BuffType.Redirect, 1, duration, caster);
         }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+            return new ApplyBuffGA(targets, BuffType.Redirect, 1, duration * xMultiplier, caster);
+        }
     }
 }

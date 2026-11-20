@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 002af2782517de34d926fb775014819a, type: 3}
+  m_Name: Event_PeddlersWager
+  m_EditorClassIdentifier: 
+  Title: Wandering Peddler's Wager
+  Subtitle: UNKNOWN ENCOUNTER
+  StoryText: A chuckling traveler shuffles three wooden cups on a stump. 'Care for
+    a quick trade, friend? Gold, power, or a mystery trinket!'
+  Illustration: {fileID: -1372926879, guid: f084f991d3468664190c4758f6203e33, type: 3}
+  Choices:
+  - Label: Buy the Mystery Box
+    OutcomePreview: "[-60g \u2022 Gain Random Relic]"
+    ResultStory: '''Pleasure doing business!'' Inside the wrapped parcel shines an
+      authentic relic.'
+    RequiredMinGold: 60
+    RequiredMinHealth: 0
+    GoldDelta: -60
+    HealthDelta: 0
+    MaxHealthDelta: 0
+    StressDelta: 0
+    GrantRandomRelic: 1
+    GrantRandomCard: 0
+  - Label: Trade a Story for Coin
+    OutcomePreview: '[Gain 70 Gold]'
+    ResultStory: The peddler laughs heartily at your tale of the Spire and tosses
+      you a plump coin purse.
+    RequiredMinGold: 0
+    RequiredMinHealth: 0
+    GoldDelta: 70
+    HealthDelta: 0
+    MaxHealthDelta: 0
+    StressDelta: 0
+    GrantRandomRelic: 0
+    GrantRandomCard: 0
+  - Label: Decline Politely
+    OutcomePreview: '[No Effect]'
+    ResultStory: You tip your hat and keep moving along the trail.
+    RequiredMinGold: 0
+    RequiredMinHealth: 0
+    GoldDelta: 0
+    HealthDelta: 0
+    MaxHealthDelta: 0
+    StressDelta: 0
+    GrantRandomRelic: 0
+    GrantRandomCard: 0

@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Image>k__BackingField: {fileID: 2054458977, guid: 56ce11f854e5896488c9b008fe7faaf5, type: 3}
   <Title>k__BackingField: Celestial Nova
-  <Description>k__BackingField: 18 Damage (X cost)
+  <Description>k__BackingField: Deal 18 Damage x X (Spends all Mana)
   <Tier>k__BackingField: 1
   <Mana>k__BackingField: 0
   <Type>k__BackingField: 0
+  <Keywords>k__BackingField: 32
   <TargetType>k__BackingField: 0
   <ManualTargetEffect>k__BackingField:
     rid: 5978927219931611262

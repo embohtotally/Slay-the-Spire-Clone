@@ -15,5 +15,12 @@ namespace PlushieOdyssey.Combat.Effects
         {
             return new RemoveDebuffGA(count, targets, caster);
         }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+            int scaledCount = count <= 0 ? 0 : count * xMultiplier;
+            return new RemoveDebuffGA(scaledCount, targets, caster);
+        }
     }
 }

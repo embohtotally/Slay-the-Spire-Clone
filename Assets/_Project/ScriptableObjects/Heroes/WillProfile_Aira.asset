@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57bc992dae1aaca49bd88599d6131227, type: 3}
+  m_Name: WillProfile_Aira
+  m_EditorClassIdentifier: 
+  maxWill: 100
+  startingWill: 60
+  highWillThreshold: 0.72
+  lowWillThreshold: 0.25
+  highWillBonusMultiplier: 1.3
+  lowWillMaxHealthPenaltyFraction: 0.2
+  highWillTitle: + High Will
+  highWillDescription: "Will \u2265 {threshold}%: Grants <color=#64E8FF><b>+{bonus}%
+    attack damage</b></color> and <color=#64E8FF><b>+{bonus}% Shield gain</b></color>."
+  lowWillTitle: - Low Will
+  lowWillDescription: 'Will < {threshold}%: Effective Max HP is reduced by <color=#FF6B6B><b>{penalty}%</b></color>
+    and Attack cards are blocked until Will recovers.'
+  useCustomPalette: 0
+  highWillFillColor: {r: 0.14, g: 0.68, b: 1, a: 1}
+  neutralWillFillColor: {r: 0.15, g: 0.45, b: 0.92, a: 1}
+  lowWillFillColor: {r: 0.66, g: 0.11, b: 0.15, a: 1}
+  normalBorderColor: {r: 0.78, g: 0.65, b: 0.36, a: 1}
+  highWillBorderColor: {r: 0.32, g: 0.86, b: 1, a: 1}
+  lowWillBorderColor: {r: 1, g: 0.28, b: 0.32, a: 1}

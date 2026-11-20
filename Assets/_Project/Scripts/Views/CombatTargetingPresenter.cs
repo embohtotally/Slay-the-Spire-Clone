@@ -55,6 +55,7 @@ namespace PlushieOdyssey.Combat.Views
             public Color Color;
             public string BadgeText;
             public bool ShowRing;
+            public int PreviewDamage;
         }
 
         private sealed class ReticleSlot
@@ -123,6 +124,10 @@ namespace PlushieOdyssey.Combat.Views
                 }
 
                 PositionReticle(slot, entry, cam, pulse);
+                if (entry.PreviewDamage > 0)
+                {
+                    entry.Target.ShowDamagePreview(entry.PreviewDamage);
+                }
             }
         }
 
@@ -292,13 +297,7 @@ namespace PlushieOdyssey.Combat.Views
                     }
                     else
                     {
-                        _activeTargets.Add(new ActiveTargetEntry
-                        {
-                            Target = target,
-                            Color = _reticleAllyColor,
-                            BadgeText = $"<b>{GetCombatantDisplayName(target)}</b>  <color=#64E8FF>ALLY</color>",
-                            ShowRing = true
-                        });
+                        BuildAllyPreviewEntry(card, target, caster, isManual: true);
                     }
                 }
             }
@@ -333,12 +332,44 @@ namespace PlushieOdyssey.Combat.Views
             ApplyActiveTargets();
         }
 
+        private void BuildAllyPreviewEntry(Card card, CombatantView target, HeroView caster, bool isManual)
+        {
+            string allyName = GetCombatantDisplayName(target);
+            int availableMana = ManaSystem.Instance != null ? ManaSystem.Instance.AvailableMana : 0;
+            int effectiveX = card != null ? card.GetEffectiveX(availableMana) : 1;
+
+            string badge;
+            Color color = _reticleAllyColor;
+            if (card != null && card.IsXCost && effectiveX <= 0)
+            {
+                badge = $"<b>{allyName}</b>   <color=#FFB74D>0 EFFECT (0 MANA)</color>";
+                color = _reticleBlockedColor;
+            }
+            else
+            {
+                string summary = BuildNonDamageEffectSummary(card, target, caster, isManual, effectiveX);
+                badge = !string.IsNullOrEmpty(summary)
+                    ? $"<b>{allyName}</b>   <color=#64E8FF>{summary}</color>"
+                    : $"<b>{allyName}</b>   <color=#64E8FF>ALLY</color>";
+            }
+
+            _activeTargets.Add(new ActiveTargetEntry
+            {
+                Target = target,
+                Color = color,
+                BadgeText = badge,
+                ShowRing = true
+            });
+        }
+
         private void BuildEnemyPreviewEntry(Card card, CombatantView target, HeroView caster, bool isManual)
         {
             int expectedDamage = EstimateCardDamage(card, target, caster, isManual);
             string enemyName = GetCombatantDisplayName(target);
             bool hasDamage = expectedDamage > 0;
             bool isLethal = hasDamage && expectedDamage >= (target.CurrentHealth + target.CurrentShield);
+            int availableMana = ManaSystem.Instance != null ? ManaSystem.Instance.AvailableMana : 0;
+            int effectiveX = card != null ? card.GetEffectiveX(availableMana) : 1;
 
             string badge;
             Color color;
@@ -352,9 +383,17 @@ namespace PlushieOdyssey.Combat.Views
                 badge = $"<b>{enemyName}</b>   <color=#FF766B>{expectedDamage} DMG</color>";
                 color = _reticleEnemyColor;
             }
+            else if (card != null && card.IsXCost && effectiveX <= 0)
+            {
+                badge = $"<b>{enemyName}</b>   <color=#FFB74D>0 EFFECT (0 MANA)</color>";
+                color = _reticleBlockedColor;
+            }
             else
             {
-                badge = $"<b>{enemyName}</b>   <color=#FFE082>TARGET</color>";
+                string summary = BuildNonDamageEffectSummary(card, target, caster, isManual, effectiveX);
+                badge = !string.IsNullOrEmpty(summary)
+                    ? $"<b>{enemyName}</b>   <color=#A8F0A5>{summary}</color>"
+                    : $"<b>{enemyName}</b>   <color=#FFE082>TARGET</color>";
                 color = _reticleEnemyColor;
             }
 
@@ -363,8 +402,77 @@ namespace PlushieOdyssey.Combat.Views
                 Target = target,
                 Color = color,
                 BadgeText = badge,
-                ShowRing = true
+                ShowRing = true,
+                PreviewDamage = expectedDamage
             });
+        }
+
+        private static string BuildNonDamageEffectSummary(Card card, CombatantView target, CombatantView caster, bool includeManual, int xMultiplier)
+        {
+            if (card == null || xMultiplier <= 0) return string.Empty;
+
+            List<string> parts = new();
+            void Collect(Effect effect)
+            {
+                if (effect == null) return;
+                switch (effect)
+                {
+                    case HealEffect heal when heal.HealAmount > 0:
+                        parts.Add($"+{heal.HealAmount * xMultiplier} HP");
+                        break;
+                    case GainShieldEffect shield when shield.ShieldAmount > 0:
+                        parts.Add($"+{shield.ShieldAmount * xMultiplier} SHIELD");
+                        break;
+                    case ApplyStatusEffect status:
+                        status.ResolveScaled(xMultiplier, out int sStacks, out int sDur);
+                        if (status.Status == StatusType.Poison && sStacks > 0)
+                            parts.Add($"+{sStacks} POISON");
+                        else if (sDur > 0)
+                            parts.Add($"{status.Status.ToString().ToUpper()} {sDur}T");
+                        break;
+                    case ApplyBuffEffect buff:
+                        buff.ResolveScaled(xMultiplier, out int bVal, out int bDur);
+                        if (buff.BuffType == BuffType.Poison && bVal > 0)
+                            parts.Add($"+{bVal} POISON");
+                        else if (buff.BuffType == BuffType.Weak || buff.BuffType == BuffType.Vulnerable ||
+                                 buff.BuffType == BuffType.Frail || buff.BuffType == BuffType.Intangible ||
+                                 buff.BuffType == BuffType.FearImmunity || buff.BuffType == BuffType.Redirect)
+                            parts.Add($"{buff.BuffType.ToString().ToUpper()} {bDur}T");
+                        else if (bVal > 0)
+                            parts.Add($"+{bVal} {buff.BuffType.ToString().ToUpper()}");
+                        break;
+                    case ApplyDoTEffect dot:
+                        dot.ResolveScaled(xMultiplier, out int dpt, out int dDur);
+                        if (dpt > 0) parts.Add($"{dpt} DOT/{dDur}T");
+                        break;
+                    case ApplyStunEffect stun when stun.Duration > 0:
+                        parts.Add($"STUN {stun.Duration * xMultiplier}T");
+                        break;
+                    case ApplyTauntEffect taunt when taunt.Duration > 0:
+                        parts.Add($"TAUNT {taunt.Duration * xMultiplier}T");
+                        break;
+                }
+            }
+
+            if (includeManual && card.ManualTargetEffect != null)
+            {
+                Collect(card.ManualTargetEffect);
+            }
+
+            if (card.OtherEffects != null)
+            {
+                foreach (AutoTargetEffect auto in card.OtherEffects)
+                {
+                    if (auto == null || auto.Effect == null || auto.TargetMode == null) continue;
+                    List<CombatantView> autoTargets = auto.TargetMode.GetTargets(caster);
+                    if (autoTargets != null && autoTargets.Contains(target))
+                    {
+                        Collect(auto.Effect);
+                    }
+                }
+            }
+
+            return parts.Count > 0 ? string.Join("  ", parts) : string.Empty;
         }
 
         private static List<CombatantView> ResolveManualPreviewTargets(Card card, CombatantView primaryTarget, CombatantView caster)
@@ -388,11 +496,16 @@ namespace PlushieOdyssey.Combat.Views
         private static int EstimateCardDamage(Card card, CombatantView target, CombatantView caster, bool includeManual)
         {
             if (card == null || target == null) return 0;
+
+            int availableMana = ManaSystem.Instance != null ? ManaSystem.Instance.AvailableMana : 0;
+            int xMultiplier = card.GetEffectiveX(availableMana);
+            if (xMultiplier <= 0) return 0;
+
             int total = 0;
 
             if (includeManual && card.ManualTargetEffect != null)
             {
-                total += EstimateEffectDamage(card.ManualTargetEffect, target, caster);
+                total += EstimateEffectDamage(card.ManualTargetEffect, target, caster, xMultiplier);
             }
 
             if (card.OtherEffects != null)
@@ -403,7 +516,7 @@ namespace PlushieOdyssey.Combat.Views
                     List<CombatantView> autoTargets = auto.TargetMode.GetTargets(caster);
                     if (autoTargets != null && autoTargets.Contains(target))
                     {
-                        total += EstimateEffectDamage(auto.Effect, target, caster);
+                        total += EstimateEffectDamage(auto.Effect, target, caster, xMultiplier);
                     }
                 }
             }
@@ -411,13 +524,15 @@ namespace PlushieOdyssey.Combat.Views
             return total;
         }
 
-        private static int EstimateEffectDamage(Effect effect, CombatantView target, CombatantView caster)
+        private static int EstimateEffectDamage(Effect effect, CombatantView target, CombatantView caster, int xMultiplier = 1)
         {
+            if (xMultiplier <= 0) return 0;
+
             int raw = effect switch
             {
-                DealDamageEffect dmg => dmg.DamageAmount,
-                BeamAttackEffect beam => beam.DamageAmount,
-                ConditionalDamageEffect cond => cond.EvaluateDamage(new List<CombatantView> { target }, caster),
+                DealDamageEffect dmg => dmg.DamageAmount * xMultiplier,
+                BeamAttackEffect beam => beam.DamageAmount * xMultiplier,
+                ConditionalDamageEffect cond => cond.EvaluateDamage(new List<CombatantView> { target }, caster) * xMultiplier,
                 _ => 0
             };
 
@@ -728,6 +843,20 @@ namespace PlushieOdyssey.Combat.Views
 
         private void ClearReticles()
         {
+            for (int i = 0; i < _activeTargets.Count; i++)
+            {
+                if (_activeTargets[i]?.Target != null)
+                {
+                    _activeTargets[i].Target.ClearDamagePreview();
+                }
+            }
+            if (EnemySystem.Instance != null && EnemySystem.Instance.Enemies != null)
+            {
+                foreach (EnemyView e in EnemySystem.Instance.Enemies)
+                {
+                    if (e != null) e.ClearDamagePreview();
+                }
+            }
             _activeTargets.Clear();
             foreach (ReticleSlot slot in _reticlePool)
             {

@@ -183,6 +183,8 @@ MonoBehaviour:
       IncludeUpgrades: 0
       OnlyOfferNewCardsNotInDeck: 1
       AllowDuplicateOptions: 0
+    RelicOverride: {fileID: 0}
+    PotionOverride: {fileID: 0}
   - Type: 3
     TitleOverride: 
     DescriptionOverride: 
@@ -193,7 +195,12 @@ MonoBehaviour:
       IncludeUpgrades: 0
       OnlyOfferNewCardsNotInDeck: 1
       AllowDuplicateOptions: 0
+    RelicOverride: {fileID: 0}
+    PotionOverride: {fileID: 0}
   cardRewardSceneName: CardReward
+  relicRewardPool: {fileID: 11400000, guid: aa91c2e91f89d174dbce292334c53009, type: 2}
+  potionRewardPool: {fileID: 0}
+  grantRelicOnEliteOrBoss: 1
   rewardRoot: {fileID: 1019761420}
   rewardContainer: {fileID: 1666546222}
   rewardOptionPrefab: {fileID: 0}

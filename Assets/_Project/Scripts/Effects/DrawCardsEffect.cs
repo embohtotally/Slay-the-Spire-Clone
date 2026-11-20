@@ -18,5 +18,11 @@ namespace PlushieOdyssey.Combat.Effects
             DrawCardsGA drawCardsGA = new(drawAmount);
             return drawCardsGA;
         }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+            return new DrawCardsGA(drawAmount * xMultiplier);
+        }
     }
 }

@@ -18,5 +18,11 @@ namespace PlushieOdyssey.Combat.Effects
             ApplyStunGA applyStunGA = new ApplyStunGA(duration, targets, caster);
             return applyStunGA;
         }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+            return new ApplyStunGA(duration * xMultiplier, targets, caster);
+        }
     }
 }

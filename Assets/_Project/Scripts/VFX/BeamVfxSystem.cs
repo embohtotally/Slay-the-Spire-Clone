@@ -51,13 +51,28 @@ namespace PlushieOdyssey.Vfx
         private Coroutine subflowPump;
         private int pendingSubflowCasts;
 
+        protected override void Awake()
+        {
+            base.Awake();
+            if (Instance != this) return;
+
+            // Ensure camera trauma shake/flash subscriber is present when a combat scene has no BeamCameraFx yet
+            if (FindFirstObjectByType<BeamCameraFx>(FindObjectsInactive.Include) == null)
+            {
+                Camera cam = Camera.main;
+                if (cam != null) cam.gameObject.AddComponent<BeamCameraFx>();
+            }
+        }
+
         private void OnEnable()
         {
+            if (Instance != null && Instance != this) return;
             ActionSystem.AttachPerformer<PlayBeamVfxGA>(PlayBeamPerformer);
         }
 
         private void OnDisable()
         {
+            if (Instance != this) return;
             ActionSystem.DetachPerformer<PlayBeamVfxGA>();
             for (int i = activeBeams.Count - 1; i >= 0; i--) activeBeams[i].StopAndReset();
             activeBeams.Clear();

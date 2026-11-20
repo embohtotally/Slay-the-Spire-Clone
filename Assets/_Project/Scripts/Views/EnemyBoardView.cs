@@ -56,9 +56,17 @@ namespace PlushieOdyssey.Combat.Views
         public IEnumerator RemoveEnemy(EnemyView enemyView)
         {
             EnemyViews.Remove(enemyView);
-            Tween tween = enemyView.transform.DOScale(Vector3.zero, removeEnemyScaleDuration);
-            yield return tween.WaitForCompletion();
-            Destroy(enemyView.gameObject);
+            if (enemyView == null) yield break;
+
+            Sequence dissolve = enemyView.PlayProceduralDeathDissolve(Mathf.Max(0.28f, removeEnemyScaleDuration));
+            if (dissolve != null)
+            {
+                yield return dissolve.WaitForCompletion();
+            }
+            if (enemyView != null)
+            {
+                Destroy(enemyView.gameObject);
+            }
         }
     }
 }

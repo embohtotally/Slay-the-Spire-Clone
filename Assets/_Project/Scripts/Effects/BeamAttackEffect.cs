@@ -26,11 +26,19 @@ namespace PlushieOdyssey.Combat.Effects
 
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
+            return GetGameAction(targets, caster, 1);
+        }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+
+            int scaledDamage = damageAmount * xMultiplier;
             List<CombatantView> list = targets ?? new List<CombatantView>();
 
             // Graceful degradation: no config configured -> plain damage, no beam.
             if (beamConfig == null)
-                return new DealDamageGA(damageAmount, list, caster);
+                return new DealDamageGA(scaledDamage, list, caster);
 
             // Manual-target pierce: expand the single clicked enemy into the geometric line.
             if (beamConfig.ExpandSingleTargetToLine && list.Count == 1 && caster != null)
@@ -38,7 +46,7 @@ namespace PlushieOdyssey.Combat.Effects
 
             List<GameAction> payloads = new(list.Count);
             foreach (CombatantView target in list)
-                payloads.Add(new DealDamageGA(damageAmount, new List<CombatantView> { target }, caster));
+                payloads.Add(new DealDamageGA(scaledDamage, new List<CombatantView> { target }, caster));
 
             return new PlayBeamVfxGA(caster, list, beamConfig, payloads);
         }

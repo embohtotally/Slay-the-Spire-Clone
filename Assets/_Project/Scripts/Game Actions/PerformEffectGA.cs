@@ -12,12 +12,14 @@ namespace PlushieOdyssey.Combat.Actions
         public Effect Effect { get; set; }
         public List<CombatantView> Targets { get; set; }
         public CombatantView Caster { get; set; }
+        public int XMultiplier { get; set; }
 
-        public PerformEffectGA(Effect effect, List<CombatantView> targets, CombatantView caster = null)
+        public PerformEffectGA(Effect effect, List<CombatantView> targets, CombatantView caster = null, int xMultiplier = 1)
         {
             Effect = effect;
             Targets = targets == null ? null : new(targets);
             Caster = caster;
+            XMultiplier = xMultiplier;
         }
     }
 }

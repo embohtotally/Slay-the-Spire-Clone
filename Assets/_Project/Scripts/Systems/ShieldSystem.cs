@@ -29,8 +29,8 @@ namespace PlushieOdyssey.Combat.Systems
             foreach (CombatantView target in gainShieldGA.Targets)
             {
                 target.AddShield(gainShieldGA.Amount);
-                global::PlushieOdyssey.Core.GameManager.GenerateFloatingText("+" + gainShieldGA.Amount, target.transform, 1f, 1f, "#00BFFF");
-                target.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 5, 1f);
+                global::PlushieOdyssey.Core.GameManager.GenerateFloatingText("+" + gainShieldGA.Amount + " BLOCK", target.transform, 0.95f, 1.0f, "#5CE1FF", 1.04f);
+                target.PlayProceduralSupportPulse();
             }
 
             yield break;

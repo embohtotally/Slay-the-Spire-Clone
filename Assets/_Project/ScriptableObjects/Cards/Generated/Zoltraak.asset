@@ -19,9 +19,10 @@ MonoBehaviour:
   <Tier>k__BackingField: 1
   <Mana>k__BackingField: 2
   <Type>k__BackingField: 0
+  <Keywords>k__BackingField: 0
   <TargetType>k__BackingField: 0
   <ManualTargetEffect>k__BackingField:
-    rid: 3218947327116181588
+    rid: 8960002078717509706
   <OtherEffects>k__BackingField: []
   <HoverSfx>k__BackingField: 5
   <PlaySfx>k__BackingField: 0
@@ -39,8 +40,8 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 3218947327116181588
-      type: {class: BeamAttackEffect, ns: , asm: Assembly-CSharp}
+    - rid: 8960002078717509706
+      type: {class: BeamAttackEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
         damageAmount: 16
         beamConfig: {fileID: 11400000, guid: dceee39a9e23e674c8d53b71772ed709, type: 2}

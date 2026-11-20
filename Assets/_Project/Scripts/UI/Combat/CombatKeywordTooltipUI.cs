@@ -41,8 +41,10 @@ namespace PlushieOdyssey.UI.Combat
         private static readonly KeywordEntry[] Catalog =
         {
             new("Shield", "Shield", "Absorbs incoming damage until the start of your next turn.", new Color(0.31f, 0.76f, 0.97f)),
-            new("Will", "Will", "75%+ Will grants +25% Attack Damage & Shield. Below 25% triggers Fear (Attack cards blocked & Max HP penalty).", new Color(0.28f, 0.75f, 1f)),
-            new("Fear", "Will / Fear", "75%+ Will grants +25% Attack Damage & Shield. Below 25% Will triggers Fear (Attack cards blocked & Max HP penalty).", new Color(0.81f, 0.58f, 0.85f)),
+            new("Will", "Will", "Every played card grants +1 to +3 Will (RNG). At 75%+ triggers + High Will (+25% Attack & Shield). Below 25% triggers - Low Will (Attack cards blocked & Max HP penalty).", new Color(0.28f, 0.75f, 1f)),
+            new("High Will", "+ High Will", "Active at 75%+ Will: grants +25% Attack Damage and Shield gain.", new Color(0.24f, 0.84f, 1f)),
+            new("Low Will", "- Low Will", "Active below 25% Will: Attack cards are blocked and Effective Max HP is reduced until Will recovers.", new Color(1f, 0.34f, 0.38f)),
+            new("Will Shield", "Will Shield", "Immune to incoming Will drain.", new Color(0.36f, 0.88f, 1f)),
             new("Vulnerable", "Vulnerable", "Target takes 50% more damage from attacks.", new Color(1f, 0.42f, 0.42f)),
             new("Weak", "Weak", "Afflicted combatant deals 25% less attack damage.", new Color(1f, 0.72f, 0.30f)),
             new("Strength", "Strength", "Increases attack damage dealt by each hit.", new Color(1f, 0.52f, 0.36f)),
@@ -54,6 +56,7 @@ namespace PlushieOdyssey.UI.Combat
             new("Ethereal", "Ethereal", "If still in hand at the end of your turn, this card is Exhausted.", new Color(0.69f, 0.62f, 1f)),
             new("Innate", "Innate", "Always starts in your opening hand on Turn 1.", new Color(1f, 0.88f, 0.52f)),
             new("Unplayable", "Unplayable", "Cannot be played from your hand.", new Color(0.62f, 0.62f, 0.68f)),
+            new("X-Cost", "X-Cost", "Consumes all remaining Mana when played. Effects multiply by the Mana spent (X).", new Color(0.98f, 0.78f, 0.34f)),
             new("Dexterity", "Dexterity", "Increases Shield gained from cards.", new Color(0.40f, 0.86f, 0.75f)),
             new("Frail", "Frail", "Reduces Shield gained from cards by 25%.", new Color(0.95f, 0.62f, 0.42f)),
             new("Thorns", "Thorns", "When hit by an attack, deals return damage to the attacker.", new Color(0.96f, 0.48f, 0.48f)),
@@ -155,13 +158,17 @@ namespace PlushieOdyssey.UI.Combat
                 }
             }
 
-            if (card != null && card.Keywords != CardKeywords.None)
+            if (card != null)
             {
-                if (card.HasKeyword(CardKeywords.Exhaust)) TryAdd("Exhaust");
-                if (card.HasKeyword(CardKeywords.Retain)) TryAdd("Retain");
-                if (card.HasKeyword(CardKeywords.Ethereal)) TryAdd("Ethereal");
-                if (card.HasKeyword(CardKeywords.Innate)) TryAdd("Innate");
-                if (card.HasKeyword(CardKeywords.Unplayable)) TryAdd("Unplayable");
+                if (card.IsXCost) TryAdd("X-Cost");
+                if (card.Keywords != CardKeywords.None)
+                {
+                    if (card.HasKeyword(CardKeywords.Exhaust)) TryAdd("Exhaust");
+                    if (card.HasKeyword(CardKeywords.Retain)) TryAdd("Retain");
+                    if (card.HasKeyword(CardKeywords.Ethereal)) TryAdd("Ethereal");
+                    if (card.HasKeyword(CardKeywords.Innate)) TryAdd("Innate");
+                    if (card.HasKeyword(CardKeywords.Unplayable)) TryAdd("Unplayable");
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(description))

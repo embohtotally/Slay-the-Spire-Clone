@@ -23,6 +23,7 @@ namespace PlushieOdyssey.Combat.Models
         public Sprite Image { get; private set; }
         public Tier Tier { get; private set; }
         public int Mana { get; private set; }
+        public int XBonus { get; private set; }
         public SfxID HoverSfx { get; private set; }
         public SfxID PlaySfx { get; private set; }
         public GameObject PlayParticle { get; private set; }
@@ -43,6 +44,7 @@ namespace PlushieOdyssey.Combat.Models
             Title = data.Title;
             Description = data.Description;
             Mana = data.Mana;
+            XBonus = Mathf.Max(0, data.XBonus);
             Type = data.Type;
             Keywords = data.Keywords;
             ManualTargetEffect = data.ManualTargetEffect;
@@ -58,5 +60,8 @@ namespace PlushieOdyssey.Combat.Models
         }
 
         public bool HasKeyword(CardKeywords keyword) => (Keywords & keyword) != 0;
+        public bool IsXCost => HasKeyword(CardKeywords.XCost) || Mana < 0;
+        public string CostLabel => IsXCost ? "X" : Mathf.Max(0, Mana).ToString();
+        public int GetEffectiveX(int manaSpent) => IsXCost ? Mathf.Max(0, manaSpent + XBonus) : 1;
     }
 }

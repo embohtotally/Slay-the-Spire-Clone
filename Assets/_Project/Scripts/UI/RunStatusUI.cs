@@ -19,10 +19,10 @@ namespace PlushieOdyssey.UI
         [SerializeField] private Slider healthSlider;
         [SerializeField] private string healthFormat = "HP: {0}/{1}";
 
-        [Header("Stress")]
+        [Header("Will")]
         [SerializeField] private TMP_Text stressText;
         [SerializeField] private Slider stressSlider;
-        [SerializeField] private string stressFormat = "Stress: {0}/{1}";
+        [SerializeField] private string stressFormat = "Will: {0}/{1}";
 
         [Header("Gold")]
         [SerializeField] private TMP_Text goldText;
@@ -78,10 +78,10 @@ namespace PlushieOdyssey.UI
             }
 
             SetText(healthText, string.Format(healthFormat, runManager.HeroCurrentHealth, runManager.HeroMaxHealth));
-            SetText(stressText, string.Format(stressFormat, runManager.HeroCurrentStress, runManager.HeroMaxStress));
+            SetText(stressText, string.Format(stressFormat, runManager.HeroCurrentWill, runManager.HeroMaxWill));
             SetText(goldText, string.Format(goldFormat, runManager.Gold));
             SetSlider(healthSlider, (float)runManager.HeroCurrentHealth / runManager.HeroMaxHealth);
-            SetSlider(stressSlider, (float)runManager.HeroCurrentStress / runManager.HeroMaxStress);
+            SetSlider(stressSlider, (float)runManager.HeroCurrentWill / runManager.HeroMaxWill);
             UpdateDeckCount();
         }
 

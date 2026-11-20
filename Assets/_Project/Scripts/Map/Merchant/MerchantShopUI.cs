@@ -49,6 +49,8 @@ namespace PlushieOdyssey.Map.Merchant
 
         [Header("Scene & Data References")]
         [SerializeField] private Canvas targetCanvas;
+        [Tooltip("Baked editable MerchantShopRoot inside the scene. When assigned (or found under targetCanvas), Play Mode binds directly to your edited scene hierarchy instead of rebuilding from code.")]
+        [SerializeField] private RectTransform bakedShopRoot;
         [SerializeField] private MerchantCardPool cardPool;
         [SerializeField] private RelicRewardPool relicPool;
         [SerializeField] private RunDeckCardView cardViewPrefab;
@@ -68,6 +70,10 @@ namespace PlushieOdyssey.Map.Merchant
         [SerializeField, Min(0)] private int resetCostIncrement = 10;
         [SerializeField, Min(0)] private int resetCostAcceleration = 0;
 
+        [Header("Card Removal Service")]
+        [SerializeField, Min(0)] private int baseRemovalCost = 75;
+        [SerializeField, Min(0)] private int removalCostIncrement = 25;
+
         [Header("Existing Art Assets")]
         [SerializeField] private Sprite backgroundSprite;
         [SerializeField] private Sprite stallPanelSprite;
@@ -77,6 +83,14 @@ namespace PlushieOdyssey.Map.Merchant
         [SerializeField] private Sprite pillButtonSprite;
         [SerializeField] private Sprite merchantIconSprite;
         [SerializeField] private Sprite vendorSprite;
+
+        [Header("Persistent Baked UI Sprites (Editable Assets)")]
+        [SerializeField] private Sprite solidSprite;
+        [SerializeField] private Sprite circleSprite;
+        [SerializeField] private Sprite circleRingSprite;
+        [SerializeField] private Sprite softGlowSprite;
+        [SerializeField] private Sprite stampBorderSprite;
+        [SerializeField] private Sprite refreshIconSprite;
 
         [Header("Vendor Identity & Dialogue")]
         [SerializeField] private string vendorName = "MERCHANT";
@@ -236,6 +250,16 @@ namespace PlushieOdyssey.Map.Merchant
         private Button _leaveButton;
         private RectTransform _goldPillRect;
         private TextMeshProUGUI _goldValueText;
+        private TextMeshProUGUI _deckBtnLabel;
+        private TextMeshProUGUI _removeBtnLabel;
+        private RectTransform _removeBtnRect;
+        private GameObject _deckModalRoot;
+        private Transform _deckModalGrid;
+        private TextMeshProUGUI _deckModalTitle;
+        private TextMeshProUGUI _deckModalEmpty;
+        private readonly List<GameObject> _deckModalCards = new();
+        private bool _deckModalIsRemovalMode;
+        private int _removalCount;
 
         // Item desc inspector
         private RectTransform _inspectorRoot;
@@ -248,6 +272,8 @@ namespace PlushieOdyssey.Map.Merchant
         // Vendor & Dialogue
         private RectTransform _vendorFloatRoot;
         private RectTransform _vendorAnimRoot;
+        private Vector2 _vendorFloatBasePos;
+        private Vector2 _vendorAnimBasePos;
         private Image _vendorImage;
         private Image _vendorSpotlight;
         private RectTransform _dialogueBoxRoot;
@@ -291,6 +317,7 @@ namespace PlushieOdyssey.Map.Merchant
         // Public properties for inspection & verification
         public int ResetCount => _resetCount;
         public int CurrentResetCost => ComputeResetCost(_resetCount);
+        public int CurrentRemovalCost => Mathf.Max(0, baseRemovalCost + _removalCount * Mathf.Max(0, removalCostIncrement));
         public bool IsRestocking => _isRestocking;
         public IReadOnlyList<MerchantOffer> ActiveCardOffers => _activeCardOffers;
         public IReadOnlyList<MerchantRelicOffer> ActiveRelicOffers => _activeRelicOffers;
@@ -475,7 +502,10 @@ namespace PlushieOdyssey.Map.Merchant
                 : (CanAfford(offer.Price) ? new Color(0.55f, 0.35f, 0.04f, 1f) : new Color(0.76f, 0.18f, 0.16f, 1f));
 
             string keywordLine = card.Keywords != CardKeywords.None ? $"\n<color=#6A3E14>Keywords: {card.Keywords}</color>" : string.Empty;
-            string manaLine = $"<color=#1E4F7A><b>Mana Cost: {card.Mana}</b></color>";
+            string manaLabel = card.IsXCost
+                ? (card.XBonus > 0 ? $"X (All Remaining, +{card.XBonus} Bonus)" : "X (All Remaining)")
+                : card.Mana.ToString();
+            string manaLine = $"<color=#1E4F7A><b>Mana Cost: {manaLabel}</b></color>";
             string desc = string.IsNullOrWhiteSpace(card.Description) ? "No description." : card.Description;
 
             SetInspectorContent(card.Title, statusTag, priceStr, priceColor, $"{manaLine}\n{desc}{keywordLine}");
@@ -906,6 +936,180 @@ namespace PlushieOdyssey.Map.Merchant
             }
 
             RefreshResetButtonVisuals(animatePrice: false);
+            RefreshDeckAndRemovalButtons();
+        }
+
+        private void RefreshDeckAndRemovalButtons()
+        {
+            int deckCount = RunDeckManager.Instance != null ? RunDeckManager.Instance.CurrentDeck.Count : 0;
+            if (_deckBtnLabel != null) _deckBtnLabel.text = $"DECK ({deckCount})";
+            if (_removeBtnLabel != null)
+            {
+                int remCost = CurrentRemovalCost;
+                _removeBtnLabel.text = $"REMOVE {remCost}g";
+                _removeBtnLabel.color = CanAfford(remCost)
+                    ? new Color(0.24f, 0.13f, 0.04f, 1f)
+                    : new Color(0.62f, 0.14f, 0.12f, 1f);
+            }
+        }
+
+        public void OpenDeckModal(bool removalMode)
+        {
+            if (_isRestocking) return;
+            EnsureRuntimeManagers();
+            if (removalMode && !CanAfford(CurrentRemovalCost))
+            {
+                HandleCannotAfford(_removeBtnRect, _removeBtnLabel, CurrentRemovalCost);
+                return;
+            }
+
+            _deckModalIsRemovalMode = removalMode;
+            BuildDeckModalIfNeeded();
+            PopulateDeckModal();
+            _deckModalRoot.SetActive(true);
+            _deckModalRoot.transform.SetAsLastSibling();
+            Tune.SFX(SfxID.ui_panel_open);
+        }
+
+        public void CloseDeckModal()
+        {
+            if (_deckModalRoot != null) _deckModalRoot.SetActive(false);
+            Tune.SFX(SfxID.ui_panel_close);
+        }
+
+        public bool TryRemoveDeckCardAt(int deckIndex)
+        {
+            if (!_deckModalIsRemovalMode || RunDeckManager.Instance == null) return false;
+            int cost = CurrentRemovalCost;
+            if (!CanAfford(cost))
+            {
+                HandleCannotAfford(_removeBtnRect, _removeBtnLabel, cost);
+                return false;
+            }
+            IReadOnlyList<CardData> deck = RunDeckManager.Instance.CurrentDeck;
+            if (deckIndex < 0 || deckIndex >= deck.Count) return false;
+
+            string removedTitle = deck[deckIndex] != null ? deck[deckIndex].Title : "Card";
+            if (!RunDeckManager.Instance.RemoveAt(deckIndex)) return false;
+            if (!SpendGold(cost, _removeBtnRect)) return false;
+
+            _removalCount++;
+            CloseDeckModal();
+            Tune.SFX(SfxID.card_remove);
+            PlayVendorHappyJump();
+            SayVendorLine($"Poof! '{removedTitle}' is gone from your deck! Next purge costs {CurrentRemovalCost}g.", playTalkAnim: true);
+            RefreshAllAffordability();
+            return true;
+        }
+
+        private void BuildDeckModalIfNeeded()
+        {
+            if (_deckModalRoot != null || _shopRoot == null) return;
+            int layer = _shopRoot.gameObject.layer;
+            TMP_FontAsset font = fontAsset != null ? fontAsset : TMP_Settings.defaultFontAsset;
+            Sprite solid = GetSolidSprite();
+
+            _deckModalRoot = new GameObject("MerchantDeckModal", typeof(RectTransform), typeof(Image));
+            _deckModalRoot.layer = layer;
+            RectTransform mRt = (RectTransform)_deckModalRoot.transform;
+            mRt.SetParent(_shopRoot, false);
+            StretchFull(mRt);
+            Image dim = _deckModalRoot.GetComponent<Image>();
+            dim.sprite = solid;
+            dim.color = new Color(0.04f, 0.02f, 0.01f, 0.84f);
+
+            RectTransform win = CreateRect(mRt, "Window", layer);
+            win.anchorMin = win.anchorMax = new Vector2(0.5f, 0.5f);
+            win.sizeDelta = new Vector2(1380f, 820f);
+            win.gameObject.AddComponent<Image>().sprite = stallPanelSprite != null ? stallPanelSprite : solid;
+
+            _deckModalTitle = CreateLabel(win, "Title", font, 28f, FontStyles.Bold, new Color(1f, 0.88f, 0.48f, 1f));
+            _deckModalTitle.rectTransform.anchorMin = new Vector2(0f, 1f);
+            _deckModalTitle.rectTransform.anchorMax = new Vector2(1f, 1f);
+            _deckModalTitle.rectTransform.offsetMin = new Vector2(36f, -78f);
+            _deckModalTitle.rectTransform.offsetMax = new Vector2(-36f, -20f);
+            _deckModalTitle.alignment = TextAlignmentOptions.Center;
+
+            RectTransform vp = CreateRect(win, "Viewport", layer);
+            vp.anchorMin = Vector2.zero;
+            vp.anchorMax = Vector2.one;
+            vp.offsetMin = new Vector2(44f, 92f);
+            vp.offsetMax = new Vector2(-44f, -88f);
+            vp.gameObject.AddComponent<RectMask2D>();
+            ScrollRect sr = vp.gameObject.AddComponent<ScrollRect>();
+            sr.horizontal = false;
+
+            RectTransform content = CreateRect(vp, "Content", layer);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            GridLayoutGroup glg = content.gameObject.AddComponent<GridLayoutGroup>();
+            glg.cellSize = new Vector2(204f, 276f);
+            glg.spacing = new Vector2(20f, 20f);
+            glg.padding = new RectOffset(20, 20, 14, 14);
+            glg.childAlignment = TextAnchor.UpperCenter;
+            content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            sr.content = content;
+            _deckModalGrid = content;
+
+            _deckModalEmpty = CreateLabel(win, "EmptyText", font, 22f, FontStyles.Italic, new Color(0.92f, 0.84f, 0.70f, 0.9f));
+            _deckModalEmpty.alignment = TextAlignmentOptions.Center;
+            _deckModalEmpty.text = "Your run deck is currently empty.";
+            _deckModalEmpty.gameObject.SetActive(false);
+
+            RectTransform closeRt = CreateRect(win, "CloseButton", layer);
+            closeRt.anchorMin = closeRt.anchorMax = new Vector2(0.5f, 0f);
+            closeRt.pivot = new Vector2(0.5f, 0f);
+            closeRt.anchoredPosition = new Vector2(0f, 24f);
+            closeRt.sizeDelta = new Vector2(220f, 52f);
+            Image cImg = closeRt.gameObject.AddComponent<Image>();
+            cImg.sprite = buttonSprite != null ? buttonSprite : solid;
+            cImg.color = new Color(0.95f, 0.86f, 0.66f, 1f);
+            closeRt.gameObject.AddComponent<Button>().onClick.AddListener(CloseDeckModal);
+            TextMeshProUGUI cTxt = CreateLabel(closeRt, "Label", font, 21f, FontStyles.Bold, new Color(0.24f, 0.13f, 0.04f, 1f));
+            cTxt.alignment = TextAlignmentOptions.Center;
+            cTxt.text = "CLOSE";
+
+            _deckModalRoot.SetActive(false);
+        }
+
+        private void PopulateDeckModal()
+        {
+            foreach (GameObject g in _deckModalCards) if (g != null) Destroy(g);
+            _deckModalCards.Clear();
+
+            IReadOnlyList<CardData> deck = RunDeckManager.Instance != null ? RunDeckManager.Instance.CurrentDeck : new List<CardData>();
+            _deckModalTitle.text = _deckModalIsRemovalMode
+                ? $"CARD REMOVAL SERVICE ({CurrentRemovalCost}g) — CLICK A CARD TO REMOVE"
+                : $"YOUR RUN DECK ({deck.Count} CARDS)";
+            _deckModalEmpty.gameObject.SetActive(deck.Count == 0);
+
+            int layer = _deckModalGrid.gameObject.layer;
+            for (int i = 0; i < deck.Count; i++)
+            {
+                CardData card = deck[i];
+                if (card == null) continue;
+                RectTransform cell = CreateRect(_deckModalGrid, $"DeckCard_{i:00}", layer);
+                cell.sizeDelta = new Vector2(204f, 276f);
+                Image hit = cell.gameObject.AddComponent<Image>();
+                hit.sprite = GetSolidSprite();
+                hit.color = new Color(1f, 1f, 1f, 0.001f);
+
+                if (cardViewPrefab != null)
+                {
+                    RunDeckCardView view = Instantiate(cardViewPrefab, cell);
+                    view.Setup(card, 1, i);
+                    FitCardViewIntoContainer(view, cell);
+                }
+
+                if (_deckModalIsRemovalMode)
+                {
+                    int captured = i;
+                    Button btn = cell.gameObject.AddComponent<Button>();
+                    btn.onClick.AddListener(() => TryRemoveDeckCardAt(captured));
+                }
+                _deckModalCards.Add(cell.gameObject);
+            }
         }
 
         private void RefreshGoldDisplay(bool animate)
@@ -1019,9 +1223,9 @@ namespace PlushieOdyssey.Map.Merchant
 
             if (_vendorAnimRoot != null)
             {
-                _vendorAnimRoot.anchoredPosition = new Vector2(0f, -60f);
+                _vendorAnimRoot.anchoredPosition = _vendorAnimBasePos + new Vector2(0f, -60f);
                 _vendorAnimRoot.localScale = new Vector3(0.82f, 0.82f, 1f);
-                _activeEntranceSequence.Join(_vendorAnimRoot.DOAnchorPosY(0f, 0.42f).SetEase(Ease.OutBack));
+                _activeEntranceSequence.Join(_vendorAnimRoot.DOAnchorPos(_vendorAnimBasePos, 0.42f).SetEase(Ease.OutBack));
                 _activeEntranceSequence.Join(_vendorAnimRoot.DOScale(Vector3.one, 0.42f).SetEase(Ease.OutBack));
             }
 
@@ -1344,7 +1548,7 @@ namespace PlushieOdyssey.Map.Merchant
                 idleTilt += Mathf.Sin(_talkBounceTimer * 0.5f) * 2.8f;
             }
 
-            _vendorFloatRoot.anchoredPosition = new Vector2(0f, idleY);
+            _vendorFloatRoot.anchoredPosition = _vendorFloatBasePos + new Vector2(0f, idleY);
             _vendorFloatRoot.localEulerAngles = new Vector3(0f, 0f, idleTilt);
             _vendorFloatRoot.localScale = new Vector3(breathScaleX, breathScaleY, 1f);
 
@@ -1361,16 +1565,16 @@ namespace PlushieOdyssey.Map.Merchant
         {
             if (_vendorAnimRoot == null) return;
             _vendorActionSequence?.Kill(complete: true);
-            _vendorAnimRoot.anchoredPosition = Vector2.zero;
+            _vendorAnimRoot.anchoredPosition = _vendorAnimBasePos;
             _vendorAnimRoot.localScale = Vector3.one;
             _vendorAnimRoot.localEulerAngles = Vector3.zero;
 
             _vendorActionSequence = DOTween.Sequence().SetUpdate(true);
             _vendorActionSequence.Append(_vendorAnimRoot.DOScale(new Vector3(1.12f, 0.86f, 1f), 0.07f).SetEase(Ease.OutQuad));
-            _vendorActionSequence.Append(_vendorAnimRoot.DOAnchorPosY(34f, 0.16f).SetEase(Ease.OutQuad));
+            _vendorActionSequence.Append(_vendorAnimRoot.DOAnchorPosY(_vendorAnimBasePos.y + 34f, 0.16f).SetEase(Ease.OutQuad));
             _vendorActionSequence.Join(_vendorAnimRoot.DOScale(new Vector3(0.92f, 1.12f, 1f), 0.16f).SetEase(Ease.OutQuad));
             _vendorActionSequence.Join(_vendorAnimRoot.DOLocalRotate(new Vector3(0f, 0f, -7f), 0.16f));
-            _vendorActionSequence.Append(_vendorAnimRoot.DOAnchorPosY(0f, 0.20f).SetEase(Ease.InQuad));
+            _vendorActionSequence.Append(_vendorAnimRoot.DOAnchorPosY(_vendorAnimBasePos.y, 0.20f).SetEase(Ease.InQuad));
             _vendorActionSequence.Join(_vendorAnimRoot.DOScale(new Vector3(1.08f, 0.92f, 1f), 0.16f));
             _vendorActionSequence.Join(_vendorAnimRoot.DOLocalRotate(new Vector3(0f, 0f, 4f), 0.16f));
             _vendorActionSequence.Append(_vendorAnimRoot.DOScale(Vector3.one, 0.14f).SetEase(Ease.OutBack));
@@ -1381,7 +1585,7 @@ namespace PlushieOdyssey.Map.Merchant
         {
             if (_vendorAnimRoot == null) return;
             _vendorActionSequence?.Kill(complete: true);
-            _vendorAnimRoot.anchoredPosition = Vector2.zero;
+            _vendorAnimRoot.anchoredPosition = _vendorAnimBasePos;
             _vendorAnimRoot.localScale = Vector3.one;
             _vendorAnimRoot.localEulerAngles = Vector3.zero;
 
@@ -1394,17 +1598,17 @@ namespace PlushieOdyssey.Map.Merchant
         {
             if (_vendorAnimRoot == null) return;
             _vendorActionSequence?.Kill(complete: true);
-            _vendorAnimRoot.anchoredPosition = Vector2.zero;
+            _vendorAnimRoot.anchoredPosition = _vendorAnimBasePos;
             _vendorAnimRoot.localScale = Vector3.one;
             _vendorAnimRoot.localEulerAngles = Vector3.zero;
 
             _vendorActionSequence = DOTween.Sequence().SetUpdate(true);
             _vendorActionSequence.Append(_vendorAnimRoot.DOScale(new Vector3(1.16f, 0.80f, 1f), 0.10f).SetEase(Ease.InQuad));
-            _vendorActionSequence.Append(_vendorAnimRoot.DOAnchorPosY(38f, 0.18f).SetEase(Ease.OutQuad));
+            _vendorActionSequence.Append(_vendorAnimRoot.DOAnchorPosY(_vendorAnimBasePos.y + 38f, 0.18f).SetEase(Ease.OutQuad));
             _vendorActionSequence.Join(_vendorAnimRoot.DOScale(new Vector3(0.88f, 1.14f, 1f), 0.18f));
             _vendorActionSequence.Join(_vendorAnimRoot.DOLocalRotate(new Vector3(0f, 0f, 12f), 0.12f));
             _vendorActionSequence.Append(_vendorAnimRoot.DOLocalRotate(new Vector3(0f, 0f, -10f), 0.14f));
-            _vendorActionSequence.Join(_vendorAnimRoot.DOAnchorPosY(0f, 0.22f).SetEase(Ease.InOutQuad));
+            _vendorActionSequence.Join(_vendorAnimRoot.DOAnchorPosY(_vendorAnimBasePos.y, 0.22f).SetEase(Ease.InOutQuad));
             _vendorActionSequence.Append(_vendorAnimRoot.DOScale(Vector3.one, 0.16f).SetEase(Ease.OutBack));
             _vendorActionSequence.Join(_vendorAnimRoot.DOLocalRotate(Vector3.zero, 0.16f));
         }
@@ -1595,13 +1799,60 @@ namespace PlushieOdyssey.Map.Merchant
         }
 
         // ------------------------------------------------------------------
-        // Procedural UI Hierarchy Construction (Using Existing Project Assets!)
+        // Procedural / Editable Scene Hierarchy Construction & Binding
         // ------------------------------------------------------------------
         private void BuildShopUIIfNeeded()
         {
             if (_isBuilt || targetCanvas == null) return;
             _isBuilt = true;
 
+            RectTransform existing = bakedShopRoot != null
+                ? bakedShopRoot
+                : targetCanvas.transform.Find("MerchantShopRoot") as RectTransform;
+
+            if (existing != null)
+            {
+                BindExistingShopUI(existing);
+                return;
+            }
+
+            BuildFreshHierarchyUnderCanvas();
+        }
+
+        /// <summary>
+        /// Editor baker entry point: builds a clean, persistent MerchantShopRoot under targetCanvas
+        /// using baked Sprite assets and populates Edit-Mode preview cards/relics so designers can
+        /// inspect and edit every panel, slot, button, and character directly in the Unity Editor.
+        /// </summary>
+        public RectTransform BuildBakedHierarchyForEditor()
+        {
+            EnsureCanvas();
+            if (targetCanvas == null) return null;
+
+            // Clean any previous baked root before rebuilding
+            for (int i = targetCanvas.transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = targetCanvas.transform.GetChild(i);
+                if (child == bakedShopRoot || child.name == "MerchantShopRoot")
+                {
+                    DestroyImmediate(child.gameObject);
+                }
+            }
+
+            _isBuilt = false;
+            _deckModalRoot = null;
+            BuildFreshHierarchyUnderCanvas();
+            BuildDeckModalIfNeeded();
+            if (_deckModalRoot != null) _deckModalRoot.SetActive(false);
+
+            bakedShopRoot = _shopRoot;
+            PopulateEditorPreviewVisuals();
+            _isBuilt = false; // Allow Play Mode Awake() to cleanly bind listeners onto the baked scene hierarchy
+            return _shopRoot;
+        }
+
+        private void BuildFreshHierarchyUnderCanvas()
+        {
             int layer = targetCanvas.gameObject.layer;
             TMP_FontAsset font = fontAsset != null ? fontAsset : TMP_Settings.defaultFontAsset;
             Sprite solid = GetSolidSprite();
@@ -1616,6 +1867,407 @@ namespace PlushieOdyssey.Map.Merchant
 
             _floatingPopupRoot = CreateRect(_shopRoot, "FloatingPopups", layer);
             StretchFull(_floatingPopupRoot);
+        }
+
+        private void BindExistingShopUI(RectTransform root)
+        {
+            _shopRoot = root;
+            bakedShopRoot = root;
+            root.gameObject.SetActive(true);
+
+            _leftColumnRoot = FindRect(root, "LeftColumn");
+            _stallRoot = FindRect(root, "ShopStallPanel");
+            _floatingPopupRoot = FindRect(root, "FloatingPopups");
+            if (_floatingPopupRoot == null)
+            {
+                _floatingPopupRoot = CreateRect(root, "FloatingPopups", root.gameObject.layer);
+                StretchFull(_floatingPopupRoot);
+            }
+
+            // Ambient motes
+            _motes.Clear();
+            Transform moteLayer = root.Find("AmbientMotes");
+            if (moteLayer != null)
+            {
+                for (int i = 0; i < moteLayer.childCount; i++)
+                {
+                    RectTransform mRt = moteLayer.GetChild(i) as RectTransform;
+                    Image mImg = mRt != null ? mRt.GetComponent<Image>() : null;
+                    if (mRt == null || mImg == null) continue;
+                    _motes.Add(new FloatingMote
+                    {
+                        Rect = mRt,
+                        Image = mImg,
+                        BaseX = mRt.anchoredPosition.x,
+                        SpeedY = UnityEngine.Random.Range(14f, 34f),
+                        SwayAmp = UnityEngine.Random.Range(12f, 32f),
+                        SwayFreq = UnityEngine.Random.Range(0.5f, 1.2f),
+                        Phase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
+                        BaseAlpha = mImg.color.a > 0.02f ? mImg.color.a : 0.22f
+                    });
+                }
+            }
+
+            // Left column controls
+            if (_leftColumnRoot != null)
+            {
+                RectTransform leaveRt = FindRect(_leftColumnRoot, "LeaveToMapButton");
+                if (leaveRt != null)
+                {
+                    _leaveButton = leaveRt.GetComponent<Button>();
+                    if (_leaveButton != null)
+                    {
+                        _leaveButton.onClick.RemoveAllListeners();
+                        _leaveButton.onClick.AddListener(ReturnToMap);
+                    }
+                    AttachOrRebindHoverScale(leaveRt, 1.06f);
+                }
+
+                _goldPillRect = FindRect(_leftColumnRoot, "GoldCounterPill");
+                _goldValueText = FindTMP(_goldPillRect, "GoldValue");
+
+                // Equipped Relics mini-row
+                _equippedMiniSlots.Clear();
+                Transform beltRow = _leftColumnRoot.Find("EquippedRelicsRow");
+                if (beltRow != null)
+                {
+                    for (int i = 0; i < beltRow.childCount; i++)
+                    {
+                        RectTransform mSlot = beltRow.GetChild(i) as RectTransform;
+                        if (mSlot == null || !mSlot.name.StartsWith("MiniRelic_", StringComparison.Ordinal)) continue;
+                        Image border = mSlot.GetComponent<Image>();
+                        Image bg = mSlot.Find("Inner")?.GetComponent<Image>();
+                        Image icon = mSlot.Find("Inner/Icon")?.GetComponent<Image>();
+                        TextMeshProUGUI mono = mSlot.Find("Inner/Mono")?.GetComponent<TextMeshProUGUI>();
+                        Button btn = mSlot.GetComponent<Button>();
+                        if (btn != null)
+                        {
+                            btn.onClick.RemoveAllListeners();
+                            btn.onClick.AddListener(() =>
+                            {
+                                EnsureRelicSwapModal();
+                                _relicSwapModal?.OpenManageMode();
+                            });
+                        }
+                        _equippedMiniSlots.Add(new EquippedMiniSlotUI
+                        {
+                            Root = mSlot,
+                            Border = border,
+                            Bg = bg,
+                            Icon = icon,
+                            Monogram = mono
+                        });
+                    }
+                }
+
+                RectTransform deckBtnRt = FindRect(_leftColumnRoot, "ShopDeckButton");
+                if (deckBtnRt != null)
+                {
+                    Button deckBtn = deckBtnRt.GetComponent<Button>();
+                    if (deckBtn != null)
+                    {
+                        deckBtn.onClick.RemoveAllListeners();
+                        deckBtn.onClick.AddListener(() => OpenDeckModal(removalMode: false));
+                    }
+                    AttachOrRebindHoverScale(deckBtnRt, 1.06f);
+                    _deckBtnLabel = FindTMP(deckBtnRt, "Label");
+                }
+
+                _removeBtnRect = FindRect(_leftColumnRoot, "CardRemovalButton");
+                if (_removeBtnRect != null)
+                {
+                    Button remBtn = _removeBtnRect.GetComponent<Button>();
+                    if (remBtn != null)
+                    {
+                        remBtn.onClick.RemoveAllListeners();
+                        remBtn.onClick.AddListener(() => OpenDeckModal(removalMode: true));
+                    }
+                    AttachOrRebindHoverScale(_removeBtnRect, 1.06f);
+                    _removeBtnLabel = FindTMP(_removeBtnRect, "Label");
+                }
+
+                // Item Description Inspector
+                _inspectorRoot = FindRect(_leftColumnRoot, "ItemDescPanel");
+                if (_inspectorRoot != null)
+                {
+                    _inspectorBorderGlow = _inspectorRoot.Find("InnerInset")?.GetComponent<Image>();
+                    _inspectorTitleText = FindTMP(_inspectorRoot, "InnerInset/ItemTitle");
+                    _inspectorPriceText = FindTMP(_inspectorRoot, "InnerInset/ItemPrice");
+                    _inspectorMetaText = FindTMP(_inspectorRoot, "InnerInset/ItemMeta");
+                    _inspectorBodyText = FindTMP(_inspectorRoot, "InnerInset/ItemBody");
+                }
+
+                // Vendor Stage
+                Transform vendorStage = _leftColumnRoot.Find("VendorStage");
+                if (vendorStage != null)
+                {
+                    _vendorSpotlight = vendorStage.Find("VendorSpotlight")?.GetComponent<Image>();
+                    _vendorFloatRoot = vendorStage.Find("VendorFloatRoot") as RectTransform;
+                    _vendorAnimRoot = vendorStage.Find("VendorFloatRoot/VendorAnimRoot") as RectTransform;
+                    _vendorFloatBasePos = _vendorFloatRoot != null ? _vendorFloatRoot.anchoredPosition : Vector2.zero;
+                    _vendorAnimBasePos = _vendorAnimRoot != null ? _vendorAnimRoot.anchoredPosition : Vector2.zero;
+
+                    Transform visualTr = vendorStage.Find("VendorFloatRoot/VendorAnimRoot/VendorVisual");
+                    if (visualTr != null)
+                    {
+                        _vendorImage = visualTr.GetComponent<Image>();
+                        Button pokeBtn = visualTr.GetComponent<Button>();
+                        if (pokeBtn != null)
+                        {
+                            pokeBtn.onClick.RemoveAllListeners();
+                            pokeBtn.onClick.AddListener(PokeVendor);
+                        }
+                    }
+                }
+
+                // Vendor Dialogue Box
+                _dialogueBoxRoot = FindRect(_leftColumnRoot, "VendorDialogueBox");
+                if (_dialogueBoxRoot != null)
+                {
+                    Button dlgBtn = _dialogueBoxRoot.GetComponent<Button>();
+                    if (dlgBtn != null)
+                    {
+                        dlgBtn.onClick.RemoveAllListeners();
+                        dlgBtn.onClick.AddListener(CompleteDialogueImmediately);
+                    }
+                    _dialogueText = FindTMP(_dialogueBoxRoot, "VendorText");
+                    _dialogueDoneDiamond = FindRect(_dialogueBoxRoot, "DonePrompt");
+                }
+            }
+
+            // Right Shop Stall: Card Slots, Relic Shelf, Reset Medallion
+            _cardSlots.Clear();
+            _relicSlots.Clear();
+            if (_stallRoot != null)
+            {
+                Transform cardsGrid = _stallRoot.Find("CardOffersGrid");
+                if (cardsGrid != null)
+                {
+                    for (int i = 0; i < cardsGrid.childCount; i++)
+                    {
+                        RectTransform slotRoot = cardsGrid.GetChild(i) as RectTransform;
+                        if (slotRoot == null) continue;
+                        RectTransform contentRoot = slotRoot.Find("Content") as RectTransform;
+                        if (contentRoot == null) continue;
+
+                        RectTransform cardHolder = contentRoot.Find("CardHolder") as RectTransform;
+                        RunDeckCardView cardView = cardHolder != null ? cardHolder.GetComponentInChildren<RunDeckCardView>(true) : null;
+                        if (cardView == null && cardViewPrefab != null && cardHolder != null)
+                        {
+                            cardView = Instantiate(cardViewPrefab, cardHolder);
+                        }
+                        if (cardView != null)
+                        {
+                            CanvasGroup cg = cardView.GetComponent<CanvasGroup>();
+                            if (cg != null) { cg.interactable = false; cg.blocksRaycasts = false; }
+                        }
+
+                        RectTransform soldRoot = slotRoot.Find("SoldStamp") as RectTransform;
+                        CardSlotUI slot = new()
+                        {
+                            Index = _cardSlots.Count,
+                            Root = slotRoot,
+                            ContentRoot = contentRoot,
+                            ContentGroup = contentRoot.GetComponent<CanvasGroup>() ?? contentRoot.gameObject.AddComponent<CanvasGroup>(),
+                            HoverGlow = contentRoot.Find("HoverGlow")?.GetComponent<Image>(),
+                            ShimmerOverlay = contentRoot.Find("ShimmerOverlay")?.GetComponent<Image>(),
+                            CardContainer = cardHolder,
+                            CardView = cardView,
+                            PriceText = FindTMP(contentRoot, "PricePill/PriceText"),
+                            PricePill = contentRoot.Find("PricePill")?.GetComponent<Image>(),
+                            SoldStampRoot = soldRoot,
+                            SoldStampGroup = soldRoot != null ? soldRoot.GetComponent<CanvasGroup>() : null,
+                            RestContentPos = contentRoot.anchoredPosition
+                        };
+                        int capturedIdx = slot.Index;
+                        _cardSlots.Add(slot);
+
+                        MerchantPointerRelay relay = slotRoot.GetComponent<MerchantPointerRelay>() ?? slotRoot.gameObject.AddComponent<MerchantPointerRelay>();
+                        relay.Init(
+                            onEnter: () => OnCardSlotHoverEnter(slot),
+                            onExit: () => OnCardSlotHoverExit(slot),
+                            onClick: () => TryBuyCardAt(capturedIdx));
+                    }
+                }
+
+                Transform relicsRow = _stallRoot.Find("BottomRelicsAndResetShelf/RelicsZone/RelicsRow");
+                if (relicsRow != null)
+                {
+                    for (int i = 0; i < relicsRow.childCount; i++)
+                    {
+                        RectTransform slotRoot = relicsRow.GetChild(i) as RectTransform;
+                        if (slotRoot == null) continue;
+                        RectTransform contentRoot = slotRoot.Find("Content") as RectTransform;
+                        if (contentRoot == null) continue;
+
+                        RectTransform soldRoot = slotRoot.Find("SoldStamp") as RectTransform;
+                        RelicSlotUI slot = new()
+                        {
+                            Index = _relicSlots.Count,
+                            Root = slotRoot,
+                            ContentRoot = contentRoot,
+                            ContentGroup = contentRoot.GetComponent<CanvasGroup>() ?? contentRoot.gameObject.AddComponent<CanvasGroup>(),
+                            FrameBg = contentRoot.Find("Pedestal")?.GetComponent<Image>(),
+                            HoverGlow = contentRoot.Find("HoverGlow")?.GetComponent<Image>(),
+                            ShimmerOverlay = contentRoot.Find("ShimmerOverlay")?.GetComponent<Image>(),
+                            IconRing = contentRoot.Find("Pedestal/IconRing")?.GetComponent<Image>(),
+                            IconImage = contentRoot.Find("Pedestal/IconRing/Socket/Icon")?.GetComponent<Image>(),
+                            MonogramText = FindTMP(contentRoot, "Pedestal/IconRing/Socket/Monogram"),
+                            NameText = FindTMP(contentRoot, "Pedestal/RelicName"),
+                            PriceText = FindTMP(contentRoot, "PricePill/PriceText"),
+                            PricePill = contentRoot.Find("PricePill")?.GetComponent<Image>(),
+                            SoldStampRoot = soldRoot,
+                            SoldStampGroup = soldRoot != null ? soldRoot.GetComponent<CanvasGroup>() : null,
+                            RestContentPos = contentRoot.anchoredPosition
+                        };
+                        int capturedIdx = slot.Index;
+                        _relicSlots.Add(slot);
+
+                        MerchantPointerRelay relay = slotRoot.GetComponent<MerchantPointerRelay>() ?? slotRoot.gameObject.AddComponent<MerchantPointerRelay>();
+                        relay.Init(
+                            onEnter: () => OnRelicSlotHoverEnter(slot),
+                            onExit: () => OnRelicSlotHoverExit(slot),
+                            onClick: () => TryBuyRelicAt(capturedIdx));
+                    }
+                }
+
+                // Reset Medallion Button
+                _resetButtonRoot = FindRect(_stallRoot, "BottomRelicsAndResetShelf/ResetZone/ResetButton");
+                if (_resetButtonRoot != null)
+                {
+                    _resetPulseRing = _resetButtonRoot.Find("PulseRing")?.GetComponent<Image>();
+                    _resetHoverGlow = _resetButtonRoot.Find("HoverGlow")?.GetComponent<Image>();
+                    _resetMedallionSpinRect = _resetButtonRoot.Find("SpinningMedallion") as RectTransform;
+                    _resetMedallionBg = _resetButtonRoot.Find("SpinningMedallion/InnerDisc")?.GetComponent<Image>();
+                    _resetIconImage = _resetButtonRoot.Find("SpinningMedallion/InnerDisc/RefreshArrowsIcon")?.GetComponent<Image>();
+                    _resetPricePillRect = _resetButtonRoot.Find("ResetPricePill") as RectTransform;
+                    _resetPricePillBg = _resetPricePillRect != null ? _resetPricePillRect.GetComponent<Image>() : null;
+                    _resetPriceText = FindTMP(_resetPricePillRect, "ResetPriceText");
+                    _resetButton = _resetButtonRoot.GetComponent<Button>();
+
+                    MerchantPointerRelay relay = _resetButtonRoot.GetComponent<MerchantPointerRelay>() ?? _resetButtonRoot.gameObject.AddComponent<MerchantPointerRelay>();
+                    relay.Init(
+                        onEnter: OnResetButtonHoverEnter,
+                        onExit: OnResetButtonHoverExit,
+                        onClick: () => TryResetShop());
+                }
+            }
+
+            // Optional baked Deck Viewer / Card Removal Modal
+            Transform existingModal = root.Find("MerchantDeckModal");
+            if (existingModal != null)
+            {
+                _deckModalRoot = existingModal.gameObject;
+                _deckModalTitle = FindTMP(existingModal, "Window/Title");
+                _deckModalGrid = existingModal.Find("Window/Viewport/Content");
+                _deckModalEmpty = FindTMP(existingModal, "Window/EmptyText");
+                Button closeBtn = existingModal.Find("Window/CloseButton")?.GetComponent<Button>();
+                if (closeBtn != null)
+                {
+                    closeBtn.onClick.RemoveAllListeners();
+                    closeBtn.onClick.AddListener(CloseDeckModal);
+                }
+                _deckModalRoot.SetActive(false);
+            }
+        }
+
+        private void PopulateEditorPreviewVisuals()
+        {
+            Canvas.ForceUpdateCanvases();
+
+            // Preview cards directly in Edit Mode so designers see the real 2x4 grid immediately!
+            if (cardPool != null)
+            {
+                List<MerchantOffer> previewCards = cardPool.BuildCandidateOffers(null, includeNewCards: true, includeUpgrades: includeUpgrades);
+                for (int i = 0; i < _cardSlots.Count; i++)
+                {
+                    CardSlotUI slot = _cardSlots[i];
+                    if (i < previewCards.Count && previewCards[i] != null)
+                    {
+                        if (slot.CardView != null)
+                        {
+                            slot.CardView.Setup(previewCards[i].PreviewCard, 1, i);
+                            FitCardViewIntoContainer(slot.CardView, slot.CardContainer);
+                        }
+                        if (slot.PriceText != null) slot.PriceText.text = $"{previewCards[i].Price}g";
+                    }
+                }
+            }
+
+            // Preview relics directly in Edit Mode!
+            if (relicPool != null)
+            {
+                List<RelicData> previewRelics = relicPool.BuildCandidateRewards(null, RelicRarityMask.All);
+                for (int i = 0; i < _relicSlots.Count; i++)
+                {
+                    RelicSlotUI slot = _relicSlots[i];
+                    if (i < previewRelics.Count && previewRelics[i] != null)
+                    {
+                        RelicData relic = previewRelics[i];
+                        Color rarityColor = TopBarRelicSlotsUI.GetRarityBorderColor(relic.Rarity, new Color(0.92f, 0.76f, 0.36f, 1f));
+                        if (slot.IconRing != null) slot.IconRing.color = rarityColor;
+                        bool hasImg = relic.Image != null;
+                        if (slot.IconImage != null)
+                        {
+                            slot.IconImage.enabled = hasImg;
+                            if (hasImg)
+                            {
+                                slot.IconImage.sprite = relic.Image;
+                                slot.IconImage.color = GetRelicIconTint(relic);
+                            }
+                        }
+                        if (slot.MonogramText != null)
+                        {
+                            slot.MonogramText.gameObject.SetActive(!hasImg);
+                            if (!hasImg) slot.MonogramText.text = TopBarRelicSlotsUI.BuildMonogram(relic.Title);
+                        }
+                        if (slot.NameText != null) slot.NameText.text = relic.Title;
+                        int price = relic.GoldValue > 0 ? relic.GoldValue : fallbackRelicPrice;
+                        if (slot.PriceText != null) slot.PriceText.text = $"{price}g";
+                    }
+                }
+            }
+
+            if (_goldValueText != null) _goldValueText.text = $"{standaloneTestGold}g";
+            if (_resetPriceText != null) _resetPriceText.text = $"{baseResetCost}g";
+            if (_dialogueText != null && greetingLines != null && greetingLines.Length > 0)
+            {
+                _dialogueText.text = greetingLines[0];
+                _dialogueText.maxVisibleCharacters = greetingLines[0].Length;
+            }
+            ClearInspector();
+        }
+
+        private static RectTransform FindRect(Transform parent, string path)
+        {
+            if (parent == null) return null;
+            Transform t = parent.Find(path);
+            return t as RectTransform;
+        }
+
+        private static TextMeshProUGUI FindTMP(Transform parent, string path)
+        {
+            if (parent == null) return null;
+            Transform t = parent.Find(path);
+            return t != null ? t.GetComponent<TextMeshProUGUI>() : null;
+        }
+
+        private static void AttachOrRebindHoverScale(RectTransform target, float hoverScale)
+        {
+            MerchantPointerRelay relay = target.GetComponent<MerchantPointerRelay>() ?? target.gameObject.AddComponent<MerchantPointerRelay>();
+            relay.Init(
+                onEnter: () =>
+                {
+                    Tune.SFX(SfxID.hover);
+                    target.DOKill();
+                    target.DOScale(hoverScale, 0.14f).SetEase(Ease.OutBack).SetUpdate(true);
+                },
+                onExit: () =>
+                {
+                    target.DOKill();
+                    target.DOScale(Vector3.one, 0.14f).SetEase(Ease.OutCubic).SetUpdate(true);
+                },
+                onClick: null);
         }
 
         private void BuildBackdrop(RectTransform parent, int layer, Sprite solid)
@@ -1804,6 +2456,35 @@ namespace PlushieOdyssey.Map.Merchant
                     Monogram = mono
                 });
             }
+
+            // Deck Viewer & Card Removal Buttons right below Equipped Relics strip
+            RectTransform deckBtnRt = CreateRect(_leftColumnRoot, "ShopDeckButton", layer);
+            deckBtnRt.anchorMin = deckBtnRt.anchorMax = new Vector2(0f, 1f);
+            deckBtnRt.pivot = new Vector2(0f, 1f);
+            deckBtnRt.anchoredPosition = new Vector2(28f, -174f);
+            deckBtnRt.sizeDelta = new Vector2(142f, 46f);
+            Image deckBg = deckBtnRt.gameObject.AddComponent<Image>();
+            deckBg.sprite = buttonSprite != null ? buttonSprite : solid;
+            deckBg.color = new Color(0.92f, 0.84f, 0.68f, 1f);
+            deckBtnRt.gameObject.AddComponent<Button>().onClick.AddListener(() => OpenDeckModal(removalMode: false));
+            AttachSimpleHoverScale(deckBtnRt, 1.06f);
+            _deckBtnLabel = CreateLabel(deckBtnRt, "Label", font, 17f, FontStyles.Bold, new Color(0.24f, 0.13f, 0.05f, 1f));
+            _deckBtnLabel.alignment = TextAlignmentOptions.Center;
+            _deckBtnLabel.text = "DECK (0)";
+
+            _removeBtnRect = CreateRect(_leftColumnRoot, "CardRemovalButton", layer);
+            _removeBtnRect.anchorMin = _removeBtnRect.anchorMax = new Vector2(0f, 1f);
+            _removeBtnRect.pivot = new Vector2(0f, 1f);
+            _removeBtnRect.anchoredPosition = new Vector2(180f, -174f);
+            _removeBtnRect.sizeDelta = new Vector2(186f, 46f);
+            Image remBg = _removeBtnRect.gameObject.AddComponent<Image>();
+            remBg.sprite = buttonSprite != null ? buttonSprite : solid;
+            remBg.color = new Color(0.96f, 0.78f, 0.66f, 1f);
+            _removeBtnRect.gameObject.AddComponent<Button>().onClick.AddListener(() => OpenDeckModal(removalMode: true));
+            AttachSimpleHoverScale(_removeBtnRect, 1.06f);
+            _removeBtnLabel = CreateLabel(_removeBtnRect, "Label", font, 16.5f, FontStyles.Bold, new Color(0.24f, 0.13f, 0.04f, 1f));
+            _removeBtnLabel.alignment = TextAlignmentOptions.Center;
+            _removeBtnLabel.text = $"REMOVE {baseRemovalCost}g";
 
             // --- 2. Top-Center-Left: Item Desc Inspector Box (Matches Figma top-center-left box!) ---
             _inspectorRoot = CreateRect(_leftColumnRoot, "ItemDescPanel", layer);
@@ -2442,7 +3123,7 @@ namespace PlushieOdyssey.Map.Merchant
                 onClick: () => TryResetShop());
         }
 
-        private static void BuildSoldStamp(RectTransform parent, int layer, TMP_FontAsset font, out RectTransform stampRoot, out CanvasGroup stampGroup, Vector2 size, float fontSize)
+        private void BuildSoldStamp(RectTransform parent, int layer, TMP_FontAsset font, out RectTransform stampRoot, out CanvasGroup stampGroup, Vector2 size, float fontSize)
         {
             stampRoot = CreateRect(parent, "SoldStamp", layer);
             stampRoot.anchorMin = stampRoot.anchorMax = new Vector2(0.5f, 0.56f);
@@ -2699,16 +3380,18 @@ namespace PlushieOdyssey.Map.Merchant
             }
         }
 
-        private static Sprite GetSolidSprite()
+        private Sprite GetSolidSprite()
         {
+            if (solidSprite != null) return solidSprite;
             if (s_solidSprite != null) return s_solidSprite;
             Texture2D tex = Texture2D.whiteTexture;
             s_solidSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
             return s_solidSprite;
         }
 
-        private static Sprite GetCircleSprite()
+        private Sprite GetCircleSprite()
         {
+            if (circleSprite != null) return circleSprite;
             if (s_circleSprite != null) return s_circleSprite;
             const int size = 128;
             Texture2D tex = new(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
@@ -2732,8 +3415,9 @@ namespace PlushieOdyssey.Map.Merchant
             return s_circleSprite;
         }
 
-        private static Sprite GetCircleRingSprite()
+        private Sprite GetCircleRingSprite()
         {
+            if (circleRingSprite != null) return circleRingSprite;
             if (s_circleRingSprite != null) return s_circleRingSprite;
             const int size = 128;
             Texture2D tex = new(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
@@ -2760,8 +3444,9 @@ namespace PlushieOdyssey.Map.Merchant
             return s_circleRingSprite;
         }
 
-        private static Sprite GetSoftGlowSprite()
+        private Sprite GetSoftGlowSprite()
         {
+            if (softGlowSprite != null) return softGlowSprite;
             if (s_softGlowSprite != null) return s_softGlowSprite;
             const int size = 96;
             Texture2D tex = new(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
@@ -2784,8 +3469,9 @@ namespace PlushieOdyssey.Map.Merchant
             return s_softGlowSprite;
         }
 
-        private static Sprite GetStampBorderSprite()
+        private Sprite GetStampBorderSprite()
         {
+            if (stampBorderSprite != null) return stampBorderSprite;
             if (s_stampBorderSprite != null) return s_stampBorderSprite;
             const int size = 32;
             const int border = 4;
@@ -2807,8 +3493,9 @@ namespace PlushieOdyssey.Map.Merchant
             return s_stampBorderSprite;
         }
 
-        private static Sprite GetRefreshIconSprite()
+        private Sprite GetRefreshIconSprite()
         {
+            if (refreshIconSprite != null) return refreshIconSprite;
             if (s_refreshIconSprite != null) return s_refreshIconSprite;
             const int size = 160;
             Texture2D tex = new(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };

@@ -24,20 +24,20 @@ namespace PlushieOdyssey.Data
         [Range(0.01f, 0.49f)] [SerializeField] private float lowWillThreshold = 0.25f;
 
         [Header("Modular Gameplay Effects")]
-        [Tooltip("Outgoing attack damage & shield gain multiplier while Will >= High Will Threshold.")]
+        [Tooltip("Outgoing attack damage & shield gain multiplier while Will >= High Will Threshold (+ High Will).")]
         [Min(1f)] [SerializeField] private float highWillBonusMultiplier = 1.25f;
-        [Tooltip("Fraction of this character's Max HP penalized while Will < Low Will Threshold (Fear).")]
+        [Tooltip("Fraction of this character's Max HP penalized while Will < Low Will Threshold (- Low Will).")]
         [Range(0f, 0.8f)] [SerializeField] private float lowWillMaxHealthPenaltyFraction = 0.20f;
 
         [Header("Tooltip Display (Supports {threshold}, {bonus}, {penalty} Placeholders)")]
-        [SerializeField] private string highWillTitle = "High Will";
+        [SerializeField] private string highWillTitle = "+ High Will";
         [TextArea(2, 3)]
         [SerializeField] private string highWillDescription =
             "Will ≥ {threshold}%: Grants <color=#64E8FF><b>+{bonus}% attack damage</b></color> and <color=#64E8FF><b>+{bonus}% Shield gain</b></color>.";
-        [SerializeField] private string lowWillTitle = "Fear (Low Will)";
+        [SerializeField] private string lowWillTitle = "- Low Will";
         [TextArea(2, 3)]
         [SerializeField] private string lowWillDescription =
-            "Will < {threshold}%: Effective Max HP is reduced by <color=#FF6B6B><b>{penalty}% Fear</b></color> until Will recovers.";
+            "Will < {threshold}%: Effective Max HP is reduced by <color=#FF6B6B><b>{penalty}%</b></color> and Attack cards are blocked until Will recovers.";
 
         [Header("Optional Signature UI Palette")]
         [SerializeField] private bool useCustomPalette;
@@ -55,8 +55,8 @@ namespace PlushieOdyssey.Data
         public float HighWillBonusMultiplier => Mathf.Max(1f, highWillBonusMultiplier);
         public float LowWillMaxHealthPenaltyFraction => Mathf.Clamp(lowWillMaxHealthPenaltyFraction, 0f, 0.8f);
 
-        public string HighWillTitle => string.IsNullOrWhiteSpace(highWillTitle) ? "High Will" : highWillTitle;
-        public string LowWillTitle => string.IsNullOrWhiteSpace(lowWillTitle) ? "Fear (Low Will)" : lowWillTitle;
+        public string HighWillTitle => string.IsNullOrWhiteSpace(highWillTitle) ? "+ High Will" : highWillTitle;
+        public string LowWillTitle => string.IsNullOrWhiteSpace(lowWillTitle) ? "- Low Will" : lowWillTitle;
 
         public bool UseCustomPalette => useCustomPalette;
         public Color HighWillFillColor => highWillFillColor;
@@ -90,7 +90,7 @@ namespace PlushieOdyssey.Data
             int thresholdPct = Mathf.RoundToInt(LowWillThreshold * 100f);
             int penaltyPct = Mathf.RoundToInt(LowWillMaxHealthPenaltyFraction * 100f);
             string template = string.IsNullOrWhiteSpace(lowWillDescription)
-                ? "Will < {threshold}%: Effective Max HP is reduced by {penalty}% Fear until Will recovers."
+                ? "Will < {threshold}%: Effective Max HP is reduced by {penalty}% and Attack cards are blocked until Will recovers."
                 : lowWillDescription;
             return template
                 .Replace("{threshold}", thresholdPct.ToString())

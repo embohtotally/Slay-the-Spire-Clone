@@ -13,21 +13,29 @@ namespace PlushieOdyssey.Combat.Effects
 
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
+            return GetGameAction(targets, caster, 1);
+        }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+
             List<GameAction> childActions = new List<GameAction>();
             if (Effects != null)
             {
                 foreach (AutoTargetEffect effect in Effects)
                 {
-                    if (effect.Effect != null)
+                    if (effect != null && effect.Effect != null)
                     {
-                        List<CombatantView> specificTargets = effect.TargetMode != null ? effect.TargetMode.GetTargets(caster) : null;
-                        childActions.Add(effect.Effect.GetGameAction(specificTargets, caster));
+                        List<CombatantView> specificTargets = effect.TargetMode != null ? effect.TargetMode.GetTargets(caster) : targets;
+                        GameAction action = effect.Effect.GetGameAction(specificTargets, caster, xMultiplier);
+                        if (action != null) childActions.Add(action);
                     }
                 }
             }
 
-            SimultaneousGA simultaneousGA = new SimultaneousGA(childActions, caster);
-            return simultaneousGA;
+            if (childActions.Count == 0) return null;
+            return new SimultaneousGA(childActions, caster);
         }
     }
 }

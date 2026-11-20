@@ -60,8 +60,10 @@ namespace PlushieOdyssey.Editor.Tools
         // --- PARSING LOGIC ---
         private class CardDef
         {
-            public string id, title, tier, card_type, target_type, description;
+            public string id, title, tier, card_type, target_type, description, keywords;
             public int mana_cost;
+            public int x_bonus;
+            public bool is_x_cost;
             public EffectDef manual_effect;
             public List<AutoEffectDef> auto_effects = new();
         }
@@ -112,7 +114,20 @@ namespace PlushieOdyssey.Editor.Tools
                     string key = GetKey(trimmed), val = GetVal(trimmed);
                     if (key == "title") cCard.title = val;
                     else if (key == "tier") cCard.tier = val;
-                    else if (key == "mana_cost") cCard.mana_cost = int.Parse(val);
+                    else if (key == "mana_cost")
+                    {
+                        if (string.Equals(val, "X", StringComparison.OrdinalIgnoreCase))
+                        {
+                            cCard.mana_cost = 0;
+                            cCard.is_x_cost = true;
+                        }
+                        else
+                        {
+                            cCard.mana_cost = int.Parse(val);
+                        }
+                    }
+                    else if (key == "x_bonus") cCard.x_bonus = int.Parse(val);
+                    else if (key == "keywords") cCard.keywords = val;
                     else if (key == "card_type") cCard.card_type = val;
                     else if (key == "target_type") cCard.target_type = val;
                     else if (key == "description") cCard.description = val;
@@ -181,9 +196,28 @@ namespace PlushieOdyssey.Editor.Tools
             }
 
             SetPrivateProperty(card, "Title", c.title);
-            SetPrivateProperty(card, "Tier", c.tier);
+            if (!string.IsNullOrWhiteSpace(c.tier) && Enum.TryParse(c.tier, true, out Tier parsedTier))
+            {
+                SetPrivateProperty(card, "Tier", parsedTier);
+            }
             SetPrivateProperty(card, "Mana", c.mana_cost);
+            SetPrivateProperty(card, "XBonus", Mathf.Max(0, c.x_bonus));
             SetPrivateProperty(card, "Type", (CardType)Enum.Parse(typeof(CardType), c.card_type));
+
+            CardKeywords kw = card.Keywords;
+            if (!string.IsNullOrWhiteSpace(c.keywords))
+            {
+                foreach (string rawToken in c.keywords.Split(','))
+                {
+                    if (Enum.TryParse(rawToken.Trim(), true, out CardKeywords parsedKw))
+                    {
+                        kw |= parsedKw;
+                    }
+                }
+            }
+            if (c.is_x_cost) kw |= CardKeywords.XCost;
+            SetPrivateProperty(card, "Keywords", kw);
+
             SetPrivateProperty(card, "TargetType", (CardTargetType)Enum.Parse(typeof(CardTargetType), c.target_type));
             SetPrivateProperty(card, "Description", c.description);
 
@@ -249,13 +283,13 @@ namespace PlushieOdyssey.Editor.Tools
                 SetPrivateField(eff, "amount", int.Parse(e.props["amount"]));
                 return eff;
             }
-            if (e.type == "ReduceFear")
+            if (e.type == "ReduceFear" || e.type == "GainWill")
             {
                 ReduceFearEffect eff = new ReduceFearEffect();
                 SetPrivateField(eff, "amount", int.Parse(e.props["amount"]));
                 return eff;
             }
-            if (e.type == "CopyFear")
+            if (e.type == "CopyFear" || e.type == "CopyWill")
             {
                 CopyFearEffect eff = new CopyFearEffect();
                 SetPrivateField(eff, "sourceAllyName", e.props["source_ally"]);
@@ -288,6 +322,8 @@ namespace PlushieOdyssey.Editor.Tools
                 SetPrivateField(eff, "status", (StatusType)Enum.Parse(typeof(StatusType), e.props["status"]));
                 SetPrivateField(eff, "stacks", int.Parse(e.props["stacks"]));
                 SetPrivateField(eff, "duration", int.Parse(e.props["duration"]));
+                if (e.props.TryGetValue("x_scaling", out string axisVal) && Enum.TryParse(axisVal, true, out XScalingAxis axis))
+                    SetPrivateField(eff, "xScaling", axis);
                 return eff;
             }
             if (e.type == "ApplyBuff")
@@ -297,6 +333,17 @@ namespace PlushieOdyssey.Editor.Tools
                 if (e.props.ContainsKey("value")) SetPrivateField(eff, "value", int.Parse(e.props["value"]));
                 else SetPrivateField(eff, "value", 1);
                 SetPrivateField(eff, "duration", int.Parse(e.props["duration"]));
+                if (e.props.TryGetValue("x_scaling", out string axisVal) && Enum.TryParse(axisVal, true, out XScalingAxis axis))
+                    SetPrivateField(eff, "xScaling", axis);
+                return eff;
+            }
+            if (e.type == "ApplyDoT")
+            {
+                ApplyDoTEffect eff = new ApplyDoTEffect();
+                SetPrivateField(eff, "damagePerTurn", int.Parse(e.props["amount"]));
+                SetPrivateField(eff, "duration", int.Parse(e.props["duration"]));
+                if (e.props.TryGetValue("x_scaling", out string axisVal) && Enum.TryParse(axisVal, true, out XScalingAxis axis))
+                    SetPrivateField(eff, "xScaling", axis);
                 return eff;
             }
             if (e.type == "CostReduction")

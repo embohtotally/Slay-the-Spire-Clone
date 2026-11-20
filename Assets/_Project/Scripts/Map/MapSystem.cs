@@ -111,13 +111,10 @@ namespace PlushieOdyssey.Map
                     }
                     else
                     {
-                        // Final chapter boss defeated — campaign complete, return to Levels screen cleanly.
-                        RunManager.Instance.AbandonRun();
-                        if (!string.IsNullOrWhiteSpace(levelSelectSceneName))
-                        {
-                            SceneLoader.LoadScene(levelSelectSceneName);
-                            return;
-                        }
+                        // Final chapter boss defeated — campaign complete! Open Victory Run Summary screen.
+                        PlushieOdyssey.UI.Menus.RunEndSummaryUI.PendingVictoryMode = true;
+                        SceneLoader.LoadScene("GameOver");
+                        return;
                     }
                 }
                 else if (progression != null && progression.HasCurrentLevel)

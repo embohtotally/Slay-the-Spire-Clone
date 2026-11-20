@@ -54,6 +54,9 @@ namespace PlushieOdyssey.Vfx
         private MaterialPropertyBlock coreMpb, sheathMpb, muzzleMpb, circleMpbA, circleMpbB;
         private BeamVfxConfig config;
         private int generation;
+        private static Material s_fallbackAdditiveParticleMat;
+        private static Material s_fallbackAlphaParticleMat;
+        private static Texture2D s_softGlowTex;
 
         private struct Runtime
         {
@@ -169,12 +172,135 @@ namespace PlushieOdyssey.Vfx
             ApplySorting(muzzleRenderer, layer, cfg.SortingOrder + 4);
             foreach (ImpactSlot slot in impactSlots) ApplySorting(slot.RingRenderer, layer, cfg.SortingOrder + 5);
 
+            // Guarantee all ParticleSystemRenderers have valid URP materials (never magenta/null) and clean sorting
+            EnsureParticleMaterial(condensation, additive: true, layer, cfg.SortingOrder + 4);
+            EnsureParticleMaterial(muzzleBurst, additive: true, layer, cfg.SortingOrder + 6);
+            foreach (ImpactSlot slot in impactSlots)
+            {
+                EnsureParticleMaterial(slot.Sparks, additive: true, layer, cfg.SortingOrder + 6);
+                EnsureParticleMaterial(slot.Ion, additive: true, layer, cfg.SortingOrder + 6);
+                EnsureParticleMaterial(slot.Smoke, additive: false, layer, cfg.SortingOrder + 4);
+            }
+
+            ResetVisualState();
+
             void ApplySorting(MeshRenderer r, int layerId, int order)
             {
                 if (r == null) return;
                 r.sortingLayerID = layerId;
                 r.sortingOrder = order;
             }
+        }
+
+        private void ResetVisualState()
+        {
+            if (coreRenderer != null && coreMpb != null)
+            {
+                coreRenderer.GetPropertyBlock(coreMpb);
+                coreMpb.SetFloat(HeadT, 0f); coreMpb.SetFloat(TailT, 0f); coreMpb.SetFloat(PowerT, 0f);
+                coreRenderer.SetPropertyBlock(coreMpb);
+            }
+            if (sheathRenderer != null && sheathMpb != null)
+            {
+                sheathRenderer.GetPropertyBlock(sheathMpb);
+                sheathMpb.SetFloat(HeadT, 0f); sheathMpb.SetFloat(TailT, 0f); sheathMpb.SetFloat(PowerT, 0f);
+                sheathRenderer.SetPropertyBlock(sheathMpb);
+            }
+            if (circleRenderers[0] != null && circleMpbA != null)
+            {
+                circleRenderers[0].GetPropertyBlock(circleMpbA);
+                circleMpbA.SetFloat(ChargeT, 0f); circleMpbA.SetFloat(DissipateT, 1f);
+                circleRenderers[0].SetPropertyBlock(circleMpbA);
+                if (circleTransforms[0] != null) circleTransforms[0].localScale = Vector3.one * 0.001f;
+            }
+            if (circleRenderers[1] != null && circleMpbB != null)
+            {
+                circleRenderers[1].GetPropertyBlock(circleMpbB);
+                circleMpbB.SetFloat(ChargeT, 0f); circleMpbB.SetFloat(DissipateT, 1f);
+                circleRenderers[1].SetPropertyBlock(circleMpbB);
+                if (circleTransforms[1] != null) circleTransforms[1].localScale = Vector3.one * 0.001f;
+            }
+            if (muzzleRenderer != null && muzzleMpb != null)
+            {
+                muzzleRenderer.GetPropertyBlock(muzzleMpb);
+                muzzleMpb.SetFloat(RingT, 1f); muzzleMpb.SetFloat(FlashT, 1f);
+                muzzleRenderer.SetPropertyBlock(muzzleMpb);
+                if (muzzleTransform != null) muzzleTransform.localScale = Vector3.one * 0.001f;
+            }
+            foreach (ImpactSlot slot in impactSlots)
+            {
+                if (slot.RingRenderer != null && slot.Mpb != null)
+                {
+                    slot.RingRenderer.GetPropertyBlock(slot.Mpb);
+                    slot.Mpb.SetFloat(RingT, 1f); slot.Mpb.SetFloat(FlashT, 1f);
+                    slot.RingRenderer.SetPropertyBlock(slot.Mpb);
+                }
+                if (slot.Ring != null) slot.Ring.localScale = Vector3.one * 0.001f;
+            }
+        }
+
+        private static void EnsureParticleMaterial(ParticleSystem ps, bool additive, int sortingLayerId, int sortingOrder)
+        {
+            if (ps == null) return;
+            ParticleSystemRenderer psr = ps.GetComponent<ParticleSystemRenderer>();
+            if (psr == null) return;
+            psr.sortingLayerID = sortingLayerId;
+            psr.sortingOrder = sortingOrder;
+            if (psr.sharedMaterial != null && psr.sharedMaterial.shader != null &&
+                psr.sharedMaterial.shader.name != "Hidden/InternalErrorShader" &&
+                ((psr.sharedMaterial.HasProperty("_BaseMap") && psr.sharedMaterial.GetTexture("_BaseMap") != null) ||
+                 (psr.sharedMaterial.HasProperty("_MainTex") && psr.sharedMaterial.GetTexture("_MainTex") != null)))
+                return;
+
+            psr.sharedMaterial = GetOrCreateParticleMaterial(additive);
+        }
+
+        private static Material GetOrCreateParticleMaterial(bool additive)
+        {
+            if (additive && s_fallbackAdditiveParticleMat != null) return s_fallbackAdditiveParticleMat;
+            if (!additive && s_fallbackAlphaParticleMat != null) return s_fallbackAlphaParticleMat;
+
+            if (s_softGlowTex == null)
+            {
+                const int sz = 64;
+                s_softGlowTex = new Texture2D(sz, sz, TextureFormat.RGBA32, false)
+                {
+                    wrapMode = TextureWrapMode.Clamp,
+                    filterMode = FilterMode.Bilinear,
+                    name = "ZoltraakSoftParticleTex"
+                };
+                Color[] px = new Color[sz * sz];
+                float half = sz * 0.5f;
+                for (int y = 0; y < sz; y++)
+                {
+                    for (int x = 0; x < sz; x++)
+                    {
+                        float r = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(half, half)) / half;
+                        float a = Mathf.Pow(Mathf.Clamp01(1f - r), 2.2f);
+                        px[y * sz + x] = new Color(1f, 1f, 1f, a);
+                    }
+                }
+                s_softGlowTex.SetPixels(px);
+                s_softGlowTex.Apply(false, false);
+            }
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                            ?? Shader.Find("Particles/Standard Unlit")
+                            ?? Shader.Find("Sprites/Default");
+            Material mat = new Material(shader) { name = additive ? "ZoltraakParticleAdd" : "ZoltraakParticleAlpha" };
+            if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", s_softGlowTex);
+            if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", s_softGlowTex);
+            if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 1f); // Transparent
+            if (mat.HasProperty("_Blend")) mat.SetFloat("_Blend", additive ? 2f : 0f); // 2=Additive, 0=Alpha
+            if (mat.HasProperty("_SrcBlend")) mat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            if (mat.HasProperty("_DstBlend")) mat.SetFloat("_DstBlend", (float)(additive ? UnityEngine.Rendering.BlendMode.One : UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha));
+            if (mat.HasProperty("_ZWrite")) mat.SetFloat("_ZWrite", 0f);
+            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent + 150;
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            if (additive) mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+
+            if (additive) s_fallbackAdditiveParticleMat = mat; else s_fallbackAlphaParticleMat = mat;
+            return mat;
         }
 
         public IEnumerator PlayBeamRoutine(Transform casterOrigin, CombatantView target,
@@ -476,19 +602,21 @@ namespace PlushieOdyssey.Vfx
             rt.Length = baseLen + cfg.PierceOvershoot;
 
             rt.Order = new int[valid.Count];
-            rt.Proj = new float[valid.Count];
+            rt.Proj = new float[n];
             for (int i = 0; i < valid.Count; i++)
             {
+                int origIdx = valid[i].idx;
                 Vector3 p = ResolveAnchor(valid[i].v.transform, cfg.TargetAnchorNames, cfg.TargetAnchorOffset);
                 p.z += cfg.DepthOffset;
-                valid[i] = (valid[i].idx, valid[i].v, Vector3.Dot(p - muzzle, dir));
-                rt.Proj[i] = valid[i].proj;
-                rt.Order[i] = i;
+                rt.Proj[origIdx] = Vector3.Dot(p - muzzle, dir);
+                rt.Order[i] = origIdx;
             }
             Array.Sort(rt.Order, (a, b) => rt.Proj[a].CompareTo(rt.Proj[b]));
 
             rt.Fired = new bool[n];
             rt.FiredCount = 0;
+
+            ResetVisualState();
 
             transform.SetPositionAndRotation(muzzle, Quaternion.LookRotation(dir, Vector3.up));
             if (beamGroup != null)

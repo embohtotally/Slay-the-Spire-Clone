@@ -11,21 +11,38 @@ namespace PlushieOdyssey.Combat.Effects
     {
         [SerializeField] private int damagePerTurn;
         [SerializeField] private int duration;
+        [SerializeField] private XScalingAxis xScaling = XScalingAxis.Auto;
 
         public int DamagePerTurn => damagePerTurn;
         public int Duration => duration;
+        public XScalingAxis XScaling => xScaling;
 
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
-            // For multiple targets, typically Slay the Spire applies the same effect to each.
-            // We'll return an ApplyDoTGA for the first target in this simple implementation,
-            // or we could loop through and add multiple reactions.
-            // To handle multiple targets, the best approach is to let the GameAction handle multiple targets,
-            // or just add a loop. Let's make ApplyDoTGA take a List<CombatantView> Targets instead?
-            // Wait, the GA pattern usually supports multiple targets. Let's update ApplyDoTGA to take List<CombatantView>.
-
             ApplyDoTGA applyDoTGA = new(targets, damagePerTurn, duration, caster);
             return applyDoTGA;
+        }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+            ResolveScaled(xMultiplier, out int scaledDmg, out int scaledDur);
+            return new ApplyDoTGA(targets, scaledDmg, scaledDur, caster);
+        }
+
+        public void ResolveScaled(int xMultiplier, out int scaledDamagePerTurn, out int scaledDuration)
+        {
+            int mult = Mathf.Max(0, xMultiplier);
+            if (mult == 1)
+            {
+                scaledDamagePerTurn = damagePerTurn;
+                scaledDuration = duration;
+                return;
+            }
+
+            XScalingAxis axis = xScaling == XScalingAxis.Auto ? XScalingAxis.Value : xScaling;
+            scaledDamagePerTurn = axis == XScalingAxis.Value || axis == XScalingAxis.Both ? damagePerTurn * mult : damagePerTurn;
+            scaledDuration = axis == XScalingAxis.Duration || axis == XScalingAxis.Both ? duration * mult : duration;
         }
     }
 }

@@ -312,11 +312,12 @@ namespace PlushieOdyssey.Combat.Views
 
                 if (IsHighWill && !wasHighWill)
                 {
-                    GameManager.GenerateFloatingText("High Will! (+25%)", transform, 1.2f, 1f, "#38D4FF");
+                    int bonusPct = Mathf.RoundToInt((HighWillBonusMultiplier - 1f) * 100f);
+                    GameManager.GenerateFloatingText($"+ High Will! (+{bonusPct}%)", transform, 1.2f, 1f, "#38D4FF");
                 }
                 else if (IsStressed && !wasLowWill)
                 {
-                    GameManager.GenerateFloatingText("Low Will! (Fear)", transform, 1.2f, 1f, "#FF4D5A");
+                    GameManager.GenerateFloatingText("- Low Will!", transform, 1.2f, 1f, "#FF4D5A");
                 }
             }
 

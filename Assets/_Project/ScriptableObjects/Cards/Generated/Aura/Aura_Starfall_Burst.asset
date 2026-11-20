@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Image>k__BackingField: {fileID: 2054458977, guid: 56ce11f854e5896488c9b008fe7faaf5, type: 3}
   <Title>k__BackingField: Starfall Burst
-  <Description>k__BackingField: Deal 18 Damage (+12 If Fear >= 50)
+  <Description>k__BackingField: Deal 18 Damage (+12 If Will <= 50)
   <Tier>k__BackingField: 1
   <Mana>k__BackingField: 3
   <Type>k__BackingField: 0

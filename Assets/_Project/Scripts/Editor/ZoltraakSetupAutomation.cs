@@ -345,7 +345,7 @@ namespace PlushieOdyssey.Editor.Tools
 
                 GameObject smoke = new GameObject("Smoke");
                 smoke.transform.SetParent(slotObj.transform, false);
-                SetupParticleSystem(smoke, new Color(0.3f, 0.2f, 0.35f, 0.5f), 0.8f, 0.25f);
+                SetupParticleSystem(smoke, new Color(0.3f, 0.2f, 0.35f, 0.5f), 0.8f, 0.25f, additive: false);
             }
 
             // Wire fields on ZoltraakBeamController via SerializedObject
@@ -378,7 +378,7 @@ namespace PlushieOdyssey.Editor.Tools
             return savedPrefab;
         }
 
-        private static ParticleSystem SetupParticleSystem(GameObject go, Color color, float lifetime, float size)
+        private static ParticleSystem SetupParticleSystem(GameObject go, Color color, float lifetime, float size, bool additive = true)
         {
             ParticleSystem ps = go.AddComponent<ParticleSystem>();
             var main = ps.main;
@@ -398,7 +398,40 @@ namespace PlushieOdyssey.Editor.Tools
             shape.shapeType = ParticleSystemShapeType.Sphere;
             shape.radius = 0.1f;
 
+            var psr = go.GetComponent<ParticleSystemRenderer>();
+            if (psr != null)
+            {
+                psr.sharedMaterial = GetOrCreateParticleMaterial(additive);
+            }
+
             return ps;
+        }
+
+        private static Material GetOrCreateParticleMaterial(bool additive)
+        {
+            string path = MaterialDir + (additive ? "/M_BeamParticleAdd.mat" : "/M_BeamParticleSmoke.mat");
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Sprites/Default");
+            if (mat == null)
+            {
+                mat = new Material(shader);
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            else if (shader != null && mat.shader != shader)
+            {
+                mat.shader = shader;
+            }
+
+            if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 1f);
+            if (mat.HasProperty("_Blend")) mat.SetFloat("_Blend", additive ? 2f : 0f);
+            if (mat.HasProperty("_SrcBlend")) mat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            if (mat.HasProperty("_DstBlend")) mat.SetFloat("_DstBlend", (float)(additive ? UnityEngine.Rendering.BlendMode.One : UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha));
+            if (mat.HasProperty("_ZWrite")) mat.SetFloat("_ZWrite", 0f);
+            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent + 150;
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            if (additive) mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         private static BeamVfxConfig SetupConfig(GameObject prefab, Material coreMat, Material sheathMat, Material circleMat, Material shockMat)
@@ -422,25 +455,30 @@ namespace PlushieOdyssey.Editor.Tools
             cfg.DissipateDuration = 0.45f;
 
             cfg.CylinderSides = 12;
-            cfg.BeamRadius = 0.22f;
-            cfg.SheathRadiusMultiplier = 1.8f;
-            cfg.CircleRadius = 1.15f;
-            cfg.CircleCameraTilt = 0.55f;
-            cfg.PierceOvershoot = 1.5f;
+            cfg.BeamRadius = 0.34f;
+            cfg.SheathRadiusMultiplier = 1.95f;
+            cfg.CircleRadius = 1.48f;
+            cfg.CircleCameraTilt = 0.62f;
+            cfg.PierceOvershoot = 1.8f;
             cfg.DepthOffset = -0.35f;
+            cfg.CasterAnchorOffset = new Vector3(1.85f, 1.42f, 0f);
+            cfg.TargetAnchorOffset = new Vector3(0f, 0.68f, 0f);
+            cfg.ChargeSfx = PlushieOdyssey.Audio.SfxID.apply_buff;
+            cfg.FireSfx = PlushieOdyssey.Audio.SfxID.PlayCard;
+            cfg.ImpactSfx = PlushieOdyssey.Audio.SfxID.Hit;
 
-            cfg.CoreColor = new Color(1f, 0.35f, 0.75f, 1f);
-            cfg.HotColor = Color.white;
-            cfg.SheathColor = new Color(0.72f, 0.30f, 1f, 1f);
-            cfg.CircleColor = new Color(1f, 0.50f, 0.85f, 1f);
-            cfg.ImpactRingColor = new Color(1f, 0.60f, 0.90f, 1f);
+            cfg.CoreColor = new Color(0.95f, 0.20f, 0.86f, 1f);
+            cfg.HotColor = new Color(1f, 0.98f, 1f, 1f);
+            cfg.SheathColor = new Color(0.62f, 0.16f, 1f, 1f);
+            cfg.CircleColor = new Color(0.96f, 0.26f, 0.88f, 1f);
+            cfg.ImpactRingColor = new Color(0.96f, 0.24f, 0.88f, 1f);
             cfg.ImpactFlashColor = Color.white;
 
-            cfg.CoreIntensity = 6f;
-            cfg.SheathIntensity = 2.5f;
-            cfg.CircleIntensity = 4f;
-            cfg.ImpactRingIntensity = 7f;
-            cfg.ImpactFlashIntensity = 10f;
+            cfg.CoreIntensity = 1.65f;
+            cfg.SheathIntensity = 1.35f;
+            cfg.CircleIntensity = 1.45f;
+            cfg.ImpactRingIntensity = 1.45f;
+            cfg.ImpactFlashIntensity = 1.65f;
 
             cfg.GateMode = BeamGateMode.Auto;
             cfg.UsePerTargetSubflows = false;

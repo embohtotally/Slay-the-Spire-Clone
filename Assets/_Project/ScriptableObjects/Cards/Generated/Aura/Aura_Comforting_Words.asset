@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Image>k__BackingField: {fileID: 2054458977, guid: 56ce11f854e5896488c9b008fe7faaf5, type: 3}
   <Title>k__BackingField: Comforting Words
-  <Description>k__BackingField: Heal 6 HP + Reduce Fear 2
+  <Description>k__BackingField: Heal 6 HP, Gain +2 Will
   <Tier>k__BackingField: 0
   <Mana>k__BackingField: 1
   <Type>k__BackingField: 2

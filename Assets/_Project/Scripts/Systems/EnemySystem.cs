@@ -129,10 +129,14 @@ namespace PlushieOdyssey.Combat.Systems
             attacker.ConsumeIntentForEnemyTurn();
 
             bool isAttackComplete = false;
+            Vector3? lungePos = HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null
+                ? HeroSystem.Instance.HeroView.transform.position
+                : (Vector3?)null;
             attacker.StateMachine.ChangeState(new CombatantAttackState(
                 attacker,
-                Mathf.Max(0.5f, attackMoveDuration + attackReturnDuration),
-                () => isAttackComplete = true
+                Mathf.Max(0.42f, attackMoveDuration + attackReturnDuration),
+                () => isAttackComplete = true,
+                lungePos
             ));
 
             yield return new WaitUntil(() => isAttackComplete);

@@ -11,7 +11,6 @@ namespace PlushieOdyssey.Combat.States
     {
         private float shakeDuration;
         private float shakeStrength;
-        private float timer;
         private bool isComplete;
 
         public CombatantHurtState(CombatantView combatant, float shakeDuration, float shakeStrength, Action onComplete = null)
@@ -23,20 +22,17 @@ namespace PlushieOdyssey.Combat.States
 
         public override void Enter()
         {
-            timer = 0f;
             isComplete = false;
 
-            combatant.DoHurtFlash(0.2f);
+            combatant.DoHurtFlash(0.22f);
+            combatant.PlayProceduralHurtRecoil(Mathf.Max(0.18f, shakeDuration), Mathf.Max(0.18f, shakeStrength));
 
             if (combatant.HasAnimator && !string.IsNullOrEmpty(combatant.HurtAnimationTrigger))
             {
                 combatant.SetAnimationTrigger(combatant.HurtAnimationTrigger);
-                CompleteHurt(); // Instantly finish the state (fire and forget)
             }
-            else
-            {
-                combatant.transform.DOShakePosition(shakeDuration, shakeStrength).OnComplete(CompleteHurt);
-            }
+
+            CompleteHurt();
         }
 
         public override void Update()

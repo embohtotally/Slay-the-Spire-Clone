@@ -62,6 +62,7 @@ namespace PlushieOdyssey.Combat.Views
             {
                 spriteRenderer.transform.localPosition = enemyData.SpriteOffset;
             }
+            CaptureProceduralVisualHomeIfNeeded(forceRecapture: true);
 
             TrySubscribeBuffSystem();
 

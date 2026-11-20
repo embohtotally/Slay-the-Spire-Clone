@@ -45,8 +45,8 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
   - Added and wired `Dexterity`, `Frail`, `Thorns`, `Metallicize`, `Artifact`, `Intangible`, `PlatedArmor`, and `Barricade` across [`BuffType.cs`](../Assets/_Project/Scripts/Models/BuffType.cs), [`BuffSystem.cs`](../Assets/_Project/Scripts/Systems/BuffSystem.cs), [`ShieldSystem.cs`](../Assets/_Project/Scripts/Systems/ShieldSystem.cs), and [`DamageSystem.cs`](../Assets/_Project/Scripts/Systems/DamageSystem.cs).
 
 ### Card Keywords & Mid-Combat Deck Mechanics
-- [x] **Add Card Keywords & Exhaust Pile in `CardData` / `CardSystem`**
-  - Added `[Flags] CardKeywords` (`Exhaust`, `Retain`, `Ethereal`, `Innate`, `Unplayable`) to [`CardData.cs`](../Assets/_Project/Scripts/Data/CardData.cs) / [`Card.cs`](../Assets/_Project/Scripts/Models/Card.cs) and runtime handling + `exhaustPile` in [`CardSystem.cs`](../Assets/_Project/Scripts/Systems/CardSystem.cs) & [`CardPlayService.cs`](../Assets/_Project/Scripts/Systems/CardPlayService.cs) (`X-Cost` and persistent `Power` triggers remain for future cards).
+- [x] **Add Card Keywords, Exhaust Pile & Modular X-Cost Cards in `CardData` / `CardSystem`**
+  - Added `[Flags] CardKeywords` (`Exhaust`, `Retain`, `Ethereal`, `Innate`, `Unplayable`, `XCost`) and `XBonus` to [`CardData.cs`](../Assets/_Project/Scripts/Data/CardData.cs) / [`Card.cs`](../Assets/_Project/Scripts/Models/Card.cs), custom [`CardDataEditor.cs`](../Assets/_Project/Scripts/Editor/CardDataEditor.cs) (`Is X-Cost` toggle showing `X` instead of `0`), **`X`** cost badge rendering across [`CardView.cs`](../Assets/_Project/Scripts/Views/CardView.cs) / [`MerchantShopUI.cs`](../Assets/_Project/Scripts/Map/Merchant/MerchantShopUI.cs), FIFO-safe all-Mana spending in [`CardPlayService.cs`](../Assets/_Project/Scripts/Systems/CardPlayService.cs) / [`CardSystem.cs`](../Assets/_Project/Scripts/Systems/CardSystem.cs), and modular `XScalingAxis` / `GetGameAction(..., int xMultiplier)` scaling across all 22 `Effect` subclasses (Damage, Heal, Shield, Poison/Status, Buffs/Debuffs, DoTs, Stun/Taunt, Draw, Fear/Will, and composite `SimultaneousEffect`/`ScalingEffect`) (persistent `Power` passive triggers remain for future cards).
 - [x] **Enforce Max Hand Size (`10`) & empty-draw guards**
   - Enforced `MaxHandSize` (`10`) with `HandFullRejected` toast notification and null-draw guards in [`CardSystem.cs`](../Assets/_Project/Scripts/Systems/CardSystem.cs).
 - [x] **Add Max-Mana scaling API in `ManaSystem`**
@@ -60,8 +60,8 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
 
 ### Party, Heroes, Companions, Ultimates & Enemy AI
 - [ ] **Implement multi-hero party & playable hero selection (Aura / Ember)**
-  - Only `1` hero asset exists ([`Default Hero.asset`](../Assets/_Project/ScriptableObjects/Heroes/Default%20Hero.asset), `Health: 44`), while [`HeroView.cs`](../Assets/_Project/Scripts/Views/HeroView.cs) has multi-hero `heroTeam` spawning logic commented out.
-  - Finish multi-member [`AllyByCharacterTargetMode.cs`](../Assets/_Project/Scripts/Target%20Modes/AllyByCharacterTargetMode.cs) (currently still targets the single shared `HeroView`), plus separate `HeroData` assets and playable selection for **Aura** and **Ember**.
+  - *(Completed)* Built two-stage celestial **Party Setup** (`Levels.unity`) via [`PartySetupUI.cs`](../Assets/_Project/Scripts/Levels/PartySetupUI.cs) & [`PartySetupArtFactory.cs`](../Assets/_Project/Scripts/Levels/PartySetupArtFactory.cs) with 3 party slots, per-hero **Ultimates**, **Innate + Future Unlockable Talents** on [`HeroData.cs`](../Assets/_Project/Scripts/Data/HeroData.cs) (`Hero_Aira` / `Hero_Ember`), real frame-by-frame animated standing sprites, and innate combat bonuses in [`MatchSetupSystem.cs`](../Assets/_Project/Scripts/Systems/MatchSetupSystem.cs).
+  - Remaining in combat: finish multi-member [`AllyByCharacterTargetMode.cs`](../Assets/_Project/Scripts/Target%20Modes/AllyByCharacterTargetMode.cs) and uncomment multi-hero world avatar spawning in [`HeroView.cs`](../Assets/_Project/Scripts/Views/HeroView.cs).
 - [ ] **Implement Shared Basic Deck vs Character Starter/Rare Decks (Miro Frame 12)**
   - Separate a character-shared **Basic** card pool from per-character **5-card starter kits + 4 Rare cards** (and update [`YamlCardImporter.cs`](../Assets/_Project/Scripts/Editor/YamlCardImporter.cs), which currently sorts only into `Aura/` and `Ember/`).
 - [ ] **Implement Ultimates, Companions/Pets & Archetypes**
@@ -77,12 +77,12 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
 ## P2 — Run Loop, Map, Economy, Potions & Meta-Progression
 
 ### Shop, Rest, Rewards & Potions
-- [ ] **Complete Reward drops in `RunRewardController`**
-  - [`RunRewardController.cs`](../Assets/_Project/Scripts/Rewards/RunRewardController.cs) currently only supports `RunRewardType.Gold` and `RunRewardType.CardReward`; add Relic drops (Elite/Treasure/Boss), Potion drops, and Boss Relic selection.
-- [ ] **Expand `MerchantController` & fix interactive Card Removal UI**
-  - [`MerchantController.cs`](../Assets/_Project/Scripts/Map/Merchant/MerchantController.cs) sells cards and upgrades via `MerchantCardPool`; add **Relic** shelves, **Potion** shelves, StS-style discount/Courier effects, and a deck-grid picker UI for [`MerchantCardRemovalController.cs`](../Assets/_Project/Scripts/Map/Merchant/MerchantCardRemovalController.cs) (which currently relies on a single `selectedCard` reference).
-- [ ] **Make `RestSiteController` player-driven**
-  - [`RestSiteController.cs`](../Assets/_Project/Scripts/Map/Rest/RestSiteController.cs) currently uses a single hardcoded serialized pair (`upgradeSourceCard` -> `upgradeTargetCard`); replace with a deck-browser UI so players choose which card to upgrade (`Smith`), plus optional relics/camp actions (Lift / Toke / Dig / Recall).
+- [x] **Complete Relic & Potion drops in `RunRewardController`**
+  - Added `RunRewardType.Relic` and `RunRewardType.Potion` to [`RunRewardController.cs`](../Assets/_Project/Scripts/Rewards/RunRewardController.cs) with automatic Elite/Boss Relic drops and `RelicSwapModalUI` integration in `RunRewards.unity` (Boss 3-Relic picker remains optional future polish).
+- [x] **Build Slay-the-Spire Merchant Shop with Relics, Escalating Reset & Interactive Card Removal (`Merchant.unity`)**
+  - Built [`MerchantShopUI.cs`](../Assets/_Project/Scripts/Map/Merchant/MerchantShopUI.cs) with talking Vendor + native `Vendor Text` dialogue, `Item desc` hover inspector, 2×4 (8 cards) + 3 Relic pedestals beside an escalating circular `RESET` (`10g → 20g → 30g...`) with procedural flip/shimmer choreography, Deck Viewer, and escalating Deck-Grid Card Removal (`75g → 100g...`) (Potion shelf / Courier discounts remain optional future polish).
+- [x] **Make `Rest.unity` player-driven with interactive Smith Upgrade Picker**
+  - Built [`RestSiteUI.cs`](../Assets/_Project/Scripts/Map/Rest/RestSiteUI.cs) in `Rest.unity` with flickering campfire embers, **Rest** (`+30% HP`), **Calm Mind** (`+30 Will`), and interactive **Smith** Deck-Grid Picker + side-by-side `Card → Card+` preview modal.
 - [ ] **Implement out-of-combat Potions & Full-Belt Swap UI**
   - Support `PotionData.UsableOutsideCombat` on Map/Shop/Rest scenes, combat-end / lethal-prevention triggers, and a Discard/Swap prompt when [`RunPotionManager.cs`](../Assets/_Project/Scripts/Run/RunPotionManager.cs) is at `Capacity` (`3`) instead of silently returning `false`.
 
@@ -91,19 +91,20 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
   - Upgraded [`ProceduralMapGenerator.cs`](../Assets/_Project/Scripts/Map/ProceduralMapGenerator.cs) & [`MapGeneratorConfig.cs`](../Assets/_Project/Scripts/Map/MapGeneratorConfig.cs) (`Default Map Generator Config.asset`) to procedurally generate **6–8 column** Left-to-Right branching maps with organic position jitter, non-crossing dotted paths, and balanced StS node rules (no consecutive Elite/Rest/Shop/Treasure, no early Elite/Rest, guaranteed Start Enemies on Left, Rest/Treasure pre-Boss, Boss on Right, and sibling diversity).
   - Built [`ProceduralMapRendererUI.cs`](../Assets/_Project/Scripts/UI/Map/ProceduralMapRendererUI.cs) using existing project Map art assets (`scroll.png`, `Pin Map.png`, `Tombol.png`, `Icon_*.png`) with Left→Right staggered procedural pop-up animations, curved inked dotted trails, hover tooltips, and a Legend bar.
   - Wired [`MapSystem.cs`](../Assets/_Project/Scripts/Map/MapSystem.cs) into `Map.unity` with full scene routing (`Game`, `Merchant`, `Rest`, `Event`, `Treasure`, Boss level completion) and wired [`CombatMapOverlayUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatMapOverlayUI.cs) to `CombatTopBar/MapButton` (and `M` hotkey) in `Game.unity` showing the live current run map + `"HERE"` pin marker.
-- [ ] **Bridge `LevelDefinition` stages into continuous Multi-Act Runs + Victory Flow**
-  - Currently `Level 1` (`loneliness`), `Level 2` (`fear`), `Level 3` (`anxiety`), and `Level 4` (`anger`) unlock sequentially in `PlayerPrefs` (`SlayClone.HighestUnlockedLevelIndex`) and return to Levels on completion. Add continuous Act 1→3→Final Boss runs (or act-transition healing/boss chests/true-ending keys) plus a dedicated **Victory** / Run Summary screen.
+- [x] **Bridge `LevelDefinition` stages into continuous Multi-Act Runs + Victory Summary Flow**
+  - Wired automatic direct Chapter `1 → 2 → 3 → 4` progression after Boss victories across [`LevelProgressionManager.cs`](../Assets/_Project/Scripts/Levels/LevelProgressionManager.cs), [`RunManager.cs`](../Assets/_Project/Scripts/Run/RunManager.cs), and [`MapSystem.cs`](../Assets/_Project/Scripts/Map/MapSystem.cs), routing Chapter 4 Boss completion into the new Victory / Defeat Run Summary UI ([`RunEndSummaryUI.cs`](../Assets/_Project/Scripts/Menus/RunEndSummaryUI.cs) in `GameOver.unity`).
 - [ ] **Implement `Crystal` Meta-Currency (Miro Frame 1 Spec)**
-  - Miro Frame 1's HUD wireframe includes both `Gold` and `Crystal`; [`RunManager.cs`](../Assets/_Project/Scripts/Run/RunManager.cs) only tracks `Gold` (`startingGold: 150` in `GameManager.prefab`). Add Crystal earning, persistence, and a meta-progression shop.
+  - Miro Frame 1's HUD wireframe includes both `Gold` and `Crystal`; [`RunManager.cs`](../Assets/_Project/Scripts/Run/RunManager.cs) tracks `Gold` & `Crystals`, and `RunEndSummaryUI` awards run Crystals—still need persistent meta-wallet saving and a meta-progression upgrade shop.
 - [ ] **Add Mid-Run Save / Resume, Seeded Runs, Modes & Compendium**
   - Serialize active run state (seed, deck, HP/Stress, gold/crystals, relics, potions, map progress, floor) for Save & Quit / Continue.
   - Add **Run Seeds** (custom seed input + deterministic RNG), **Ascension / Difficulty** modifiers, **Daily / Custom Modes**, **Compendium / Card Library** viewer, **Run History / Lifetime Stats**, **Unlockable Pools**, and **Achievements**.
 
 ### Content Volume (Current vs Target)
 - [ ] **Scale ScriptableObject content beyond prototype counts**
-  - Cards: currently `31` YAML entries in [`CardsDatabase.yaml`](../Assets/_Project/Data/CardsDatabase.yaml) (`44` Card `.asset` files total)
-  - Heroes: `1` (`Default Hero.asset`)
-  - Relics: `2` (`Relic 1.asset`, `Relic 2.asset`)
+  - Cards: currently `31` YAML entries in [`CardsDatabase.yaml`](../Assets/_Project/Data/CardsDatabase.yaml) (`44` Card `.asset` files total; `24` in Merchant Pool)
+  - Heroes: `3` (`Default Hero.asset`, `Hero_Aira.asset`, `Hero_Ember.asset` + `WillProfile_Aira`, `WillProfile_Ember`)
+  - Relics: `8` (`Relic 1`, `Relic 2`, plus 6 functional combat shop/treasure relics in `Default Merchant Relic Pool.asset`)
+  - Narrative Events: `6` (`Assets/_Project/ScriptableObjects/Events/`)
   - Potions: `2` (`Potion Draw.asset`, `Potion Heal.asset`)
   - Enemies: `7` (`Guard`, `King Lizard`, `Lonely Tiger`, `Red Slime`, `Slime`, `The Last Paradise`, `Wilted Rhino`)
   - Encounters: `6`
@@ -127,8 +128,10 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
 
 ## P4 — Audio, VFX & Art Integration Backlog
 
-- [ ] **Wire the 60 unreferenced Character Voicepack WAVs**
-  - All `60` clips under `Assets/_Project/Sounds/Sfx/Voicepack/` (`30` `Aira/` + `30` `Ember/`: `attack1-3`, `damaged1-3`, `healed1-3`, `fire`, `ice`, `wind`, `heal`, `cure`, `curse`) currently have `0` references across all `.unity`, `.prefab`, and `.asset` files.
+- [x] **Wire the 60 unreferenced Character Voicepack WAVs**
+  - Connected `Aira` and `Ember` voice cues (`SfxID.Aira_*` / `SfxID.Ember_*`) to combat card plays, damage taken, and healing via [`CharacterVoiceDirector.cs`](../Assets/_Project/Scripts/Audio/CharacterVoiceDirector.cs) (auto-attached in `ActionSystem.Awake()`).
+- [x] **Add Core Combat Procedural Juice Pack**
+  - Added [`CombatJuiceDirector.cs`](../Assets/_Project/Scripts/VFX/CombatJuiceDirector.cs) (hit-stop, impact-scaled camera shake & zoom punch, played-card comet ribbon trails, Boss Entrance banners, Will threshold callouts, `E`/`A`/`D` combat hotkeys), procedural combatant idle breathing / directional attack lunges / hurt recoil / enemy death dissolve, parabolic color-coded floating combat numbers, and live HP-bar projected damage preview shading.
 - [ ] **Fill empty global Audio/VFX director slots & triage unused pools**
   - On `GameManager.prefab` -> `GameActionAudioDirector`, populate empty `sfxName` entries on `playCardSfx`, `drawCardsBatchSfx`, `dealDamageSfx`, `healSfx`, and `gainShieldSfx`; assign `playCardVfx` on `GameActionVfxDirector`.
   - Review the `267` sidelined audio clips moved to `NotUsed/` ([`AudioSetupReport.md`](../Assets/_Project/Sounds/AudioSetupReport.md)) and `50` unused CFXR/Hit VFX prefabs ([`VfxAssignmentReport.md`](../Assets/_Project/Scripts/VFX/VfxAssignmentReport.md)).
@@ -165,14 +168,14 @@ Scene/prefab audit comparing current Unity UI (`Assets/_Project/Scenes/` & `Asse
 
 ### C. Existing Map & Non-Combat Scene UI Gaps
 - [ ] **`MainMenu.unity`**: Only has `Play`, `Settings`, `Credits`, `Exit`. Add **Continue / Resume Run**, **Game Modes** (Standard, Daily, Custom Seed/Modifiers), **Compendium** (Card Library, Relic Gallery, Potion List, Enemy Bestiary), **Run History & Lifetime Stats**, **Achievements**, Language switcher, and **Quit Confirmation** popup.
-- [ ] **`Levels.unity`**: Only shows `Level 1`–`Level 4` (`Title`, `Status`, `Description`, `Enter`, `Cancel`). Add Miro Frame 1's **Difficulty selector (`Difficulty : Easy`)**, **Level Reward preview panel**, **Character / Starter Deck selection** (`Aura` vs `Ember` + Shared Basic Deck), and **Ascension / Seed** controls.
+- [ ] **`Levels.unity`**: *(Completed)* Added two-stage Celestial **Party Setup** (`Aura` & `Ember`, 3-slot tarot cards, Ultimates, Innate + Future Unlockable Talents, 5-icon roster strip, animated chibi sprites) via [`PartySetupUI.cs`](../Assets/_Project/Scripts/Levels/PartySetupUI.cs). Remaining: **Difficulty selector (`Difficulty : Easy`)**, **Level Reward preview panel**, and **Ascension / Seed** controls.
 - [ ] **`Map.unity`**: Add the **Map Legend panel** sketched in Miro Frame 1 (`Elite Boss`, `Enemy`, `Rest`, `Merchant`, `Event`), **Act Boss icon/preview** at top of scroll map, clickable **RunDeckContainer**, and **PotionBelt / RelicList** HUD.
-- [ ] **`Merchant.unity`**: Currently only has card `OfferPanel`, `MerchantCardRemovalController`, `RunStatusUI`, and `Back`. Add **Relic Shop shelf**, **Potion Shop shelf**, **Deck-Grid Card Removal modal** (currently relies on a single `selectedCard` field), **Shopkeeper speech/greeting bubble**, affordability/purchased feedback, and **Deck Viewer** button.
-- [ ] **`Rest.unity`**: Currently only has `Go Rest`, `Reduce Stress`, `Leave`, `RunDeckContainer`, and `RunStatusUI`. Add a **Smith / Upgrade Card button** (missing in `Rest.unity`), an interactive **Deck-Grid Upgrade Picker + `Card -> Card+` side-by-side preview modal**, and relic/camp action buttons (Lift, Toke, Dig, Recall).
-- [ ] **`Treasure.unity`**: Currently only has `Claim 50 Gold` and `Leave`. Add an interactive **Chest Open animation/state**, **Relic / Card Reward Showcase card**, Mimic/Curse dilemma UI, and **True-Ending Key** claim slot.
-- [ ] **`Event.unity`**: Currently only has `Gain 50 Gold` and `Leave` buttons. Add **Event Title banner**, **Narrative Story text box**, **Event Illustration frame**, **Outcome preview & requirement-lock tooltips** on choices, and result summary feedback.
-- [ ] **`RunRewards.unity` & `CardReward.unity`**: `RunRewards.unity` only shows `Rewards`, `Card Reward`, and `Continue`—add **Gold / Relic / Potion claim rows**, **Boss 3-Relic Picker overlay**, and **Full-Potion-Belt Swap/Discard modal**. On `CardReward.unity`, add **Rarity banners**, **Owned Duplicate count badges**, and **Keyword Tooltips**.
-- [ ] **`GameOver.unity` & Missing Victory Screen**: Currently only shows `"Game Over"`, `"Your run has ended."`, and `"Main Menu"`. Add **Victory screen**, **Run Summary & Score breakdown**, **Final Deck & Relics recap**, **Seed display/copy**, **Crystal meta-currency earned bar**, and **Play Again / Quick Retry**.
+- [x] **`Merchant.unity`**: Built [`MerchantShopUI.cs`](../Assets/_Project/Scripts/Map/Merchant/MerchantShopUI.cs) with 8 card offers (`2×4`), 3 Relic pedestals beside an escalating circular `RESET` (`10g → 20g → 30g...`), talking vendor + `Vendor Text` dialogue, `Item desc` hover inspector, Deck Viewer, and escalating Deck-Grid Card Removal (`75g → 100g...`) (Potion shelf remains optional).
+- [x] **`Rest.unity`**: Built [`RestSiteUI.cs`](../Assets/_Project/Scripts/Map/Rest/RestSiteUI.cs) with flickering campfire embers, **Rest**, **Calm Mind**, and interactive **Smith** Deck-Grid Upgrade Picker + `Card → Card+` side-by-side preview modal.
+- [x] **`Treasure.unity`**: Built [`TreasureRoomUI.cs`](../Assets/_Project/Scripts/Map/Treasure/TreasureRoomUI.cs) with interactive rattling chest burst animation, Gold claim, and random Relic showcase with 5-slot `RelicSwapModalUI` integration.
+- [x] **`Event.unity`**: Built data-driven [`NarrativeEventData.cs`](../Assets/_Project/Scripts/Data/NarrativeEventData.cs) + [`NarrativeEventUI.cs`](../Assets/_Project/Scripts/Map/Event/NarrativeEventUI.cs) with 6 handcrafted chapter-themed events, requirement-locked choices, outcome previews, and result feedback.
+- [ ] **`RunRewards.unity` & `CardReward.unity`**: Added Relic & Potion reward types + automatic Elite/Boss Relic drops to `RunRewardController`. Still remaining: Boss 3-Relic Picker overlay, Full-Potion-Belt Swap modal, and Rarity/Owned-Count badges on `CardReward.unity`.
+- [x] **`GameOver.unity` & Victory Summary Screen**: Built [`RunEndSummaryUI.cs`](../Assets/_Project/Scripts/Menus/RunEndSummaryUI.cs) supporting both **Victory (`VICTORY — RUN COMPLETE!`)** and **Game Over** with Hero, Chapters Reached, Deck Size, Relics, Gold, Crystals Earned, and Play Again / Main Menu controls.
 - [ ] **`DialogueTutorial.unity` & Settings Modal**: Add Miro Frame 1's **Intro Cutscene UI**, plus Dialogue **History Log**, **Auto / Text Speed**, and **Branching Choice** buttons to `Dialogue (1).prefab` (`NPCInteraction`). Expand `SettingsAnimateablePanel.prefab` beyond 3 audio sliders to include **Display/Resolution/VSync**, **Fast Mode**, **Screen Shake**, **Confirmations**, **Language (`en`/`zh-Hant`/`ja`/`ko`)**, **Keybinds**, and **Reset Save confirmation**.
 
 ### D. Witch's Apocalyptic Journey (`魔女的末日旅途`) Signature UIs

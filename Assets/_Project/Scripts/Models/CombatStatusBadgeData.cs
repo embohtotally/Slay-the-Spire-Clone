@@ -185,7 +185,7 @@ namespace PlushieOdyssey.Combat.Models
             Data.HeroWillProfile profile = state?.WillProfile;
             int thresholdPct = Mathf.RoundToInt((state != null ? state.HighThreshold : RunHeroStressState.HighWillThreshold) * 100f);
             int bonusPct = Mathf.RoundToInt(((state != null ? state.HighWillBonusMultiplier : 1.25f) - 1f) * 100f);
-            string title = profile != null ? profile.HighWillTitle : "High Will";
+            string title = profile != null ? profile.HighWillTitle : "+ High Will";
             string desc = profile != null
                 ? profile.FormatHighWillDescription()
                 : $"Will ≥ {thresholdPct}%: Grants <color=#64E8FF><b>+{bonusPct}% attack damage</b></color> and <color=#64E8FF><b>+{bonusPct}% Shield gain</b></color>.";
@@ -194,7 +194,7 @@ namespace PlushieOdyssey.Combat.Models
             {
                 Id = "HighWill",
                 Title = title,
-                ShortCode = "W+",
+                ShortCode = "+W",
                 StackLabel = string.Empty,
                 StackValue = bonusPct,
                 RemainingTurns = 999,
@@ -213,16 +213,16 @@ namespace PlushieOdyssey.Combat.Models
             Data.HeroWillProfile profile = state?.WillProfile;
             int thresholdPct = Mathf.RoundToInt((state != null ? state.LowThreshold : RunHeroStressState.LowWillThreshold) * 100f);
             int penaltyPct = Mathf.RoundToInt((state != null ? state.LowWillPenaltyFraction : 0.20f) * 100f);
-            string title = profile != null ? profile.LowWillTitle : "Fear (Low Will)";
+            string title = profile != null ? profile.LowWillTitle : "- Low Will";
             string desc = profile != null
                 ? profile.FormatLowWillDescription()
-                : $"Will < {thresholdPct}%: Effective Max HP is reduced by <color=#FF6B6B><b>{penaltyPct}% Fear</b></color> until Will recovers.";
+                : $"Will < {thresholdPct}%: Effective Max HP is reduced by <color=#FF6B6B><b>{penaltyPct}%</b></color> and Attack cards are blocked until Will recovers.";
 
             return new CombatStatusBadgeData
             {
                 Id = "LowWill",
                 Title = title,
-                ShortCode = "F!",
+                ShortCode = "-W",
                 StackLabel = string.Empty,
                 StackValue = penaltyPct,
                 RemainingTurns = 999,
@@ -308,7 +308,7 @@ namespace PlushieOdyssey.Combat.Models
 
                 BuffType.FearImmunity => (
                     "Will Shield", "WI", StatusIconKey.WillPositive, new Color(0.36f, 0.88f, 1.00f, 1f),
-                    "Immune to incoming Will drain and Fear effects."),
+                    "Immune to incoming Will drain."),
 
                 BuffType.Redirect => (
                     "Redirect", "RD", StatusIconKey.Defend, new Color(0.42f, 0.86f, 0.68f, 1f),

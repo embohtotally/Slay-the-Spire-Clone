@@ -106,13 +106,17 @@ namespace PlushieOdyssey.Combat.Systems
             failure = GetFailure(card, target);
             if (failure != CardPlayFailure.None) return false;
 
-            int manaCost = GetEffectiveManaCost(card);
+            int manaCost = card.IsXCost ? _manaSystem.AvailableMana : GetEffectiveManaCost(card);
             // Immediately detach card from hand, reserve mana, and launch non-blocking exit tween
             // so the hand fans shut on frame 0 and the next card can be hovered/played instantaneously!
             _manaSystem.ReserveMana(manaCost);
             _cardSystem.ReserveCardPlay(card);
 
-            if (_actionSystem.Enqueue(new PlayCardGA(card, target)))
+            PlayCardGA playAction = card.IsXCost
+                ? new PlayCardGA(card, target, manaCost)
+                : new PlayCardGA(card, target);
+
+            if (_actionSystem.Enqueue(playAction))
             {
                 RefreshState();
                 return true;

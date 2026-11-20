@@ -15,7 +15,7 @@
   mana_cost: 1
   card_type: Power
   target_type: Hero
-  description: "Heal 6 HP + Reduce Fear 2"
+  description: "Heal 6 HP, Gain +2 Will"
   auto_effects:
     - type: Heal
       amount: 6
@@ -30,7 +30,7 @@
   mana_cost: 2
   card_type: Power
   target_type: Hero
-  description: "Reduce Fear 10, Draw 1"
+  description: "Gain +10 Will, Draw 1"
   auto_effects:
     - type: ReduceFear
       amount: 10
@@ -45,7 +45,7 @@
   mana_cost: 2
   card_type: Power
   target_type: Hero
-  description: "Draw 2, Reduce Fear 5"
+  description: "Draw 2, Gain +5 Will"
   auto_effects:
     - type: Draw
       amount: 2
@@ -60,7 +60,7 @@
   mana_cost: 3
   card_type: Attack
   target_type: Enemy
-  description: "Deal 18 Damage (+12 If Fear >= 50)"
+  description: "Deal 18 Damage (+12 If Will <= 50)"
   manual_effect:
     type: ConditionalDamage
     base_amount: 18
@@ -168,7 +168,7 @@
   mana_cost: 1
   card_type: Buff
   target_type: Hero
-  description: "Gain 8 Shield, Reduce Fear 5"
+  description: "Gain 8 Shield, Gain +5 Will"
   auto_effects:
     - type: Shield
       amount: 8
@@ -195,7 +195,7 @@
   mana_cost: 3
   card_type: Power
   target_type: Hero
-  description: "Gain Aura's Fear, Receive heal 18"
+  description: "Copy Aura's Will, Heal 18 HP"
   auto_effects:
     - type: CopyFear
       source_ally: "Aura"
@@ -328,10 +328,10 @@
 - id: "Reward_Aura_Celestial_Nova"
   title: "Celestial Nova"
   tier: Rare
-  mana_cost: 0
+  mana_cost: X
   card_type: Attack
   target_type: Enemy
-  description: "18 Damage (X cost)"
+  description: "Deal 18 Damage x X (Spends all Mana)"
   manual_effect:
     type: Damage
     amount: 18
@@ -393,12 +393,12 @@
       target: Self
 
 - id: "Reward_Ember_Fear_Immunity"
-  title: "Fear Immunity"
+  title: "Will Shield"
   tier: Rare
   mana_cost: 2
   card_type: Buff
   target_type: Hero
-  description: "Fear Immunity 1 turn, Gain 10 Shield"
+  description: "Will Shield 1 turn (Immune to Will drain), Gain 10 Shield"
   auto_effects:
     - type: ApplyBuff
       buff_type: FearImmunity

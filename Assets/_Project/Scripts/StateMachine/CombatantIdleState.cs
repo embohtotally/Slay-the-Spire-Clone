@@ -12,7 +12,12 @@ namespace PlushieOdyssey.Combat.States
 
         public override void Enter()
         {
-            // Just idling
+            combatant?.CaptureProceduralVisualHomeIfNeeded();
+        }
+
+        public override void Update()
+        {
+            combatant?.UpdateProceduralIdle(UnityEngine.Time.deltaTime);
         }
     }
 }

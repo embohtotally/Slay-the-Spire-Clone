@@ -135,7 +135,7 @@ namespace PlushieOdyssey.UI.Combat
                     if (view != null && view.Card != null && view.Card.HasKeyword(Data.CardKeywords.Unplayable))
                         ShowToast("This card is Unplayable.");
                     else
-                        ShowToast("Low Will (<25%): Attack cards are blocked!");
+                        ShowToast("- Low Will (<25%): Attack cards are blocked!");
                     break;
                 case CardPlayFailure.TutorialBlocked:
                     ShowToast("Follow the tutorial prompt first.");

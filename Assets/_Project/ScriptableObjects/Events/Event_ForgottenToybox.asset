@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 002af2782517de34d926fb775014819a, type: 3}
+  m_Name: Event_ForgottenToybox
+  m_EditorClassIdentifier: 
+  Title: The Forgotten Toybox
+  Subtitle: "CHAPTER EVENT \u2022 LONELINESS"
+  StoryText: Half-buried beneath soft wildflowers sits an ornate brass toybox humming
+    a gentle lullaby. A rusted clasp guards whatever trinkets sleep inside.
+  Illustration: {fileID: 1033468905, guid: 3ef97e551d654ba47b3b4393e27ba5e9, type: 3}
+  Choices:
+  - Label: Pry Open the Clasp
+    OutcomePreview: "[Lose 6 HP \u2022 Gain Random Relic]"
+    ResultStory: The sharp latch nicks your fingers, yet nestled inside the velvet
+      lining glows a forgotten relic!
+    RequiredMinGold: 0
+    RequiredMinHealth: 6
+    GoldDelta: 0
+    HealthDelta: -6
+    MaxHealthDelta: 0
+    StressDelta: 0
+    GrantRandomRelic: 1
+    GrantRandomCard: 0
+  - Label: Wind the Music Box
+    OutcomePreview: "[Restore +25 Will \u2022 Gain 35g]"
+    ResultStory: A familiar melody drifts into the breeze, steadying your heart while
+      a handful of coins tumbles from the base.
+    RequiredMinGold: 0
+    RequiredMinHealth: 0
+    GoldDelta: 35
+    HealthDelta: 0
+    MaxHealthDelta: 0
+    StressDelta: -25
+    GrantRandomRelic: 0
+    GrantRandomCard: 0
+  - Label: Leave It Undisturbed
+    OutcomePreview: '[Heal 8 HP]'
+    ResultStory: You take a quiet breath beside the flowers before continuing down
+      the path.
+    RequiredMinGold: 0
+    RequiredMinHealth: 0
+    GoldDelta: 0
+    HealthDelta: 8
+    MaxHealthDelta: 0
+    StressDelta: 0
+    GrantRandomRelic: 0
+    GrantRandomCard: 0

@@ -11,11 +11,13 @@ namespace PlushieOdyssey.Combat.States
         private float animationDuration;
         private float timer;
         private bool isComplete;
+        private Vector3? targetWorldPos;
 
-        public CombatantAttackState(CombatantView combatant, float animationDuration, Action onComplete = null)
+        public CombatantAttackState(CombatantView combatant, float animationDuration, Action onComplete = null, Vector3? targetWorldPos = null)
             : base(combatant, onComplete)
         {
             this.animationDuration = animationDuration;
+            this.targetWorldPos = targetWorldPos;
         }
 
         public override void Enter()
@@ -27,6 +29,10 @@ namespace PlushieOdyssey.Combat.States
             {
                 combatant.SetAnimationTrigger("Attack");
             }
+
+            // Always play snappy procedural wind-up & directional lunge so static sprites feel alive!
+            Vector3 lungeTarget = targetWorldPos ?? (combatant.transform.position + (combatant is EnemyView ? Vector3.left * 2.2f : Vector3.right * 2.2f));
+            combatant.PlayProceduralAttackLunge(lungeTarget, Mathf.Clamp(animationDuration, 0.24f, 0.55f));
         }
 
         public override void Update()

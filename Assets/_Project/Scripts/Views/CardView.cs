@@ -45,7 +45,7 @@ namespace PlushieOdyssey.Combat.Views
             Card = card;
             CardData = null;
             ApplyDisplay(new CardDisplayData(card.Title, card.Description, card.Mana,
-                card.Type, card.Image, card.Tier));
+                card.Type, card.Image, card.Tier, card.IsXCost));
         }
 
         public void Setup(CardData cardData)
@@ -66,7 +66,7 @@ namespace PlushieOdyssey.Combat.Views
             ApplyDisplay(new CardDisplayData(
                 string.IsNullOrWhiteSpace(titleOverride) ? cardData.Title : titleOverride,
                 string.IsNullOrWhiteSpace(descriptionOverride) ? cardData.Description : descriptionOverride,
-                cardData.Mana, cardData.Type, cardData.Image, cardData.Tier));
+                cardData.Mana, cardData.Type, cardData.Image, cardData.Tier, cardData.IsXCost));
         }
 
         public void Display(CardDisplayData data)
@@ -79,8 +79,13 @@ namespace PlushieOdyssey.Combat.Views
         public void SetDisplayedCost(int cost)
         {
             if (!HasContent) return;
+            if (DisplayData.IsXCost)
+            {
+                SetText(manaText, DisplayData.CostLabel);
+                return;
+            }
             DisplayData = DisplayData.WithCost(Mathf.Max(0, cost));
-            SetText(manaText, DisplayData.Mana.ToString());
+            SetText(manaText, DisplayData.CostLabel);
         }
 
         public void SetBlocked(bool blocked)
@@ -117,7 +122,7 @@ namespace PlushieOdyssey.Combat.Views
             HasContent = true;
             SetText(titleText, data.Title);
             SetText(descriptionText, data.Description);
-            SetText(manaText, data.Mana.ToString());
+            SetText(manaText, data.CostLabel);
             SetText(typeText, data.Type.ToString());
             SetImage(cardImage, data.Image);
             SetImage(frameImage, data.Tier switch

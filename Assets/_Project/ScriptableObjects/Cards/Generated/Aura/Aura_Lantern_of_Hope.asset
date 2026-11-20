@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Image>k__BackingField: {fileID: 2054458977, guid: 56ce11f854e5896488c9b008fe7faaf5, type: 3}
   <Title>k__BackingField: Lantern of Hope
-  <Description>k__BackingField: Reduce Fear 10, Draw 1
+  <Description>k__BackingField: Gain +10 Will, Draw 1
   <Tier>k__BackingField: 0
   <Mana>k__BackingField: 2
   <Type>k__BackingField: 2

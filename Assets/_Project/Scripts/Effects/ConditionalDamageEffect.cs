@@ -55,6 +55,12 @@ namespace PlushieOdyssey.Combat.Effects
             return new DealDamageGA(EvaluateDamage(targets, caster), targets, caster);
         }
 
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+            return new DealDamageGA(EvaluateDamage(targets, caster) * xMultiplier, targets, caster);
+        }
+
         private static bool HasAnyActiveStatus(CombatantView target)
         {
             if (target == null) return false;

@@ -2,15 +2,15 @@ Shader "Gameseed/Spellbeam/MagicCircle"
 {
     Properties
     {
-        [HDR] _CircleColor ("Circle Color", Color) = (1, 0.5, 0.85, 1)
-        _CircleIntensity ("Circle Intensity", Float) = 4
-        _RingASpeed ("Ring A Rotation", Float) = 0.55
-        _RingBSpeed ("Ring B Rotation", Float) = -0.85
-        _TickA ("Ring A Tick Count", Float) = 18
-        _TickB ("Ring B Tick Count", Float) = 9
-        _RingWidthA ("Ring A Width", Float) = 0.045
-        _RingWidthB ("Ring B Width", Float) = 0.035
-        _HexRadius ("Hexagram Radius", Float) = 0.46
+        [HDR] _CircleColor ("Circle Color", Color) = (0.95, 0.28, 0.88, 1)
+        _CircleIntensity ("Circle Intensity", Float) = 1.45
+        _RingASpeed ("Ring A Rotation", Float) = 0.75
+        _RingBSpeed ("Ring B Rotation", Float) = -1.05
+        _TickA ("Ring A Tick Count", Float) = 24
+        _TickB ("Ring B Tick Count", Float) = 12
+        _RingWidthA ("Ring A Width", Float) = 0.038
+        _RingWidthB ("Ring B Width", Float) = 0.028
+        _HexRadius ("Hexagram Radius", Float) = 0.48
         _ChargeT ("Charge T", Range(0, 1)) = 0
         _DissipateT ("Dissipate T", Range(0, 1)) = 0
         _Seed ("Seed", Float) = 0
@@ -22,7 +22,7 @@ Shader "Gameseed/Spellbeam/MagicCircle"
         {
             Name "SpellbeamMagicCircle"
             Tags { "LightMode"="SRPDefaultUnlit" }
-            Blend One One
+            Blend SrcAlpha OneMinusSrcAlpha
             ZWrite Off
             ZTest LEqual
             Cull Off
@@ -57,39 +57,54 @@ Shader "Gameseed/Spellbeam/MagicCircle"
             {
                 float2 p = IN.uv * 2.0 - 1.0;
                 float r = length(p);
+                if (r > 1.0) discard;
+
                 float ang = atan2(p.y, p.x);
                 float a01 = frac(ang / 6.28318530718 + 1.0) * 6.28318530718;
                 float t = _Time.y + _Seed * 17.0;
 
+                // Outer arcane rune ring + crisp inner border lines
                 float aA = ang + t * _RingASpeed;
-                float bandA = smoothstep(_RingWidthA, 0.0, abs(r - 0.86));
-                float ticksA = 0.55 + 0.45 * pow(abs(sin(aA * _TickA * 0.5)), 0.5);
-                float ringA = bandA * ticksA;
+                float bandA = smoothstep(_RingWidthA, 0.004, abs(r - 0.86));
+                float hairlineOuter = smoothstep(0.016, 0.002, abs(r - 0.93));
+                float ticksA = 0.40 + 0.60 * pow(abs(sin(aA * _TickA * 0.5)), 0.45);
+                float ringA = max(bandA * ticksA, hairlineOuter * 0.85);
 
+                // Counter-rotating inner sigil ring
                 float aB = ang + t * _RingBSpeed;
-                float bandB = smoothstep(_RingWidthB, 0.0, abs(r - 0.66));
-                float ticksB = 0.6 + 0.4 * pow(abs(sin(aB * _TickB * 0.5)), 0.6);
+                float bandB = smoothstep(_RingWidthB, 0.004, abs(r - 0.66));
+                float ticksB = 0.45 + 0.55 * pow(abs(sin(aB * _TickB * 0.5)), 0.55);
                 float ringB = bandB * ticksB;
 
+                // Crisp double hexagram star
                 const float SIXTH = PI / 6.0;
-                float f1 = abs(fmod(a01 + SIXTH, 2.0 * SIXTH) - SIXTH);
-                float f2 = abs(fmod(a01 + 2.0 * SIXTH, 2.0 * SIXTH) - SIXTH);
-                float hex1 = smoothstep(0.028, 0.0, abs(r - _HexRadius / max(cos(f1), 0.72)));
-                float hex2 = smoothstep(0.022, 0.0, abs(r - _HexRadius * 0.62 / max(cos(f2), 0.72)));
-                float hex = max(hex1, hex2) * 0.85;
+                float rotA = frac((ang + t * 0.45) / 6.28318530718 + 1.0) * 6.28318530718;
+                float f1 = abs(fmod(rotA + SIXTH, 2.0 * SIXTH) - SIXTH);
+                float f2 = abs(fmod(rotA + 2.0 * SIXTH, 2.0 * SIXTH) - SIXTH);
+                float hex1 = smoothstep(0.026, 0.004, abs(r - _HexRadius / max(cos(f1), 0.72)));
+                float hex2 = smoothstep(0.020, 0.003, abs(r - _HexRadius * 0.62 / max(cos(f2), 0.72)));
+                float hex = max(hex1, hex2) * 0.95;
 
-                float coreGlow = exp(-r * 5.0) * 0.6;
-                float pat = max(max(ringA, ringB), hex) + coreGlow;
+                // Delicate center bloom & soft outer halo
+                float coreGlow = exp(-r * 5.8) * 0.55;
+                float softHalo = smoothstep(1.0, 0.76, r) * smoothstep(0.55, 0.86, r) * 0.24;
+                float sharpLines = max(max(ringA, ringB), hex);
 
-                float chargeR = _ChargeT * 1.12;
+                float chargeR = _ChargeT * 1.08;
                 float reveal = smoothstep(chargeR, chargeR - 0.08, r);
-                float edge = smoothstep(chargeR + 0.10, chargeR - 0.02, r)
-                           * smoothstep(chargeR - 0.16, chargeR - 0.02, r);
-                float pulse = lerp(0.65 + 0.35 * sin(t * 16.0), 1.0, _ChargeT);
+                float edge = smoothstep(chargeR + 0.06, chargeR - 0.01, r)
+                           * smoothstep(chargeR - 0.10, chargeR - 0.01, r) * 0.85;
+                float pulse = lerp(0.80 + 0.20 * sin(t * 14.0), 1.0, _ChargeT);
                 float fade = 1.0 - _DissipateT;
 
-                float intensity = _CircleIntensity * (pat * reveal + edge * 1.8) * pulse * fade;
-                return half4(_CircleColor.rgb * intensity, 1.0);
+                float alpha = saturate(((sharpLines + coreGlow + softHalo) * reveal + edge) * pulse * fade);
+
+                // Deep vibrant violet-magenta aura with crisp white-hot rune cores
+                float3 deepTint = _CircleColor.rgb * 0.62;
+                float3 brightRune = lerp(_CircleColor.rgb * 1.15, float3(1.0, 0.94, 1.0), saturate(sharpLines * 0.78 + coreGlow * 0.6));
+                float3 col = lerp(deepTint, brightRune, saturate(sharpLines + coreGlow + edge)) * clamp(_CircleIntensity, 0.9, 1.8);
+
+                return half4(col, alpha);
             }
             ENDHLSL
         }

@@ -17,5 +17,11 @@ namespace PlushieOdyssey.Combat.Effects
             AddStressGA addStressGA = new AddStressGA(stressAmount, targets, caster);
             return addStressGA;
         }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+            return new AddStressGA(stressAmount * xMultiplier, targets, caster);
+        }
     }
 }

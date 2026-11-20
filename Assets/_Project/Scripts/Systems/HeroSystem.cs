@@ -15,11 +15,23 @@ namespace PlushieOdyssey.Combat.Systems
     {
         [field: SerializeField] public HeroView HeroView { get; private set; }
 
+        [Header("Will System — Per-Card RNG Gain")]
+        [Tooltip("When enabled, every card played grants a random amount of Will between Min and Max (inclusive).")]
+        [SerializeField] private bool grantWillOnCardPlay = true;
+        [SerializeField, Min(0)] private int minWillGainPerCard = 1;
+        [SerializeField, Min(0)] private int maxWillGainPerCard = 3;
+
+        public int MinWillGainPerCard => Mathf.Max(0, minWillGainPerCard);
+        public int MaxWillGainPerCard => Mathf.Max(MinWillGainPerCard, maxWillGainPerCard);
+        public int LastCardWillGain { get; private set; }
+        public event Action<int> CardWillGained;
+
         private void OnEnable()
         {
             ActionSystem.AttachPerformer<AddStressGA>(AddStressPerformer);
             ActionSystem.AttachPerformer<ModifyStressGA>(ModifyStressPerformer);
             ActionSystem.AttachPerformer<SetStressGA>(SetStressPerformer);
+            ActionSystem.SubscribeReaction<PlayCardGA>(OnCardPlayedPost, ReactionTiming.POST);
         }
 
         private void OnDisable()
@@ -27,6 +39,23 @@ namespace PlushieOdyssey.Combat.Systems
             ActionSystem.DetachPerformer<AddStressGA>();
             ActionSystem.DetachPerformer<ModifyStressGA>();
             ActionSystem.DetachPerformer<SetStressGA>();
+            ActionSystem.UnsubscribeReaction<PlayCardGA>(OnCardPlayedPost, ReactionTiming.POST);
+        }
+
+        private void OnCardPlayedPost(PlayCardGA playCardGA)
+        {
+            if (!grantWillOnCardPlay || HeroView == null || playCardGA?.Card == null) return;
+            int min = MinWillGainPerCard;
+            int max = MaxWillGainPerCard;
+            if (max <= 0) return;
+
+            int roll = UnityEngine.Random.Range(min, max + 1);
+            LastCardWillGain = roll;
+            if (roll <= 0) return;
+
+            HeroView.AddWillToAllHeroes(roll);
+            GameManager.GenerateFloatingText($"+{roll} Will", HeroView.transform, 1f, 0.92f, "#38D4FF");
+            CardWillGained?.Invoke(roll);
         }
 
         public void Setup(List<HeroData> heroTeam)
@@ -100,7 +129,7 @@ namespace PlushieOdyssey.Combat.Systems
                 if (target is HeroView heroView)
                 {
                     heroView.SetCurrentStress(sourceStress);
-                    GameManager.GenerateFloatingText("Fear = " + sourceStress, target.transform, 1f, 1f, "#800080");
+                    GameManager.GenerateFloatingText("Will = " + heroView.CurrentWill, target.transform, 1f, 1f, "#38D4FF");
                     target.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 5, 1f);
                 }
             }

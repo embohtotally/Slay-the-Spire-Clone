@@ -17,5 +17,11 @@ namespace PlushieOdyssey.Combat.Effects
             HealGA healGA = new HealGA(healAmount, targets, caster);
             return healGA;
         }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+            return new HealGA(healAmount * xMultiplier, targets, caster);
+        }
     }
 }

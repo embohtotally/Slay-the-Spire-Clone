@@ -41,13 +41,35 @@ namespace PlushieOdyssey.Combat.Systems
                 if (target == null || target.CurrentHealth <= 0) continue;
 
                 int hpBefore = target.CurrentHealth;
+                int shieldBefore = target.CurrentShield;
                 target.Damage(dealDamageGA.Amount);
+                int hpLost = Mathf.Max(0, hpBefore - target.CurrentHealth);
+                int shieldAbsorbed = Mathf.Max(0, shieldBefore - target.CurrentShield);
+                bool shieldBroken = shieldBefore > 0 && target.CurrentShield <= 0 && dealDamageGA.Amount > 0;
+                bool killed = target.CurrentHealth <= 0;
+
                 if (damageVFX != null)
                 {
                     Instantiate(damageVFX, target.transform.position, Quaternion.identity);
                 }
 
-                GameManager.GenerateFloatingText("-" + dealDamageGA.Amount.ToString(), target.transform);
+                if (hpLost > 0)
+                {
+                    float popupScale = hpLost >= 14 || killed ? 1.38f : (hpLost >= 8 ? 1.16f : 1.0f);
+                    string hex = killed ? "#FF3B3B" : (hpLost >= 12 ? "#FF6B35" : "#FF5252");
+                    GameManager.GenerateFloatingText("-" + hpLost, target.transform, 1.05f, 1.15f, hex, popupScale);
+                    if (shieldBroken)
+                    {
+                        GameManager.GenerateFloatingText("SHIELD BREAK!", target.transform, 1.15f, 1.35f, "#5CE1E6", 1.12f);
+                    }
+                }
+                else if (shieldAbsorbed > 0)
+                {
+                    GameManager.GenerateFloatingText("BLOCKED!", target.transform, 0.95f, 1.05f, "#66E0FF", 1.05f);
+                }
+
+                PlushieOdyssey.Vfx.CombatJuiceDirector.Instance?.OnDamageImpact(
+                    target, dealDamageGA.Caster, dealDamageGA.Amount, hpLost, shieldAbsorbed, shieldBroken, killed);
 
                 if (target.CurrentHealth < hpBefore && BuffSystem.Instance != null)
                 {

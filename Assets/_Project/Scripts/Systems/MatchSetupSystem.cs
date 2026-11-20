@@ -26,10 +26,14 @@ namespace PlushieOdyssey.Combat.Systems
         [SerializeField] private List<CardData> editorTestCards = new();
 #endif
 
+        private int _bonusOpeningDrawFromTalents;
+        private int _bonusStartingShieldFromTalents;
+
         private void Start()
         {
             List<HeroData> activeParty = ResolveActiveParty();
             HeroSystem.Instance.Setup(activeParty);
+            CollectUnlockedTalentBonuses(activeParty);
 
             List<EnemyData> enemiesForThisMatch = enemyDataList;
             if (!forceInspectorEnemies && RunManager.Instance != null && RunManager.Instance.SelectedEncounter != null)
@@ -54,7 +58,36 @@ namespace PlushieOdyssey.Combat.Systems
                     }
                 }
             }
-            ActionSystem.Instance.Perform(new CombatStartedGA(), DrawStartingHand);
+            ActionSystem.Instance.Perform(new CombatStartedGA(), OnCombatStartedFinished);
+        }
+
+        private void CollectUnlockedTalentBonuses(List<HeroData> activeParty)
+        {
+            _bonusOpeningDrawFromTalents = 0;
+            _bonusStartingShieldFromTalents = 0;
+            if (activeParty == null) return;
+
+            for (int i = 0; i < activeParty.Count; i++)
+            {
+                HeroData hero = activeParty[i];
+                if (hero == null || hero.Talents == null) continue;
+                for (int t = 0; t < hero.Talents.Count; t++)
+                {
+                    HeroTalentDefinition talent = hero.Talents[t];
+                    if (talent == null || !talent.IsUnlocked) continue;
+                    _bonusOpeningDrawFromTalents += Mathf.Max(0, talent.BonusOpeningDraw);
+                    _bonusStartingShieldFromTalents += Mathf.Max(0, talent.BonusStartingShield);
+                }
+            }
+        }
+
+        private void OnCombatStartedFinished()
+        {
+            if (_bonusStartingShieldFromTalents > 0 && HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null)
+            {
+                HeroSystem.Instance.HeroView.AddShield(_bonusStartingShieldFromTalents);
+            }
+            DrawStartingHand();
         }
 
         private List<HeroData> ResolveActiveParty()
@@ -70,7 +103,8 @@ namespace PlushieOdyssey.Combat.Systems
         private void DrawStartingHand()
         {
             if (yourTurnSfx != global::PlushieOdyssey.Audio.SfxID.None) global::PlushieOdyssey.Audio.Tune.SFX(yourTurnSfx);
-            DrawCardsGA drawCardsGA = new(startingHandSize);
+            int totalDraw = Mathf.Max(1, startingHandSize + _bonusOpeningDrawFromTalents);
+            DrawCardsGA drawCardsGA = new(totalDraw);
             ActionSystem.Instance.Perform(drawCardsGA);
         }
 

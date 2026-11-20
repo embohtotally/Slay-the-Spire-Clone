@@ -18,36 +18,36 @@ MonoBehaviour:
   HoldDuration: 0.32
   DissipateDuration: 0.45
   CylinderSides: 12
-  BeamRadius: 0.22
-  SheathRadiusMultiplier: 1.8
-  CircleRadius: 1.15
-  CircleCameraTilt: 0.55
-  PierceOvershoot: 1.5
+  BeamRadius: 0.34
+  SheathRadiusMultiplier: 1.95
+  CircleRadius: 1.48
+  CircleCameraTilt: 0.62
+  PierceOvershoot: 1.8
   DepthOffset: -0.35
   CasterAnchorNames:
   - CastAnchor
   - Muzzle
   - Staff
-  CasterAnchorOffset: {x: 0.55, y: 0.35, z: 0}
+  CasterAnchorOffset: {x: 1.85, y: 1.42, z: 0}
   TargetAnchorNames:
   - ImpactAnchor
   - HitPoint
-  TargetAnchorOffset: {x: 0, y: 0.15, z: 0}
+  TargetAnchorOffset: {x: 0, y: 0.68, z: 0}
   BaseCoreMaterial: {fileID: 2100000, guid: f2f71e48bfe8fd749b1830b626ca0e03, type: 2}
   BaseSheathMaterial: {fileID: 2100000, guid: bd480f4fe276a724da6537b337a05841, type: 2}
   BaseCircleMaterial: {fileID: 2100000, guid: 6be4d9e40af7ef04e8e0394fd7cce7f8, type: 2}
   BaseShockMaterial: {fileID: 2100000, guid: 502ec40aef3210043815d4e98f38e410, type: 2}
-  CoreColor: {r: 1, g: 0.35, b: 0.75, a: 1}
-  HotColor: {r: 1, g: 1, b: 1, a: 1}
-  SheathColor: {r: 0.72, g: 0.3, b: 1, a: 1}
-  CircleColor: {r: 1, g: 0.5, b: 0.85, a: 1}
-  ImpactRingColor: {r: 1, g: 0.6, b: 0.9, a: 1}
+  CoreColor: {r: 0.95, g: 0.2, b: 0.86, a: 1}
+  HotColor: {r: 1, g: 0.98, b: 1, a: 1}
+  SheathColor: {r: 0.62, g: 0.16, b: 1, a: 1}
+  CircleColor: {r: 0.96, g: 0.26, b: 0.88, a: 1}
+  ImpactRingColor: {r: 0.96, g: 0.24, b: 0.88, a: 1}
   ImpactFlashColor: {r: 1, g: 1, b: 1, a: 1}
-  CoreIntensity: 6
-  SheathIntensity: 2.5
-  CircleIntensity: 4
-  ImpactRingIntensity: 7
-  ImpactFlashIntensity: 10
+  CoreIntensity: 1.65
+  SheathIntensity: 1.35
+  CircleIntensity: 1.45
+  ImpactRingIntensity: 1.45
+  ImpactFlashIntensity: 1.65
   GateMode: 0
   UsePerTargetSubflows: 0
   SkipDeadTargets: 1
@@ -61,8 +61,8 @@ MonoBehaviour:
   ShakeAmplitude: 0.22
   ShakeDuration: 0.32
   FlashStrength: 0.55
-  ChargeSfx: 0
-  FireSfx: 0
-  ImpactSfx: 0
+  ChargeSfx: 40
+  FireSfx: 10
+  ImpactSfx: 9
   SortingLayerName: Default
   SortingOrder: 50

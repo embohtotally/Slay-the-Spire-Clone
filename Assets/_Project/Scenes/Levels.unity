@@ -717,6 +717,8 @@ RectTransform:
   - {fileID: 874692434}
   - {fileID: 1753327420}
   - {fileID: 692913511}
+  - {fileID: 1936442744}
+  - {fileID: 2081412362}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -794,6 +796,7 @@ MonoBehaviour:
   mapId: ManualMap
   forceResetStateOnStart: 0
   completeCurrentLevelWhenCleared: 0
+  autoAdvanceToNextChapter: 1
   levelSelectSceneName: Levels
   returnToLevelSelectOnComplete: 1
   OnMapCompleted:
@@ -2585,6 +2588,7 @@ MonoBehaviour:
   mapSceneName: Map
   preferCurrentLevelLayout: 1
   completeCurrentLevelWhenMapCleared: 1
+  autoAdvanceToNextChapter: 1
   levelSelectSceneName: Levels
   returnToLevelSelectOnMapComplete: 1
   enableViewportControls: 1
@@ -3107,6 +3111,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 59e5c1f717b35f440b7c9d52f737aac7, type: 3}
+--- !u!1 &1936442743
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1936442744}
+  m_Layer: 0
+  m_Name: CharacterSelectUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1936442744
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1936442743}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 501534462}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2034441896
 GameObject:
   m_ObjectHideFlags: 0
@@ -3324,6 +3359,62 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2044919698}
   m_CullTransparentMesh: 1
+--- !u!1 &2081412361
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2081412362}
+  - component: {fileID: 2081412363}
+  m_Layer: 0
+  m_Name: PartySetupController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2081412362
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2081412361}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 501534462}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2081412363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2081412361}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6d1761d79c72c24e9085562f5a3fa5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetCanvas: {fileID: 501534461}
+  serifFontAsset: {fileID: 11400000, guid: 6893825dc4f34e44891f850088246407, type: 2}
+  uiFontAsset: {fileID: 11400000, guid: 33d1c0e660fceac4bb16a1137a01eeaa, type: 2}
+  playableRoster:
+  - {fileID: 11400000, guid: b2fc22748d8410b4dace4c72bd901277, type: 2}
+  - {fileID: 11400000, guid: a50f0b8ba0b43b043b63c6bcc10836e5, type: 2}
+  futureLockedRoster: []
+  panelSprite: {fileID: 816480020, guid: c8d5f36f218b3d14a88d3f212bef8738, type: 3}
+  buttonSprite: {fileID: 1147154880, guid: d061496e95b57b44d85f3177fbad7703, type: 3}
+  nameplateSprite: {fileID: -508220812, guid: 4463af55faecb754caad02ce0be8c94a, type: 3}
+  openPartySetupOnStart: 0
+  allowDuplicateHeroAcrossSlots: 0
 --- !u!1 &2117342968
 GameObject:
   m_ObjectHideFlags: 0

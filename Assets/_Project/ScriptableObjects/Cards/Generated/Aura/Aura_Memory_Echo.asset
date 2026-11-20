@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Image>k__BackingField: {fileID: 2054458977, guid: 56ce11f854e5896488c9b008fe7faaf5, type: 3}
   <Title>k__BackingField: Memory Echo
-  <Description>k__BackingField: Draw 2, Reduce Fear 5
+  <Description>k__BackingField: Draw 2, Gain +5 Will
   <Tier>k__BackingField: 2
   <Mana>k__BackingField: 2
   <Type>k__BackingField: 2

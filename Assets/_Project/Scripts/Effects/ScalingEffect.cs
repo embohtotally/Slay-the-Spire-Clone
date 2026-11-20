@@ -18,6 +18,13 @@ namespace PlushieOdyssey.Combat.Effects
 
         public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster)
         {
+            return GetGameAction(targets, caster, 1);
+        }
+
+        public override GameAction GetGameAction(List<CombatantView> targets, CombatantView caster, int xMultiplier)
+        {
+            if (xMultiplier <= 0) return null;
+
             int count = 0;
             if (RunManager.Instance != null && RunManager.Instance.Counters.ContainsKey(counterKey))
             {
@@ -28,15 +35,14 @@ namespace PlushieOdyssey.Combat.Effects
 
             if (baseEffect != null)
             {
-                actions.Add(baseEffect.GetGameAction(targets, caster));
+                GameAction baseAction = baseEffect.GetGameAction(targets, caster, xMultiplier);
+                if (baseAction != null) actions.Add(baseAction);
             }
 
             if (scalingEffect != null && count > 0)
             {
-                for (int i = 0; i < count; i++)
-                {
-                    actions.Add(scalingEffect.GetGameAction(targets, caster));
-                }
+                GameAction scaledAction = scalingEffect.GetGameAction(targets, caster, count * xMultiplier);
+                if (scaledAction != null) actions.Add(scaledAction);
             }
 
             if (RunManager.Instance != null)
@@ -48,7 +54,7 @@ namespace PlushieOdyssey.Combat.Effects
                 RunManager.Instance.Counters[counterKey] += step;
             }
 
-            return new SequentialGameAction(actions);
+            return actions.Count > 0 ? new SequentialGameAction(actions) : null;
         }
     }
 }

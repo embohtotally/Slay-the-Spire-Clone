@@ -1,7 +1,9 @@
 using PlushieOdyssey.Audio;
 using PlushieOdyssey.Core;
 using PlushieOdyssey.Core.Scenes;
+using PlushieOdyssey.Data;
 using PlushieOdyssey.Run;
+using PlushieOdyssey.UI.Relics;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,7 +19,9 @@ namespace PlushieOdyssey.Rewards
         Gold,
         Heal,
         ReduceStress,
-        CardReward
+        CardReward,
+        Relic,
+        Potion
     }
 
     [Serializable]
@@ -28,6 +32,8 @@ namespace PlushieOdyssey.Rewards
         [TextArea(2, 4)] public string DescriptionOverride;
         [Min(0)] public int Amount = 20;
         public CardRewardRequest CardRewardRequest = new();
+        public RelicData RelicOverride;
+        public PotionData PotionOverride;
 
         public string GetTitle()
         {
@@ -37,8 +43,10 @@ namespace PlushieOdyssey.Rewards
             {
                 RunRewardType.Gold => $"{Amount} Gold",
                 RunRewardType.Heal => Amount > 0 ? $"Heal {Amount} HP" : "Full Heal",
-                RunRewardType.ReduceStress => Amount > 0 ? $"Reduce {Amount} Stress" : "Clear Stress",
+                RunRewardType.ReduceStress => Amount > 0 ? $"Restore {Amount} Will" : "Restore Full Will",
                 RunRewardType.CardReward => "Card Reward",
+                RunRewardType.Relic => RelicOverride != null ? $"Relic: {RelicOverride.Title}" : "Relic Reward",
+                RunRewardType.Potion => PotionOverride != null ? $"Potion: {PotionOverride.Title}" : "Potion Reward",
                 _ => "Reward"
             };
         }
@@ -51,8 +59,10 @@ namespace PlushieOdyssey.Rewards
             {
                 RunRewardType.Gold => $"Gain {Amount} gold for this run.",
                 RunRewardType.Heal => Amount > 0 ? $"Restore {Amount} HP." : "Restore HP to full.",
-                RunRewardType.ReduceStress => Amount > 0 ? $"Reduce stress by {Amount}." : "Remove all current stress.",
+                RunRewardType.ReduceStress => Amount > 0 ? $"Restore {Amount} Will." : "Restore Will to maximum.",
                 RunRewardType.CardReward => "Choose one card to add to your run deck. You may skip the card choice.",
+                RunRewardType.Relic => RelicOverride != null && !string.IsNullOrWhiteSpace(RelicOverride.Description) ? RelicOverride.Description : "Claim a permanent relic for this run.",
+                RunRewardType.Potion => PotionOverride != null && !string.IsNullOrWhiteSpace(PotionOverride.Description) ? PotionOverride.Description : "Add a combat potion to your belt.",
                 _ => string.Empty
             };
         }
@@ -70,6 +80,9 @@ namespace PlushieOdyssey.Rewards
 
         [Header("Card Reward Scene")]
         [SerializeField] private string cardRewardSceneName = "CardReward";
+        [SerializeField] private RelicRewardPool relicRewardPool;
+        [SerializeField] private PotionRewardPool potionRewardPool;
+        [SerializeField] private bool grantRelicOnEliteOrBoss = true;
 
         [Header("UI")]
         [SerializeField] private GameObject rewardRoot;
@@ -134,6 +147,22 @@ namespace PlushieOdyssey.Rewards
                 }
             }
 
+            // Automatically append a Relic drop when coming from an Elite or Boss encounter
+            if (grantRelicOnEliteOrBoss && relicRewardPool != null &&
+                !activeRewards.Exists(r => r.Type == RunRewardType.Relic) &&
+                RunManager.Instance != null && RunManager.Instance.CurrentMap != null &&
+                !string.IsNullOrEmpty(RunManager.Instance.CurrentMapNodeId))
+            {
+                var node = RunManager.Instance.CurrentMap.GetNode(RunManager.Instance.CurrentMapNodeId);
+                if (node != null && (node.Type == PlushieOdyssey.Map.MapNodeType.Elite || node.Type == PlushieOdyssey.Map.MapNodeType.Boss))
+                {
+                    if (relicRewardPool.TryGetRandomRelic(RunRelicManager.EnsureInstance(), out RelicData dropRelic, RelicRarityMask.All))
+                    {
+                        activeRewards.Add(new RunRewardDefinition { Type = RunRewardType.Relic, RelicOverride = dropRelic });
+                    }
+                }
+            }
+
             if (rewardRoot != null) rewardRoot.SetActive(true);
             if (titleText != null) titleText.text = title;
 
@@ -176,6 +205,64 @@ namespace PlushieOdyssey.Rewards
                 case RunRewardType.CardReward:
                     StartCoroutine(OpenCardRewardScene(rewardIndex, reward.CardRewardRequest));
                     break;
+
+                case RunRewardType.Relic:
+                    ClaimRelicReward(rewardIndex, reward);
+                    break;
+
+                case RunRewardType.Potion:
+                    ClaimPotionReward(rewardIndex, reward);
+                    break;
+            }
+        }
+
+        private void ClaimRelicReward(int rewardIndex, RunRewardDefinition reward)
+        {
+            RunRelicManager mgr = RunRelicManager.EnsureInstance();
+            RelicData relic = reward.RelicOverride;
+            if (relic == null && relicRewardPool != null)
+            {
+                relicRewardPool.TryGetRandomRelic(mgr, out relic, RelicRarityMask.All);
+                reward.RelicOverride = relic;
+            }
+            if (relic == null) return;
+
+            if (FindFirstObjectByType<RelicSwapModalUI>() == null)
+            {
+                Canvas c = FindFirstObjectByType<Canvas>();
+                if (c != null)
+                {
+                    GameObject mGo = new("RelicSwapModalUI");
+                    mGo.transform.SetParent(c.transform, false);
+                    mGo.AddComponent<RelicSwapModalUI>();
+                }
+            }
+
+            if (mgr.AddRelic(relic))
+            {
+                Tune.SFX(SfxID.relic_claim);
+                MarkRewardClaimed(rewardIndex);
+            }
+            else if (mgr.IsFull)
+            {
+                // Swap modal opened automatically; mark claimed so player cannot double-roll
+                MarkRewardClaimed(rewardIndex);
+            }
+        }
+
+        private void ClaimPotionReward(int rewardIndex, RunRewardDefinition reward)
+        {
+            RunPotionManager mgr = RunPotionManager.EnsureInstance();
+            PotionData potion = reward.PotionOverride;
+            if (potion == null && potionRewardPool != null)
+            {
+                potionRewardPool.TryGetRandomPotion(mgr, out potion, PotionRarityMask.All);
+                reward.PotionOverride = potion;
+            }
+            if (potion != null && mgr.AddPotion(potion))
+            {
+                Tune.SFX(SfxID.potion_claim);
+                MarkRewardClaimed(rewardIndex);
             }
         }
 

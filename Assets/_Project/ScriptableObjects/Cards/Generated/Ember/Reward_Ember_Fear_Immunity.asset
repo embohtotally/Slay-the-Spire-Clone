@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Reward_Ember_Fear_Immunity
   m_EditorClassIdentifier: 
   <Image>k__BackingField: {fileID: 1597602930, guid: 28ea9aba4895f93488dbba35627d3515, type: 3}
-  <Title>k__BackingField: Fear Immunity
-  <Description>k__BackingField: Fear Immunity 1 turn, Gain 10 Shield
+  <Title>k__BackingField: Will Shield
+  <Description>k__BackingField: Will Shield 1 turn (Immune to Will drain), Gain 10 Shield
   <Tier>k__BackingField: 0
   <Mana>k__BackingField: 2
   <Type>k__BackingField: 1
