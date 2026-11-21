@@ -3,6 +3,7 @@ using PlushieOdyssey.Audio;
 using PlushieOdyssey.Core;
 using PlushieOdyssey.Core.Scenes;
 using PlushieOdyssey.Data;
+using PlushieOdyssey.Levels;
 using PlushieOdyssey.Run;
 using PlushieOdyssey.UI.Relics;
 using System;
@@ -339,10 +340,50 @@ namespace PlushieOdyssey.Rewards
         {
             rewardsCompletedSfx?.Play(this, transform);
             OnRewardsCompleted?.Invoke();
+
+            // If the final chapter's Boss was just defeated, go directly to Victory Run Summary
+            // instead of bouncing through Map.unity!
+            if (IsFinalChapterBossCleared())
+            {
+                RunManager.Instance?.RecordChapterCleared();
+                LevelProgressionManager progression = LevelProgressionManager.Instance;
+                if (progression != null && progression.HasCurrentLevel)
+                {
+                    progression.CompleteCurrentLevel();
+                }
+
+                int totalChapters = progression != null && progression.Levels != null && progression.Levels.Count > 0
+                    ? progression.Levels.Count
+                    : 4;
+                PlushieOdyssey.UI.Menus.RunEndSummaryUI.CapturePendingSummary(
+                    isVictory: true,
+                    endReason: "You overcame Loneliness, Fear, Anxiety, and Anger!",
+                    fallbackTotalChapters: totalChapters);
+                SceneLoader.LoadScene("GameOver");
+                return;
+            }
+
             if (!string.IsNullOrWhiteSpace(mapSceneName))
             {
                 SceneLoader.LoadScene(mapSceneName);
             }
+        }
+
+        private static bool IsFinalChapterBossCleared()
+        {
+            RunManager rm = RunManager.Instance;
+            if (rm == null || !rm.HasActiveRun) return false;
+
+            bool bossCleared = rm.IsCurrentNodeBoss || (rm.CurrentMap != null && rm.CurrentMap.IsBossCleared());
+            if (!bossCleared) return false;
+
+            LevelProgressionManager progression = LevelProgressionManager.Instance;
+            if (progression != null && progression.HasCurrentLevel)
+            {
+                return !progression.HasNextLevel;
+            }
+
+            return rm.CurrentChapterNumber >= 4;
         }
 
         private IEnumerator OpenCardRewardScene(int rewardIndex, CardRewardRequest request)

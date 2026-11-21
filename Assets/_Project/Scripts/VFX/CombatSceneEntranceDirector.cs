@@ -55,6 +55,28 @@ namespace PlushieOdyssey.Vfx
         public bool IsStagingEntrance => _isStagingEntrance;
         public bool HasCompletedEntrance => _hasCompletedEntrance;
 
+        public bool TryGetStagedHomeScale(Transform target, out Vector3 homeScale)
+        {
+            if (target != null)
+            {
+                if (_stagedTopBar != null && _stagedTopBar.Rect == target)
+                {
+                    homeScale = _stagedTopBar.HomeScale;
+                    return true;
+                }
+                for (int i = 0; i < _stagedUi.Count; i++)
+                {
+                    if (_stagedUi[i] != null && _stagedUi[i].Rect == target)
+                    {
+                        homeScale = _stagedUi[i].HomeScale;
+                        return true;
+                    }
+                }
+            }
+            homeScale = Vector3.one;
+            return false;
+        }
+
         private void OnDisable()
         {
             KillAndSnapToHome();

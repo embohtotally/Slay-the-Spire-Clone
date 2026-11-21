@@ -70,6 +70,7 @@ namespace PlushieOdyssey.UI.Combat
         {
             if (_canvas == null) _canvas = GetComponentInParent<Canvas>()?.rootCanvas;
             if (_canvas == null) _canvas = FindFirstObjectByType<Canvas>();
+            EnsurePileButtonsClickable();
         }
 
         private void Start()
@@ -635,14 +636,44 @@ namespace PlushieOdyssey.UI.Combat
         private sealed class PileButtonHoverJuice : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         {
             private Vector3 _baseScale = Vector3.one;
+            private bool _capturedBaseScale;
 
             private void Awake()
             {
-                _baseScale = transform.localScale;
+                TryCaptureBaseScale();
+            }
+
+            private void TryCaptureBaseScale()
+            {
+                var director = PlushieOdyssey.Vfx.CombatSceneEntranceDirector.Instance;
+                if (director != null && director.TryGetStagedHomeScale(transform, out Vector3 homeScale))
+                {
+                    _baseScale = homeScale;
+                    _capturedBaseScale = true;
+                    return;
+                }
+
+                // Never capture temporary 0.45x scale while the battle entrance animation is staging!
+                if (director != null && director.IsStagingEntrance)
+                {
+                    return;
+                }
+
+                if (!_capturedBaseScale && transform.localScale.sqrMagnitude > 0.001f)
+                {
+                    _baseScale = transform.localScale;
+                    _capturedBaseScale = true;
+                }
             }
 
             public void OnPointerEnter(PointerEventData eventData)
             {
+                var director = PlushieOdyssey.Vfx.CombatSceneEntranceDirector.Instance;
+                if (director != null && director.IsStagingEntrance) return;
+
+                if (!_capturedBaseScale) TryCaptureBaseScale();
+                if (!_capturedBaseScale) _baseScale = Vector3.one;
+
                 transform.DOKill();
                 transform.DOScale(_baseScale * 1.10f, 0.12f).SetEase(Ease.OutBack).SetUpdate(true);
                 Tune.SFX(SfxID.hover);
@@ -650,6 +681,12 @@ namespace PlushieOdyssey.UI.Combat
 
             public void OnPointerExit(PointerEventData eventData)
             {
+                var director = PlushieOdyssey.Vfx.CombatSceneEntranceDirector.Instance;
+                if (director != null && director.IsStagingEntrance) return;
+
+                if (!_capturedBaseScale) TryCaptureBaseScale();
+                if (!_capturedBaseScale) _baseScale = Vector3.one;
+
                 transform.DOKill();
                 transform.DOScale(_baseScale, 0.12f).SetEase(Ease.OutQuad).SetUpdate(true);
             }
@@ -657,7 +694,10 @@ namespace PlushieOdyssey.UI.Combat
             private void OnDisable()
             {
                 transform.DOKill();
-                transform.localScale = _baseScale;
+                if (_capturedBaseScale)
+                {
+                    transform.localScale = _baseScale;
+                }
             }
         }
     }

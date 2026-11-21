@@ -99,6 +99,13 @@ namespace PlushieOdyssey.Combat.Systems
                     {
                         isLoadingGameOver = true;
 
+                        // Snapshot all run accomplishments BEFORE AbandonRun wipes active run state!
+                        string killerName = ResolveDefeatSourceName(dealDamageGA.Caster);
+                        string endReason = !string.IsNullOrWhiteSpace(killerName)
+                            ? $"Defeated by {killerName}"
+                            : null;
+                        PlushieOdyssey.UI.Menus.RunEndSummaryUI.CapturePendingSummary(isVictory: false, endReason: endReason);
+
                         if (RunManager.Instance != null)
                         {
                             RunManager.Instance.AbandonRun();
@@ -111,6 +118,23 @@ namespace PlushieOdyssey.Combat.Systems
             }
 
             yield break;
+        }
+
+        private static string ResolveDefeatSourceName(CombatantView caster)
+        {
+            if (caster is EnemyView enemy && enemy.Data != null && !string.IsNullOrWhiteSpace(enemy.Data.name))
+            {
+                return enemy.Data.name;
+            }
+            if (caster != null && !string.IsNullOrWhiteSpace(caster.name))
+            {
+                return caster.name.Replace("(Clone)", string.Empty).Trim();
+            }
+            if (RunManager.Instance != null && !string.IsNullOrWhiteSpace(RunManager.Instance.LastEncounterName))
+            {
+                return RunManager.Instance.LastEncounterName;
+            }
+            return string.Empty;
         }
     }
 }

@@ -60,6 +60,8 @@ namespace PlushieOdyssey.Core.Scenes
 
         private Coroutine _activeRoutine;
         private string _pendingSceneName;
+        private string _redirectWhileClosedSceneName;
+        private string _queuedAfterRevealSceneName;
         private bool _isTransitioning;
         private bool _isEyesClosed;
         private float _openAmount = 1f;
@@ -170,10 +172,35 @@ namespace PlushieOdyssey.Core.Scenes
         public bool TransitionToScene(string sceneName, Action onBeforeSwap = null)
         {
             if (string.IsNullOrWhiteSpace(sceneName)) return false;
-            if (_isTransitioning) return false;
+
+            if (_isTransitioning)
+            {
+                // If a scene's Awake/Start redirects to another scene while eyelids are still closed
+                // (e.g. MapSystem detecting Final Boss Victory -> GameOver), swap seamlessly behind closed lids!
+                if (_isEyesClosed || _phase == BlinkTransitionPhase.LoadingScene)
+                {
+                    if (!string.Equals(sceneName, _pendingSceneName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _redirectWhileClosedSceneName = sceneName;
+                    }
+                    return true;
+                }
+
+                // If eyelids are already opening on the new scene, queue the follow-up transition cleanly
+                // instead of silently dropping it.
+                if (_phase == BlinkTransitionPhase.OpeningNewScene)
+                {
+                    _queuedAfterRevealSceneName = sceneName;
+                    return true;
+                }
+
+                return false;
+            }
 
             BuildOverlayIfNeeded();
             _pendingSceneName = sceneName;
+            _redirectWhileClosedSceneName = null;
+            _queuedAfterRevealSceneName = null;
             _activeRoutine = StartCoroutine(DoubleBlinkRoutine(sceneName, onBeforeSwap));
             return true;
         }
@@ -223,17 +250,37 @@ namespace PlushieOdyssey.Core.Scenes
 
             onBeforeSwap?.Invoke();
 
-            AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(targetSceneName, LoadSceneMode.Single);
-            if (asyncLoad != null)
+            string activeTargetScene = targetSceneName;
+            int redirectSafety = 0;
+            while (redirectSafety < 4)
             {
-                while (!asyncLoad.isDone)
+                _pendingSceneName = activeTargetScene;
+                _redirectWhileClosedSceneName = null;
+
+                AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(activeTargetScene, LoadSceneMode.Single);
+                if (asyncLoad != null)
                 {
-                    yield return null;
+                    while (!asyncLoad.isDone)
+                    {
+                        yield return null;
+                    }
                 }
+
+                // Give the new scene 1 frame so Awake/Start prepare hidden pre-entrance states behind closed lids
+                // (or request an immediate redirect such as Chapter 4 Boss cleared -> GameOver Victory).
+                yield return null;
+
+                if (string.IsNullOrWhiteSpace(_redirectWhileClosedSceneName))
+                {
+                    break;
+                }
+
+                activeTargetScene = _redirectWhileClosedSceneName;
+                _redirectWhileClosedSceneName = null;
+                redirectSafety++;
             }
 
-            // Give the new scene 1 frame so Awake/Start prepare hidden pre-entrance states behind closed lids
-            yield return null;
+            targetSceneName = activeTargetScene;
 
             if (closedSceneBreath > 0f)
             {
@@ -281,6 +328,9 @@ namespace PlushieOdyssey.Core.Scenes
             ApplyOpenAmount(1f, blackoutAlpha: 0f);
             SetOverlayVisible(false, blockInput: false);
 
+            string queuedNext = _queuedAfterRevealSceneName;
+            _queuedAfterRevealSceneName = null;
+
             _isTransitioning = false;
             _isEyesClosed = false;
             _phase = BlinkTransitionPhase.Idle;
@@ -294,6 +344,11 @@ namespace PlushieOdyssey.Core.Scenes
             catch (Exception ex)
             {
                 Debug.LogException(ex);
+            }
+
+            if (!string.IsNullOrWhiteSpace(queuedNext))
+            {
+                TransitionToScene(queuedNext);
             }
         }
 

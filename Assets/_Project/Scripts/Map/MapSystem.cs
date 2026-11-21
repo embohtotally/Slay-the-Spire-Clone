@@ -23,6 +23,7 @@ namespace PlushieOdyssey.Map
         [SerializeField] private ProceduralMapRendererUI proceduralRenderer;
         [SerializeField] private MapView mapView;
         [SerializeField] private TMP_Text mapTitleText;
+        [SerializeField] private GameObject newMapButton;
 
         [Header("Scene Routing")]
         [SerializeField] private string combatSceneName = "Game";
@@ -38,6 +39,7 @@ namespace PlushieOdyssey.Map
         [Header("Chapter Auto-Progression")]
         [Tooltip("When enabled, defeating a chapter's Boss immediately enters the next chapter (2, 3, 4, ...) without returning to the chapter-selection screen. Only returns to Levels after the final chapter is cleared.")]
         [SerializeField] private bool autoAdvanceToNextChapterOnBossCleared = true;
+        [SerializeField] private int maxCampaignChapters = 4;
         [SerializeField] private List<LevelDefinition> fallbackLevels = new();
 
         private MapGraph graph;
@@ -48,6 +50,7 @@ namespace PlushieOdyssey.Map
         public string ActiveChapterHeaderText => mapTitleText != null ? mapTitleText.text : string.Empty;
         public bool IsChapterBannerVisible => chapterBannerRoot != null && chapterBannerRoot.activeSelf;
         public bool IsActivatingNode => isActivatingNode;
+        public bool IsNewMapButtonVisible => newMapButton != null && newMapButton.activeSelf;
 
         private void Start()
         {
@@ -57,8 +60,13 @@ namespace PlushieOdyssey.Map
             }
 
             ResolveMapTitleText();
+            ResolveNewMapButton();
 
             LevelProgressionManager progression = LevelProgressionManager.Instance;
+            if (progression == null && fallbackLevels != null && fallbackLevels.Count > 0)
+            {
+                progression = LevelProgressionManager.GetOrCreate();
+            }
             if (progression != null)
             {
                 progression.EnsureActiveLevel(fallbackLevels);
@@ -69,6 +77,7 @@ namespace PlushieOdyssey.Map
                 // Allow standalone Map.unity preview even if GameManager wasn't loaded first
                 graph = GenerateMapForLevel(progression?.CurrentLevel);
                 UpdateChapterHeader(progression?.CurrentLevel, null);
+                UpdateNewMapButtonVisibility();
                 BeginStaggeredMapEntrance(null, null, 0, string.Empty);
                 return;
             }
@@ -116,7 +125,13 @@ namespace PlushieOdyssey.Map
                     else
                     {
                         // Final chapter boss defeated — campaign complete! Open Victory Run Summary screen.
-                        PlushieOdyssey.UI.Menus.RunEndSummaryUI.PendingVictoryMode = true;
+                        int totalChapters = progression != null && progression.Levels != null && progression.Levels.Count > 0
+                            ? progression.Levels.Count
+                            : Mathf.Max(1, maxCampaignChapters);
+                        PlushieOdyssey.UI.Menus.RunEndSummaryUI.CapturePendingSummary(
+                            isVictory: true,
+                            endReason: "You overcame Loneliness, Fear, Anxiety, and Anger!",
+                            fallbackTotalChapters: totalChapters);
                         SceneLoader.LoadScene("GameOver");
                         return;
                     }
@@ -141,6 +156,7 @@ namespace PlushieOdyssey.Map
             UpdateChapterHeader(activeLevel, RunManager.Instance);
 
             graph.RefreshAvailability(RunManager.Instance.CurrentMapNodeId);
+            UpdateNewMapButtonVisibility();
 
             int bannerChapterNum = 0;
             string bannerSubtitle = string.Empty;
@@ -205,6 +221,7 @@ namespace PlushieOdyssey.Map
         private bool TryAdvanceDirectlyToNextChapter(LevelProgressionManager progression, out LevelDefinition nextLevel)
         {
             nextLevel = null;
+            RunManager.Instance?.RecordChapterCleared();
 
             if (progression != null && progression.HasCurrentLevel)
             {
@@ -235,10 +252,19 @@ namespace PlushieOdyssey.Map
                 return true;
             }
 
-            // Fallback when LevelProgressionManager has no configured levels: continue seamlessly to Chapter N+1.
+            // Fallback when LevelProgressionManager has no configured levels:
+            // Respect maxCampaignChapters (default 4) so the player can ALWAYS finish the campaign and reach Victory!
+            int totalCap = fallbackLevels != null && fallbackLevels.Count > 0
+                ? fallbackLevels.Count
+                : Mathf.Max(1, maxCampaignChapters);
             int nextChapterNum = RunManager.Instance.CurrentChapterNumber + 1;
-            MapGraph endlessMap = GenerateMapForLevel(null);
-            RunManager.Instance.AdvanceToNextChapterMap(endlessMap, nextChapterNum, string.Empty, resetPlayerState: false);
+            if (nextChapterNum > totalCap)
+            {
+                return false;
+            }
+
+            MapGraph nextFallbackMap = GenerateMapForLevel(null);
+            RunManager.Instance.AdvanceToNextChapterMap(nextFallbackMap, nextChapterNum, string.Empty, resetPlayerState: false);
             return true;
         }
 
@@ -261,6 +287,78 @@ namespace PlushieOdyssey.Map
             if (titleGo != null)
             {
                 mapTitleText = titleGo.GetComponent<TMP_Text>();
+            }
+        }
+
+        private void ResolveNewMapButton()
+        {
+            if (newMapButton != null) return;
+
+            GameObject btnGo = GameObject.Find("NewMapButton");
+            if (btnGo != null)
+            {
+                newMapButton = btnGo;
+                return;
+            }
+
+            // Also search inactive objects under the Map Canvas in case it was hidden
+            Canvas rootCanvas = proceduralRenderer != null
+                ? proceduralRenderer.GetComponentInParent<Canvas>()?.rootCanvas
+                : FindFirstObjectByType<Canvas>()?.rootCanvas;
+            if (rootCanvas != null)
+            {
+                foreach (Transform tf in rootCanvas.GetComponentsInChildren<Transform>(true))
+                {
+                    if (tf != null && tf.name == "NewMapButton")
+                    {
+                        newMapButton = tf.gameObject;
+                        return;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The "New Map" reroll button is ONLY available at the beginning of each chapter
+        /// (before any node on the current chapter map has been entered/visited), and hidden mid-run.
+        /// </summary>
+        public bool CanRerollCurrentChapterMap()
+        {
+            if (graph == null) return true;
+
+            if (RunManager.Instance != null && !string.IsNullOrEmpty(RunManager.Instance.CurrentMapNodeId))
+            {
+                return false;
+            }
+
+            if (graph.VisitedOrder != null && graph.VisitedOrder.Count > 0)
+            {
+                return false;
+            }
+
+            if (graph.Nodes != null)
+            {
+                for (int i = 0; i < graph.Nodes.Count; i++)
+                {
+                    if (graph.Nodes[i] != null && graph.Nodes[i].IsVisited)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public void UpdateNewMapButtonVisibility()
+        {
+            ResolveNewMapButton();
+            if (newMapButton == null) return;
+
+            bool show = CanRerollCurrentChapterMap();
+            if (newMapButton.activeSelf != show)
+            {
+                newMapButton.SetActive(show);
             }
         }
 
@@ -395,6 +493,7 @@ namespace PlushieOdyssey.Map
             }
 
             graph.RefreshAvailability(selectedNode.Id);
+            UpdateNewMapButtonVisibility();
 
             if (proceduralRenderer != null)
             {
@@ -413,14 +512,28 @@ namespace PlushieOdyssey.Map
 
         public void StartNewRun()
         {
+            if (!CanRerollCurrentChapterMap())
+            {
+                UpdateNewMapButtonVisibility();
+                return;
+            }
+
             LevelDefinition activeLevel = LevelProgressionManager.Instance?.CurrentLevel;
             MapGraph fresh = GenerateMapForLevel(activeLevel);
             if (RunManager.Instance != null)
             {
-                RunManager.Instance.StartNewRun(fresh);
-                if (activeLevel != null)
+                if (RunManager.Instance.HasActiveRun)
                 {
-                    RunManager.Instance.SetChapterInfo(activeLevel.LevelNumber, activeLevel.Description);
+                    // Re-roll ONLY the current unstarted chapter's map so Chapters 2-4 keep HP/Deck/Relics/Gold!
+                    RunManager.Instance.ReplaceCurrentChapterMap(fresh);
+                }
+                else
+                {
+                    RunManager.Instance.StartNewRun(fresh);
+                    if (activeLevel != null)
+                    {
+                        RunManager.Instance.SetChapterInfo(activeLevel.LevelNumber, activeLevel.Description);
+                    }
                 }
                 graph = RunManager.Instance.CurrentMap;
             }
@@ -431,6 +544,7 @@ namespace PlushieOdyssey.Map
 
             UpdateChapterHeader(activeLevel, RunManager.Instance);
             graph.RefreshAvailability(null);
+            UpdateNewMapButtonVisibility();
             RenderCurrentGraph(null, animateEntrance: true);
         }
 

@@ -42,6 +42,15 @@ namespace PlushieOdyssey.Run
         public int Gold { get; private set; }
         public int Crystals { get; private set; }
 
+        // === Run Accomplishment Telemetry (displayed on Victory & Defeat Run Summary) ===
+        public int ChaptersCleared { get; private set; }
+        public int NodesVisitedTotal { get; private set; }
+        public int CombatsWon { get; private set; }
+        public int ElitesDefeated { get; private set; }
+        public int BossesDefeated { get; private set; }
+        public int TotalGoldEarned { get; private set; }
+        public string LastEncounterName { get; private set; } = string.Empty;
+
         public Dictionary<string, int> Counters { get; private set; } = new();
         public Dictionary<string, int> CardCostModifiers { get; private set; } = new();
 
@@ -114,6 +123,7 @@ namespace PlushieOdyssey.Run
             ClearHeroState();
             Gold = Mathf.Max(0, startingGold);
             Crystals = Mathf.Max(0, startingCrystals);
+            ResetRunTelemetry();
             Counters.Clear();
             CardCostModifiers.Clear();
 
@@ -158,6 +168,25 @@ namespace PlushieOdyssey.Run
             NotifyRunStateChanged();
         }
 
+        /// <summary>
+        /// Re-rolls only the current unstarted chapter's procedural map without wiping the active run's
+        /// party, HP, Will, Gold, Deck, Relics, Potions, Chapter number, or run telemetry.
+        /// </summary>
+        public void ReplaceCurrentChapterMap(MapGraph freshMap)
+        {
+            if (freshMap == null) return;
+            CurrentMap = freshMap;
+            CurrentMapNodeId = null;
+            SelectedEncounter = null;
+            NotifyRunStateChanged();
+        }
+
+        public void RecordChapterCleared()
+        {
+            ChaptersCleared++;
+            NotifyRunStateChanged();
+        }
+
         public string GetChapterHeaderLabel()
         {
             return string.IsNullOrWhiteSpace(CurrentChapterName)
@@ -172,6 +201,17 @@ namespace PlushieOdyssey.Run
             CurrentMap?.MarkVisited(selectedNode.Id);
             CurrentMapNodeId = selectedNode.Id;
             SelectedEncounter = selectedNode.Encounter;
+            NodesVisitedTotal++;
+
+            if (selectedNode.Encounter != null)
+            {
+                LastEncounterName = FormatEncounterDisplayName(selectedNode.Encounter);
+            }
+            else
+            {
+                LastEncounterName = selectedNode.Type.ToString();
+            }
+
             NotifyRunStateChanged();
         }
 
@@ -215,6 +255,17 @@ namespace PlushieOdyssey.Run
 
         public void CompleteCurrentEncounter()
         {
+            MapNode currentNode = CurrentMap != null && !string.IsNullOrEmpty(CurrentMapNodeId)
+                ? CurrentMap.GetNode(CurrentMapNodeId)
+                : null;
+
+            CombatsWon++;
+            if (currentNode != null)
+            {
+                if (currentNode.Type == MapNodeType.Elite) ElitesDefeated++;
+                else if (currentNode.Type == MapNodeType.Boss) BossesDefeated++;
+            }
+
             ClearSelectedEncounter();
             if (HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null)
             {
@@ -472,6 +523,7 @@ namespace PlushieOdyssey.Run
         public void AddGold(int amount)
         {
             if (amount <= 0) return;
+            TotalGoldEarned += amount;
             SetGold(Gold + amount);
         }
 
@@ -514,6 +566,7 @@ namespace PlushieOdyssey.Run
             CurrentChapterName = string.Empty;
             ClearHeroState();
             Gold = 0;
+            ResetRunTelemetry();
             Counters.Clear();
             CardCostModifiers.Clear();
 
@@ -528,6 +581,36 @@ namespace PlushieOdyssey.Run
             }
 
             NotifyRunStateChanged();
+        }
+
+        private void ResetRunTelemetry()
+        {
+            ChaptersCleared = 0;
+            NodesVisitedTotal = 0;
+            CombatsWon = 0;
+            ElitesDefeated = 0;
+            BossesDefeated = 0;
+            TotalGoldEarned = 0;
+            LastEncounterName = string.Empty;
+        }
+
+        private static string FormatEncounterDisplayName(EncounterData encounter)
+        {
+            if (encounter == null) return string.Empty;
+            if (encounter.Enemies != null && encounter.Enemies.Count > 0)
+            {
+                List<string> unique = new();
+                for (int i = 0; i < encounter.Enemies.Count; i++)
+                {
+                    EnemyData e = encounter.Enemies[i];
+                    if (e != null && !string.IsNullOrWhiteSpace(e.name) && !unique.Contains(e.name))
+                    {
+                        unique.Add(e.name);
+                    }
+                }
+                if (unique.Count > 0) return string.Join(" & ", unique);
+            }
+            return encounter.name ?? string.Empty;
         }
 
         private void ClearHeroState()

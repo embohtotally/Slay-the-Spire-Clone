@@ -1479,6 +1479,7 @@ MonoBehaviour:
   proceduralRenderer: {fileID: 835031567}
   mapView: {fileID: 0}
   mapTitleText: {fileID: 0}
+  newMapButton: {fileID: 1503573451}
   combatSceneName: Game
   tutorialCombatSceneName: GameTutorial
   enableFirstBattleTutorial: 1
@@ -1489,7 +1490,12 @@ MonoBehaviour:
   levelSelectSceneName: Levels
   completeCurrentLevelOnBossCleared: 1
   autoAdvanceToNextChapterOnBossCleared: 1
-  fallbackLevels: []
+  maxCampaignChapters: 4
+  fallbackLevels:
+  - {fileID: 11400000, guid: b5601d0c4e77ad5438272b19d35935f2, type: 2}
+  - {fileID: 11400000, guid: b52c7070d139b1043b743e9f540e55a8, type: 2}
+  - {fileID: 11400000, guid: d21a8aa809475a2439b4e65732aa7a29, type: 2}
+  - {fileID: 11400000, guid: 0dabe37db8871484d834d0a5a8b4465f, type: 2}
 --- !u!4 &1772031380
 Transform:
   m_ObjectHideFlags: 0

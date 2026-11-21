@@ -27,15 +27,15 @@ namespace PlushieOdyssey.Core.Scenes
                 return;
             }
 
-            if (BlinkSceneTransition.IsTransitioning)
-            {
-                return;
-            }
-
             CurrentRequest = SceneLoadRequest.Single(sceneName, minimumLoadingTime);
 
             BlinkSceneTransition blink = BlinkSceneTransition.EnsureInstance();
             if (blink != null && blink.TransitionToScene(sceneName))
+            {
+                return;
+            }
+
+            if (BlinkSceneTransition.IsTransitioning)
             {
                 return;
             }
