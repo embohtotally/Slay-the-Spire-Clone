@@ -26,12 +26,13 @@ Complete log of all combat responsiveness, chapter progression, pile viewer UI, 
   - [14. Editable In-Scene Merchant Shop Hierarchy \& Sprite Assets (`Merchant.unity`)](#14-editable-in-scene-merchant-shop-hierarchy--sprite-assets-merchantunity)
   - [15. Modular X-Cost Card System, Custom Inspector \& All-Effect Scaling](#15-modular-x-cost-card-system-custom-inspector--all-effect-scaling)
   - [16. Will System Renaming (`- Low Will` / `+ High Will`) \& Per-Card `1–3` RNG Will Gain](#16-will-system-renaming---low-will---high-will--per-card-13-rng-will-gain)
-  - [17. File Change Inventory](#17-file-change-inventory)
+  - [17. Procedural Double-Blink Scene Transition, Map Node Activation \& Staggered Scene Entrances](#17-procedural-double-blink-scene-transition-map-node-activation--staggered-scene-entrances)
+  - [18. File Change Inventory](#18-file-change-inventory)
     - [New Scripts](#new-scripts)
     - [New ScriptableObject \& Visual Assets](#new-scriptableobject--visual-assets)
     - [Modified Scenes, Prefabs \& Pools](#modified-scenes-prefabs--pools)
     - [Modified Scripts \& Shaders](#modified-scripts--shaders)
-  - [18. Play-Mode Verification Summary](#18-play-mode-verification-summary)
+  - [19. Play-Mode Verification Summary](#19-play-mode-verification-summary)
 
 ---
 
@@ -260,9 +261,28 @@ Complete log of all combat responsiveness, chapter progression, pile viewer UI, 
 
 ---
 
-## 17. File Change Inventory
+## 17. Procedural Double-Blink Scene Transition, Map Node Activation & Staggered Scene Entrances
+
+- **Design Goal:** Replace the old `Loading` scene transition with a procedural **double-blink eyelid transition** (Blink 1 flickers shut and drowsily re-opens on the current scene → Blink 2 sweeps shut and swaps scenes → eyelids open onto the new scene), add a juicy **per-node activation transition** on `Map.unity`, and stagger every destination scene's UI/actor entrance so elements cascade in cleanly instead of popping on screen simultaneously.
+- **Changes:**
+  - **Procedural Double-Blink Scene Transition ([`BlinkSceneTransition.cs`](../Assets/_Project/Scripts/General/Scenes/BlinkSceneTransition.cs) *(New)* & [`SceneLoader.cs`](../Assets/_Project/Scripts/General/Scenes/SceneLoader.cs)):**
+    - Generates curved, softly feathered procedural upper/lower eyelid textures (`512 × 256` RGBA) on a persistent `DontDestroyOnLoad` `Screen Space - Overlay` Canvas (`sortingOrder = 32760`) with a drowsy vignette/blackout veil and input lock.
+    - Choreographs `Blink1Closing` (`0.11s`) → `Blink1Opening` (`0.15s` to `72%`) → `Blink2Closing` (`0.17s` to `100%` blackout) → `LoadSceneAsync` while sealed → `OpeningNewScene` (`0.36s`), firing `SceneRevealing` / `SceneRevealed` and providing `BlinkSceneTransition.RunWhenRevealing(host, callback)`.
+    - Replaced `SceneLoader.LoadScene(...)`'s legacy `Loading` scene detour with `BlinkSceneTransition` globally (covering Map ↔ Battle, Rewards → Map, Map ↔ Merchant/Rest/Treasure/Event, and menu transitions).
+  - **Juicy Map Node Activation & Staggered Map Reveal ([`ProceduralMapRendererUI.cs`](../Assets/_Project/Scripts/UI/Map/ProceduralMapRendererUI.cs) & [`MapSystem.cs`](../Assets/_Project/Scripts/Map/MapSystem.cs)):**
+    - Added `PlayNodeActivationTransition(MapNode, Action)` on every node click: locks input, plays elastic punch/wobble on the chosen node, bursts two expanding golden/accent shockwave rings + 8 radial sparkle motes, dims unselected nodes, hops the `HERE` pin onto the selected node, and subtly zooms/leans the parchment toward the node (`0.34s`) before triggering the double-blink transition.
+    - Synchronized Map entrance (`PrepareHiddenForEntrance` + `BeginStaggeredMapEntrance`) with `BlinkSceneTransition.RunWhenRevealing`: parchment settles → chapter header drops in → legend bar fades in → dotted ink paths and nodes sweep in column-by-column Left → Right → `HERE` pin bounces onto the newly cleared node.
+  - **Staggered Battle & Node-Room Entrances:**
+    - [`CombatSceneEntranceDirector.cs`](../Assets/_Project/Scripts/VFX/CombatSceneEntranceDirector.cs) *(New, auto-attached by [`ActionSystem.cs`](../Assets/_Project/Scripts/Systems/Action%20System/ActionSystem.cs))*, [`MatchSetupSystem.cs`](../Assets/_Project/Scripts/Systems/MatchSetupSystem.cs), [`EnemyView.cs`](../Assets/_Project/Scripts/Views/EnemyView.cs), & [`CombatantView.cs`](../Assets/_Project/Scripts/Views/CombatantView.cs): Holds actors/HUD off-stage behind closed lids, then reveals **Top Bar** (glide down) → **Hero** (left hop + squash bounce) → **Enemies** (staggered right swoop + landing bounce) → **Bottom HUD** (Mana, Draw, Discard, End Turn, Perks left-to-right pop) → **Enemy Intents** (staggered) → **Turn 1 Banner & Opening Hand Deal**.
+    - Synchronized staggered entrances with `BlinkSceneTransition.RunWhenRevealing` in [`MerchantShopUI.cs`](../Assets/_Project/Scripts/Map/Merchant/MerchantShopUI.cs), [`RestSiteUI.cs`](../Assets/_Project/Scripts/Map/Rest/RestSiteUI.cs), [`TreasureRoomUI.cs`](../Assets/_Project/Scripts/Map/Treasure/TreasureRoomUI.cs), [`NarrativeEventUI.cs`](../Assets/_Project/Scripts/Map/Event/NarrativeEventUI.cs), and added staggered reward row pop-ins in [`RunRewardController.cs`](../Assets/_Project/Scripts/Rewards/RunRewardController.cs).
+
+---
+
+## 18. File Change Inventory
 
 ### New Scripts
+- [`Assets/_Project/Scripts/General/Scenes/BlinkSceneTransition.cs`](../Assets/_Project/Scripts/General/Scenes/BlinkSceneTransition.cs)
+- [`Assets/_Project/Scripts/VFX/CombatSceneEntranceDirector.cs`](../Assets/_Project/Scripts/VFX/CombatSceneEntranceDirector.cs)
 - [`Assets/_Project/Scripts/Editor/CardDataEditor.cs`](../Assets/_Project/Scripts/Editor/CardDataEditor.cs)
 - [`Assets/_Project/Scripts/UI/Combat/DeckShuffleAnimatorUI.cs`](../Assets/_Project/Scripts/UI/Combat/DeckShuffleAnimatorUI.cs)
 - [`Assets/_Project/Scripts/UI/Combat/UIProceduralRibbonTrail.cs`](../Assets/_Project/Scripts/UI/Combat/UIProceduralRibbonTrail.cs)
@@ -361,7 +381,7 @@ Complete log of all combat responsiveness, chapter progression, pile viewer UI, 
 
 ---
 
-## 18. Play-Mode Verification Summary
+## 19. Play-Mode Verification Summary
 
 All features were verified live in Unity Play Mode with visual Game View captures and console checks (`0` compilation errors, `0` runtime errors, `0` new warnings):
 
@@ -386,4 +406,5 @@ All features were verified live in Unity Play Mode with visual Game View capture
 | Editable Merchant (`Merchant.unity`) | Visually verified baked `MerchantShopRoot` in Edit Mode (full stall, preview cards, relics, vendor, dialogue, `10g` Reset wheel) and verified Play-Mode `TryBuyCardAt(0)`, `TryBuyRelicAt(0)`, escalating `TryResetShop()` (`10g → 20g`, `Gold: 500 → 230`), zero duplicate roots, and `0` console errors/warnings. |
 | Modular X-Cost System (`Game.unity`) | Visually verified **`X`** cost badge on `Celestial Nova` in hand (never `0`) and custom `CardDataEditor` Inspector. Verified `Celestial Nova` (`18 × X` vs `-5` Def enemy): `X=5 → 85 dmg` (`5→0` Mana), `X=2 → 31 dmg` (`2→0` Mana), `X=0 → 0 dmg`, FIFO chain `1-cost + X=4 → 67 dmg` (`5→0` Mana), and `X-Cost` tooltip. Also verified modular runtime X-cost cards: **X-Heal** (`4 × 4 = +16 HP`), **X-Poison** (`3 × 4 = 12` stacks in 1 action + `+12 POISON` preview), **X-Buff Strength** (`2 × 3 = +6`), **X-Debuff Vulnerable** (`1T × 3 = 3T` + `VULNERABLE 3T` preview), **`X+1` Bonus** (`0 Mana → +5 HP`, `2 Mana → +15 HP`), and composite **`SimultaneousEffect`** (`+15 Shield & +3 Dexterity` at `X=3`), with `0` errors / `0` warnings. |
 | Will System & `1–3` RNG Card Gain (`Game.unity`) | Verified 10 consecutive played cards each rolled RNG Will in `[1..3]` (`rolls=[2,3,3,3,1,3,3,2,2,3]`, `3` distinct values, Hero Will `30 → 55`, exact `+25` delta). Verified **`- Low Will`** (`Title='- Low Will'`, `Code='-W'`, no `"Fear"` text, Attack cards blocked), verified playing a card at `74` Will organically pushed Hero into **`+ High Will`** (`75/100`, `Title='+ High Will'`, `Code='+W'`), verified updated `Will` keyword tooltip & renamed card descriptions visually in Game View (`0` errors, `0` warnings). |
+| Double-Blink Transitions & Staggered Entrances (`Map ↔ Game ↔ RunRewards`) | Verified live end-to-end loop (`Map → Node Activation → Double-Blink → Staggered Battle → RunRewards Result → Double-Blink → Map`): node activation played punch/shockwaves/sparkles/zoom before blinking; both transitions executed full `Blink1Closing → Blink1Opening → Blink2Closing → LoadingScene → OpeningNewScene` (staying on outgoing scene during Blink 1, swapping only on Blink 2); Battle staged Top Bar → Hero → Enemies → Bottom HUD → Intents → Turn 1 Hand cleanly (`EntranceDone=True`, `Enemies=2`, `Hand=5`); `RunRewards` staggered in and double-blinked back to `Map` (`17` nodes, `HERE` pin on cleared node `'0_0'`), `0` errors. |
 

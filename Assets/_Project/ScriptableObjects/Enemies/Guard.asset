@@ -21,15 +21,28 @@ MonoBehaviour:
         rid: 5978927130765950978
       <Effect>k__BackingField:
         rid: 5978927130765950979
+    <Weight>k__BackingField: 1
+    <TurnOneOpener>k__BackingField: 0
+    <MinHpPercent>k__BackingField: 0
+    <MaxHpPercent>k__BackingField: 1
+    <CooldownTurns>k__BackingField: 0
+    <MaxConsecutiveUses>k__BackingField: 0
   <AttackPattern>k__BackingField: 0
+  <SpriteOffset>k__BackingField: {x: 0, y: 0, z: 0}
+  <PassiveTraits>k__BackingField:
+  - passiveType: 0
+    value: 2
+    secondaryValue: 0
+    customTitle: 
+    customDescription: 
   references:
     version: 2
     RefIds:
     - rid: 5978927130765950978
-      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
       data: 
     - rid: 5978927130765950979
-      type: {class: SimultaneousEffect, ns: , asm: Assembly-CSharp}
+      type: {class: SimultaneousEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
         <Effects>k__BackingField:
         - <TargetMode>k__BackingField:
@@ -41,16 +54,16 @@ MonoBehaviour:
           <Effect>k__BackingField:
             rid: 5978927130765950983
     - rid: 5978927130765950980
-      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
       data: 
     - rid: 5978927130765950981
-      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      type: {class: DealDamageEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
         damageAmount: 5
     - rid: 5978927130765950982
-      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
       data: 
     - rid: 5978927130765950983
-      type: {class: AddStressEffect, ns: , asm: Assembly-CSharp}
+      type: {class: AddStressEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
         stressAmount: 5

@@ -108,8 +108,13 @@ namespace PlushieOdyssey.Map.Rest
         private void Start()
         {
             RefreshStatusReadout();
-            PlayEntrance();
-            Tune.SFX(SfxID.scene_enter);
+            PrepareHiddenForEntrance();
+            BlinkSceneTransition.RunWhenRevealing(this, () =>
+            {
+                if (this == null || !isActiveAndEnabled) return;
+                PlayEntrance();
+                Tune.SFX(SfxID.scene_enter);
+            });
         }
 
         private void Update()
@@ -283,7 +288,7 @@ namespace PlushieOdyssey.Map.Rest
 
             int healAmt = Mathf.Max(1, Mathf.CeilToInt(maxHp * healPercent));
             if (_restDescText != null) _restDescText.text = $"Restore {Mathf.RoundToInt(healPercent * 100f)}% Max HP (+{healAmt} HP).";
-            if (_calmDescText != null) _calmDescText.text = $"Ease Fear and restore +{stressReduction} Will.";
+            if (_calmDescText != null) _calmDescText.text = $"Steady your mind and restore +{stressReduction} Will.";
 
             int upgradableCount = GetAvailableUpgradesForCurrentDeck().Count;
             if (_smithDescText != null)
@@ -294,17 +299,40 @@ namespace PlushieOdyssey.Map.Rest
             }
         }
 
+        private void PrepareHiddenForEntrance()
+        {
+            for (int i = 0; i < _actionCards.Count; i++)
+            {
+                RectTransform card = _actionCards[i];
+                if (card == null) continue;
+                card.localScale = Vector3.one * 0.78f;
+                CanvasGroup cg = card.GetComponent<CanvasGroup>();
+                if (cg != null) cg.alpha = 0f;
+            }
+            if (_continueBtnRect != null)
+            {
+                _continueBtnRect.localScale = Vector3.zero;
+            }
+        }
+
         private void PlayEntrance()
         {
             for (int i = 0; i < _actionCards.Count; i++)
             {
                 RectTransform card = _actionCards[i];
-                card.localScale = Vector3.one * 0.82f;
+                if (card == null) continue;
+                card.localScale = Vector3.one * 0.78f;
                 CanvasGroup cg = card.GetComponent<CanvasGroup>();
                 if (cg != null) cg.alpha = 0f;
-                float d = 0.08f + i * 0.09f;
-                card.DOScale(Vector3.one, 0.34f).SetDelay(d).SetEase(Ease.OutBack).SetUpdate(true);
+                float d = 0.08f + i * 0.10f;
+                card.DOScale(Vector3.one, 0.36f).SetDelay(d).SetEase(Ease.OutBack).SetUpdate(true);
                 if (cg != null) cg.DOFade(1f, 0.28f).SetDelay(d).SetUpdate(true);
+            }
+
+            if (_continueBtnRect != null)
+            {
+                _continueBtnRect.localScale = Vector3.zero;
+                _continueBtnRect.DOScale(Vector3.one, 0.30f).SetDelay(0.38f).SetEase(Ease.OutBack).SetUpdate(true);
             }
         }
 

@@ -3,6 +3,7 @@ using PlushieOdyssey.Combat.Actions;
 using PlushieOdyssey.Combat.Models;
 using PlushieOdyssey.Data;
 using PlushieOdyssey.Run;
+using PlushieOdyssey.Vfx;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -58,7 +59,24 @@ namespace PlushieOdyssey.Combat.Systems
                     }
                 }
             }
-            ActionSystem.Instance.Perform(new CombatStartedGA(), OnCombatStartedFinished);
+            CombatSceneEntranceDirector entranceDirector = CombatSceneEntranceDirector.Instance != null
+                ? CombatSceneEntranceDirector.Instance
+                : FindFirstObjectByType<CombatSceneEntranceDirector>();
+
+            if (entranceDirector != null)
+            {
+                entranceDirector.BeginBattleEntrance(() =>
+                {
+                    if (ActionSystem.Instance != null)
+                    {
+                        ActionSystem.Instance.Perform(new CombatStartedGA(), OnCombatStartedFinished);
+                    }
+                });
+            }
+            else
+            {
+                ActionSystem.Instance.Perform(new CombatStartedGA(), OnCombatStartedFinished);
+            }
         }
 
         private void CollectUnlockedTalentBonuses(List<HeroData> activeParty)

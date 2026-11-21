@@ -75,7 +75,63 @@ namespace PlushieOdyssey.Map.Event
         private void Start()
         {
             PickAndDisplayEvent();
-            Tune.SFX(SfxID.event_open);
+            PrepareHiddenForEntrance();
+            BlinkSceneTransition.RunWhenRevealing(this, () =>
+            {
+                if (this == null || !isActiveAndEnabled) return;
+                PlayEntrance();
+                Tune.SFX(SfxID.event_open);
+            });
+        }
+
+        private void PrepareHiddenForEntrance()
+        {
+            if (_root != null)
+            {
+                Transform frame = _root.Find("EventStoryFrame");
+                if (frame != null)
+                {
+                    frame.localScale = Vector3.one * 0.88f;
+                    if (!frame.TryGetComponent(out CanvasGroup cg)) cg = frame.gameObject.AddComponent<CanvasGroup>();
+                    cg.alpha = 0f;
+                }
+            }
+            for (int i = 0; i < _choiceObjects.Count; i++)
+            {
+                GameObject go = _choiceObjects[i];
+                if (go == null) continue;
+                go.transform.DOKill();
+                go.transform.localScale = Vector3.zero;
+            }
+        }
+
+        private void PlayEntrance()
+        {
+            if (_root != null)
+            {
+                Transform frame = _root.Find("EventStoryFrame");
+                if (frame != null)
+                {
+                    frame.DOKill();
+                    frame.DOScale(Vector3.one, 0.34f).SetDelay(0.04f).SetEase(Ease.OutBack).SetUpdate(true);
+                    if (!frame.TryGetComponent(out CanvasGroup cg)) cg = frame.gameObject.AddComponent<CanvasGroup>();
+                    cg.DOKill();
+                    cg.DOFade(1f, 0.24f).SetDelay(0.04f).SetUpdate(true);
+                }
+            }
+
+            for (int i = 0; i < _choiceObjects.Count; i++)
+            {
+                GameObject go = _choiceObjects[i];
+                if (go == null) continue;
+                go.transform.DOKill();
+                go.transform.localScale = Vector3.one * 0.80f;
+                if (!go.TryGetComponent(out CanvasGroup cg)) cg = go.AddComponent<CanvasGroup>();
+                cg.alpha = 0f;
+                float delay = 0.16f + i * 0.085f;
+                go.transform.DOScale(Vector3.one, 0.30f).SetDelay(delay).SetEase(Ease.OutBack).SetUpdate(true);
+                cg.DOFade(1f, 0.22f).SetDelay(delay).SetUpdate(true);
+            }
         }
 
         public bool SelectChoice(int index)

@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
+  m_Name: Will_OverdriveBurst
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 0}
+  <Title>k__BackingField: Overdrive Burst
+  <Description>k__BackingField: Spend 15 Will. Deal 22 damage to an enemy.
+  <Tier>k__BackingField: 1
+  <Mana>k__BackingField: 1
+  <XBonus>k__BackingField: 0
+  <Type>k__BackingField: 0
+  <Keywords>k__BackingField: 0
+  <OwnerCharacterId>k__BackingField: Ember
+  <TargetType>k__BackingField: 0
+  <ManualTargetEffect>k__BackingField:
+    rid: 8960002081742127187
+  <OtherEffects>k__BackingField:
+  - <TargetMode>k__BackingField:
+      rid: 8960002081742127188
+    <Effect>k__BackingField:
+      rid: 8960002081742127189
+  <PersistPowerInCombat>k__BackingField: 0
+  <PowerPassives>k__BackingField: []
+  <OnDrawEffects>k__BackingField: []
+  <EndTurnInHandEffects>k__BackingField: []
+  <HoverSfx>k__BackingField: 5
+  <PlaySfx>k__BackingField: 0
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 0}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 1, y: 1, z: 1}
+    parentToTarget: 0
+    destroyAfter: 3
+  <VisualType>k__BackingField: 0
+  <HeroAnimationTrigger>k__BackingField: 
+  <TargetAnimationTrigger>k__BackingField: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 8960002081742127187
+      type: {class: DealDamageEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
+      data:
+        damageAmount: 22
+    - rid: 8960002081742127188
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
+      data: 
+    - rid: 8960002081742127189
+      type: {class: SpendWillEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
+      data:
+        willCost: 15

@@ -44,6 +44,7 @@ namespace PlushieOdyssey.Combat.Actions
             EnsureCombatSystem<FrierenShieldSystem>();
             EnsureCombatSystem<SimultaneousSystem>();
             EnsureCombatSystem<CombatJuiceDirector>();
+            EnsureCombatSystem<CombatSceneEntranceDirector>();
             EnsureCombatSystem<PlushieOdyssey.Audio.CharacterVoiceDirector>();
         }
 

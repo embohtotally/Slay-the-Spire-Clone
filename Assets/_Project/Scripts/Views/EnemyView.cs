@@ -73,8 +73,23 @@ namespace PlushieOdyssey.Combat.Views
                 return;
             }
 
+            // If the battle entrance choreography is staging enemies off-screen, hold the intent reveal
+            // until CombatSceneEntranceDirector cues each enemy's staggered pop-in after landing.
+            if (PlushieOdyssey.Vfx.CombatSceneEntranceDirector.Instance != null &&
+                !PlushieOdyssey.Vfx.CombatSceneEntranceDirector.Instance.HasCompletedEntrance)
+            {
+                RefreshLegacyText();
+                return;
+            }
+
             int staggerIndex = EnemySystem.Instance != null ? EnemySystem.Instance.Enemies.Count : 0;
             PickNextIntent(animateReveal: true, revealDelay: 0.14f + staggerIndex * 0.10f);
+        }
+
+        public void RevealEntranceIntent(float revealDelay)
+        {
+            if (IsIntentVisible && NextIntent != null) return;
+            PickNextIntent(animateReveal: true, revealDelay: revealDelay);
         }
 
         public void PickNextIntent()

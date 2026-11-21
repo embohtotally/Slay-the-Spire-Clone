@@ -21,24 +21,54 @@ MonoBehaviour:
         rid: 5978927107236954443
       <Effect>k__BackingField:
         rid: 5978927107236954442
+    <Weight>k__BackingField: 1
+    <TurnOneOpener>k__BackingField: 0
+    <MinHpPercent>k__BackingField: 0
+    <MaxHpPercent>k__BackingField: 1
+    <CooldownTurns>k__BackingField: 0
+    <MaxConsecutiveUses>k__BackingField: 0
   - <IntentName>k__BackingField: King Lizard
     <Effects>k__BackingField:
     - <TargetMode>k__BackingField:
         rid: 5978927107236954501
       <Effect>k__BackingField:
         rid: 5978927107236954502
+    <Weight>k__BackingField: 1
+    <TurnOneOpener>k__BackingField: 0
+    <MinHpPercent>k__BackingField: 0
+    <MaxHpPercent>k__BackingField: 1
+    <CooldownTurns>k__BackingField: 0
+    <MaxConsecutiveUses>k__BackingField: 0
   - <IntentName>k__BackingField: King Lizard
     <Effects>k__BackingField:
     - <TargetMode>k__BackingField:
         rid: 5978927107236954503
       <Effect>k__BackingField:
         rid: 5978927107236954504
+    <Weight>k__BackingField: 1
+    <TurnOneOpener>k__BackingField: 0
+    <MinHpPercent>k__BackingField: 0
+    <MaxHpPercent>k__BackingField: 1
+    <CooldownTurns>k__BackingField: 0
+    <MaxConsecutiveUses>k__BackingField: 0
   <AttackPattern>k__BackingField: 1
+  <SpriteOffset>k__BackingField: {x: 0, y: 0, z: 0}
+  <PassiveTraits>k__BackingField:
+  - passiveType: 5
+    value: 28
+    secondaryValue: 16
+    customTitle: 
+    customDescription: 
+  - passiveType: 2
+    value: 1
+    secondaryValue: 0
+    customTitle: 
+    customDescription: 
   references:
     version: 2
     RefIds:
     - rid: 5978927107236954442
-      type: {class: SimultaneousEffect, ns: , asm: Assembly-CSharp}
+      type: {class: SimultaneousEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
         <Effects>k__BackingField:
         - <TargetMode>k__BackingField:
@@ -50,35 +80,36 @@ MonoBehaviour:
           <Effect>k__BackingField:
             rid: 5978927107236954450
     - rid: 5978927107236954443
-      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
       data: 
     - rid: 5978927107236954445
-      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
       data: 
     - rid: 5978927107236954446
-      type: {class: DealDamageEffect, ns: , asm: Assembly-CSharp}
+      type: {class: DealDamageEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
         damageAmount: 12
     - rid: 5978927107236954448
-      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
       data: 
     - rid: 5978927107236954450
-      type: {class: AddStressEffect, ns: , asm: Assembly-CSharp}
+      type: {class: AddStressEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
         stressAmount: 3
     - rid: 5978927107236954501
-      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
       data: 
     - rid: 5978927107236954502
-      type: {class: ApplyDoTEffect, ns: , asm: Assembly-CSharp}
+      type: {class: ApplyDoTEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
         damagePerTurn: 8
         duration: 2
+        xScaling: 0
     - rid: 5978927107236954503
-      type: {class: HeroTM, ns: , asm: Assembly-CSharp}
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
       data: 
     - rid: 5978927107236954504
-      type: {class: SummonEnemyEffect, ns: , asm: Assembly-CSharp}
+      type: {class: SummonEnemyEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
         enemyToSummon: {fileID: 11400000, guid: fd8a37b8d5b4b2142a2a5b532ff30aee, type: 2}
         summonCount: 2

@@ -137,6 +137,8 @@ namespace PlushieOdyssey.Combat.Views
         public void UpdateProceduralIdle(float dt)
         {
             if (_isPlayingActionMotion || CurrentHealth <= 0) return;
+            if (PlushieOdyssey.Vfx.CombatSceneEntranceDirector.Instance != null &&
+                PlushieOdyssey.Vfx.CombatSceneEntranceDirector.Instance.IsStagingEntrance) return;
             CaptureProceduralVisualHomeIfNeeded();
             if (_visualRoot == null) return;
 

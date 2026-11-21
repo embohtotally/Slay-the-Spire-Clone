@@ -89,7 +89,35 @@ namespace PlushieOdyssey.Map.Treasure
                 relicPool.TryGetRandomRelic(RunRelicManager.EnsureInstance(), out _rolledRelic, RelicRarityMask.All);
             }
             RefreshGoldHeader();
-            Tune.SFX(SfxID.treasure_open);
+            PrepareHiddenForEntrance();
+            BlinkSceneTransition.RunWhenRevealing(this, () =>
+            {
+                if (this == null || !isActiveAndEnabled) return;
+                PlayEntrance();
+                Tune.SFX(SfxID.treasure_open);
+            });
+        }
+
+        private void PrepareHiddenForEntrance()
+        {
+            if (_chestRoot != null) _chestRoot.localScale = Vector3.zero;
+            if (_continueBtnRect != null) _continueBtnRect.localScale = Vector3.zero;
+        }
+
+        private void PlayEntrance()
+        {
+            if (_chestRoot != null)
+            {
+                _chestRoot.DOKill();
+                _chestRoot.localScale = Vector3.one * 0.45f;
+                _chestRoot.DOScale(Vector3.one, 0.42f).SetDelay(0.10f).SetEase(Ease.OutBack).SetUpdate(true);
+            }
+            if (_continueBtnRect != null)
+            {
+                _continueBtnRect.DOKill();
+                _continueBtnRect.localScale = Vector3.zero;
+                _continueBtnRect.DOScale(Vector3.one, 0.32f).SetDelay(0.30f).SetEase(Ease.OutBack).SetUpdate(true);
+            }
         }
 
         private void Update()

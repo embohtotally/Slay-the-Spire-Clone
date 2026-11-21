@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
 using PlushieOdyssey.Audio;
+using PlushieOdyssey.Core.Scenes;
 using PlushieOdyssey.Map;
 using TMPro;
 using UnityEngine;
@@ -105,9 +106,11 @@ namespace PlushieOdyssey.UI.Map
         private Action<MapNode> _onNodeClicked;
         private NodeVisual _hoveredNode;
         private bool _isInitialized;
+        private bool _isActivatingNode;
 
         public int RenderedNodeCount => _nodeVisuals.Count;
         public string CurrentPinnedNodeId => _currentNodeId;
+        public bool IsActivatingNode => _isActivatingNode;
 
         public void ConfigureAssets(
             Sprite parchment,
@@ -136,6 +139,31 @@ namespace PlushieOdyssey.UI.Map
         public void SetShowLegendBar(bool show) => _showLegendBar = show;
         public void SetRenderOwnParchmentBackground(bool renderOwn) => _renderOwnParchmentBackground = renderOwn;
 
+        public void PrepareHiddenForEntrance()
+        {
+            EnsureStructure();
+            ClearVisuals();
+            _isActivatingNode = false;
+
+            if (_mapPlotArea != null)
+            {
+                _mapPlotArea.DOKill();
+                _mapPlotArea.localScale = Vector3.one;
+                _mapPlotArea.anchoredPosition = Vector2.zero;
+            }
+            if (_parchmentRt != null)
+            {
+                _parchmentRt.DOKill();
+                _parchmentRt.localScale = new Vector3(0.95f, 0.95f, 1f);
+            }
+            if (_legendBar != null)
+            {
+                if (!_legendBar.TryGetComponent(out CanvasGroup lg)) lg = _legendBar.gameObject.AddComponent<CanvasGroup>();
+                lg.DOKill();
+                lg.alpha = 0f;
+            }
+        }
+
         public void RenderMap(
             MapGraph graph,
             string currentNodeId,
@@ -145,6 +173,36 @@ namespace PlushieOdyssey.UI.Map
         {
             EnsureStructure();
             ClearVisuals();
+            _isActivatingNode = false;
+
+            if (_mapPlotArea != null)
+            {
+                _mapPlotArea.DOKill();
+                _mapPlotArea.localScale = Vector3.one;
+                _mapPlotArea.anchoredPosition = Vector2.zero;
+            }
+
+            if (animateEntrance)
+            {
+                if (_parchmentRt != null)
+                {
+                    _parchmentRt.DOKill();
+                    _parchmentRt.localScale = new Vector3(0.95f, 0.95f, 1f);
+                    _activeTweens.Add(_parchmentRt.DOScale(Vector3.one, 0.30f).SetEase(Ease.OutCubic).SetUpdate(true));
+                }
+                if (_legendBar != null)
+                {
+                    if (!_legendBar.TryGetComponent(out CanvasGroup lg)) lg = _legendBar.gameObject.AddComponent<CanvasGroup>();
+                    lg.DOKill();
+                    lg.alpha = 0f;
+                    _activeTweens.Add(lg.DOFade(1f, 0.28f).SetDelay(0.14f).SetEase(Ease.OutQuad).SetUpdate(true));
+                }
+            }
+            else
+            {
+                if (_parchmentRt != null) _parchmentRt.localScale = Vector3.one;
+                if (_legendBar != null && _legendBar.TryGetComponent(out CanvasGroup lg)) lg.alpha = 1f;
+            }
 
             _graph = graph;
             _currentNodeId = currentNodeId;
@@ -697,19 +755,182 @@ namespace PlushieOdyssey.UI.Map
             }
         }
 
+        /// <summary>
+        /// Plays a juicy node-activation choreography when the player clicks a map node:
+        /// elastic punch + dual shockwave rings + radial sparkle burst + HERE pin hop +
+        /// subtle camera zoom/lean toward the chosen node before invoking <paramref name="onComplete"/>
+        /// to launch the procedural blink transition into the node's scene.
+        /// </summary>
+        public void PlayNodeActivationTransition(MapNode selectedNode, Action onComplete)
+        {
+            if (selectedNode == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            NodeVisual targetVis = _nodeVisuals.Find(v => v != null && v.Node != null && v.Node.Id == selectedNode.Id);
+            if (targetVis == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            _isActivatingNode = true;
+            HideTooltip();
+            Tune.SFX(SfxID.relic_claim);
+
+            // Lock all node clicks immediately during activation
+            for (int i = 0; i < _nodeVisuals.Count; i++)
+            {
+                NodeVisual vis = _nodeVisuals[i];
+                if (vis == null) continue;
+                vis.IsInteractive = false;
+                vis.Hovering = false;
+                if (vis != targetVis && vis.Group != null)
+                {
+                    vis.Group.DOKill();
+                    _activeTweens.Add(vis.Group.DOFade(0.38f, 0.22f).SetEase(Ease.OutQuad).SetUpdate(true));
+                }
+            }
+
+            // Bring selected node to front & play elastic punch + celebratory wobble
+            targetVis.Root.SetAsLastSibling();
+            targetVis.AnimPivot.DOKill();
+            float s = targetVis.BaseScale;
+            Sequence nodeSeq = DOTween.Sequence().SetUpdate(true);
+            nodeSeq.Append(targetVis.AnimPivot.DOScale(new Vector3(1.38f, 0.84f, 1f) * s, 0.08f).SetEase(Ease.OutQuad));
+            nodeSeq.Join(targetVis.AnimPivot.DOLocalRotate(new Vector3(0f, 0f, -9f), 0.08f));
+            nodeSeq.Append(targetVis.AnimPivot.DOScale(new Vector3(1.24f, 1.32f, 1f) * s, 0.12f).SetEase(Ease.OutBack));
+            nodeSeq.Join(targetVis.AnimPivot.DOLocalRotate(new Vector3(0f, 0f, 5f), 0.12f));
+            nodeSeq.Append(targetVis.AnimPivot.DOScale(Vector3.one * (1.20f * s), 0.14f).SetEase(Ease.OutSine));
+            nodeSeq.Join(targetVis.AnimPivot.DOLocalRotate(Vector3.zero, 0.14f));
+            _activeTweens.Add(nodeSeq);
+
+            if (targetVis.HaloImage != null)
+            {
+                targetVis.HaloImage.gameObject.SetActive(true);
+                targetVis.HaloImage.DOKill();
+                targetVis.HaloImage.rectTransform.DOKill();
+                targetVis.HaloImage.color = new Color(1f, 0.90f, 0.42f, 0.95f);
+                _activeTweens.Add(targetVis.HaloImage.rectTransform.DOScale(1.75f, 0.30f).SetEase(Ease.OutCubic).SetUpdate(true));
+            }
+
+            // Dual expanding shockwave rings + radial starlight motes around the chosen node
+            (_, _, Color accent) = GetNodeInfo(selectedNode.Type);
+            Color ringColor = Color.Lerp(accent, new Color(1f, 0.90f, 0.42f, 1f), 0.48f);
+            SpawnNodeActivationBurst(targetVis.MappedPos, ringColor);
+
+            // Slide / bounce the HERE pin right onto the chosen node
+            float pinYOffset = _nodeSize * targetVis.BaseScale * 0.44f;
+            Vector2 destPinPos = targetVis.MappedPos + new Vector2(0f, pinYOffset);
+            if (_currentPinRt != null)
+            {
+                _pinSettled = false;
+                _currentPinRt.DOKill();
+                Sequence pinSeq = DOTween.Sequence().SetUpdate(true);
+                pinSeq.Append(_currentPinRt.DOAnchorPos(destPinPos + new Vector2(0f, 34f), 0.14f).SetEase(Ease.OutQuad));
+                pinSeq.Append(_currentPinRt.DOAnchorPos(destPinPos, 0.16f).SetEase(Ease.OutBounce));
+                _activeTweens.Add(pinSeq);
+            }
+            else
+            {
+                SpawnCurrentPin(targetVis, delay: 0.02f, animate: true);
+            }
+
+            // Subtle pull-in zoom & lean toward the chosen node on the parchment map
+            if (_mapPlotArea != null)
+            {
+                _mapPlotArea.DOKill();
+                Vector2 leanOffset = -targetVis.MappedPos * 0.08f;
+                leanOffset.x = Mathf.Clamp(leanOffset.x, -42f, 42f);
+                leanOffset.y = Mathf.Clamp(leanOffset.y, -24f, 24f);
+                _activeTweens.Add(_mapPlotArea.DOScale(1.075f, 0.34f).SetEase(Ease.OutCubic).SetUpdate(true));
+                _activeTweens.Add(_mapPlotArea.DOAnchorPos(leanOffset, 0.34f).SetEase(Ease.OutCubic).SetUpdate(true));
+            }
+
+            Sequence finishSeq = DOTween.Sequence().SetUpdate(true);
+            finishSeq.AppendInterval(0.34f);
+            finishSeq.OnComplete(() => onComplete?.Invoke());
+            _activeTweens.Add(finishSeq);
+        }
+
+        private void SpawnNodeActivationBurst(Vector2 pos, Color color)
+        {
+            if (_pinLayer == null) return;
+            int layer = gameObject.layer;
+
+            // Two staggered concentric ink/gold shockwave rings
+            for (int r = 0; r < 2; r++)
+            {
+                GameObject ringGo = new($"NodeShockwave_{r}", typeof(RectTransform), typeof(Image));
+                ringGo.layer = layer;
+                RectTransform rt = (RectTransform)ringGo.transform;
+                rt.SetParent(_pinLayer, false);
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = pos;
+                rt.sizeDelta = new Vector2(_nodeSize * 0.9f, _nodeSize * 0.9f);
+                rt.localScale = Vector3.one * 0.55f;
+
+                Image img = ringGo.GetComponent<Image>();
+                img.sprite = GetRingSprite();
+                img.color = r == 0 ? color : Color.white;
+                img.raycastTarget = false;
+
+                float delay = r * 0.07f;
+                Sequence seq = DOTween.Sequence().SetUpdate(true);
+                if (delay > 0f) seq.AppendInterval(delay);
+                seq.Append(rt.DOScale(r == 0 ? 2.65f : 2.15f, 0.34f).SetEase(Ease.OutCubic));
+                seq.Join(img.DOFade(0f, 0.34f).SetEase(Ease.OutQuad));
+                seq.OnComplete(() => { if (ringGo != null) Destroy(ringGo); });
+                _activeTweens.Add(seq);
+            }
+
+            // 8 radial golden sparkle motes popping outward from the node
+            const int moteCount = 8;
+            for (int i = 0; i < moteCount; i++)
+            {
+                float angle = (i / (float)moteCount) * Mathf.PI * 2f + 0.25f;
+                float dist = _nodeSize * (0.95f + (i % 2) * 0.38f);
+                Vector2 dest = pos + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
+
+                GameObject moteGo = new($"NodeSpark_{i}", typeof(RectTransform), typeof(Image));
+                moteGo.layer = layer;
+                RectTransform rt = (RectTransform)moteGo.transform;
+                rt.SetParent(_pinLayer, false);
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = pos;
+                rt.sizeDelta = Vector2.one * (i % 2 == 0 ? 11f : 8f);
+                rt.localScale = Vector3.one;
+
+                Image img = moteGo.GetComponent<Image>();
+                img.sprite = GetCircleSprite();
+                img.color = i % 2 == 0 ? new Color(1f, 0.94f, 0.56f, 0.96f) : color;
+                img.raycastTarget = false;
+
+                Sequence seq = DOTween.Sequence().SetUpdate(true);
+                seq.Append(rt.DOAnchorPos(dest, 0.32f).SetEase(Ease.OutCubic));
+                seq.Join(rt.DOScale(0f, 0.32f).SetEase(Ease.InQuad));
+                seq.Join(img.DOFade(0f, 0.32f).SetEase(Ease.InQuad));
+                seq.OnComplete(() => { if (moteGo != null) Destroy(moteGo); });
+                _activeTweens.Add(seq);
+            }
+        }
+
         // ------------------------------------------------------------------
         // Interaction & Hover Tooltip
         // ------------------------------------------------------------------
         private void HandleNodeClicked(NodeVisual vis)
         {
-            if (vis == null || !vis.IsInteractive) return;
-            Tune.SFX(SfxID.relic_claim);
+            if (vis == null || !vis.IsInteractive || _isActivatingNode || BlinkSceneTransition.IsTransitioning) return;
             _onNodeClicked?.Invoke(vis.Node);
         }
 
         private void HandleNodeHoverEnter(NodeVisual vis)
         {
-            if (vis == null) return;
+            if (vis == null || _isActivatingNode || BlinkSceneTransition.IsTransitioning) return;
             _hoveredNode = vis;
             vis.Hovering = true;
 

@@ -27,22 +27,21 @@ namespace PlushieOdyssey.Core.Scenes
                 return;
             }
 
-            CurrentRequest = SceneLoadRequest.Single(sceneName, minimumLoadingTime);
-
-            if (!ValidateScene(LoadingSceneName))
+            if (BlinkSceneTransition.IsTransitioning)
             {
-                SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
                 return;
             }
 
-            if (GameManager.Instance != null)
+            CurrentRequest = SceneLoadRequest.Single(sceneName, minimumLoadingTime);
+
+            BlinkSceneTransition blink = BlinkSceneTransition.EnsureInstance();
+            if (blink != null && blink.TransitionToScene(sceneName))
             {
-                GameManager.Instance.StartCoroutine(LoadLoadingSceneAsync());
+                return;
             }
-            else
-            {
-                SceneManager.LoadSceneAsync(LoadingSceneName, LoadSceneMode.Single);
-            }
+
+            // Fallback only if BlinkSceneTransition could not be created
+            SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
         }
 
         public static void LoadSceneWithMinimumTime(string sceneName, float minimumLoadingTime)

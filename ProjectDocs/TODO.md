@@ -1,10 +1,10 @@
 # Plushie Odyssey — Implementation To-Do List
 
-[Project README](../README.md) · [Code Documentation Index](code/README.md) · [Cards & Hand](code/cards-and-hand.md) · [Input](code/input.md)
+[Project README](../README.md) · [Code Documentation Index](code/README.md) · [Cards & Hand](code/cards-and-hand.md) · [Input](code/input.md) · [2026-11-20 Recommendations](TODO_RECOMMENDATIONS.md)
 
 Master backlog comparing the current Unity codebase against **Slay the Spire**, **Witch's Apocalyptic Journey (魔女的末日旅途)**, and the project's **Miro** design board.
 
-> **Scope note:** Every item below reflects code, scene, prefab, ScriptableObject, asset, and report state verified directly in the repository (`ProjectDocs/`, `Assets/_Project/`, `ProjectSettings/`, `Packages/`).
+> **Scope note:** Every item below reflects code, scene, prefab, ScriptableObject, asset, and report state verified directly in the repository (`ProjectDocs/`, `Assets/_Project/`, `ProjectSettings/`, `Packages/`). New feature and improvement recommendations from the 2026-11-20 audit have been separated into [`TODO_RECOMMENDATIONS.md`](TODO_RECOMMENDATIONS.md).
 
 ---
 
@@ -51,6 +51,8 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
   - Enforced `MaxHandSize` (`10`) with `HandFullRejected` toast notification and null-draw guards in [`CardSystem.cs`](../Assets/_Project/Scripts/Systems/CardSystem.cs).
 - [x] **Add Max-Mana scaling API in `ManaSystem`**
   - Exposed `CurrentMana`, `MaxMana`, `ModifyMaxMana`, `SetMaxMana`, and `ManaChanged` in [`ManaSystem.cs`](../Assets/_Project/Scripts/Systems/ManaSystem.cs).
+- [x] **Add Will System (`+ High Will` / `- Low Will`) & Per-Card `1–3` RNG Will Gain**
+  - Replaced legacy combat Fear/Stress naming across [`HeroWillProfile.cs`](../Assets/_Project/Scripts/Data/HeroWillProfile.cs), [`HeroView.cs`](../Assets/_Project/Scripts/Views/HeroView.cs), [`CombatStatusBadgeData.cs`](../Assets/_Project/Scripts/Models/CombatStatusBadgeData.cs), [`CombatJuiceDirector.cs`](../Assets/_Project/Scripts/VFX/CombatJuiceDirector.cs), [`CombatKeywordTooltipUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatKeywordTooltipUI.cs), `WillProfile_*.asset`, and card descriptions, and added per-card RNG `+1..+3` Will gain in [`HeroSystem.cs`](../Assets/_Project/Scripts/Systems/HeroSystem.cs).
 - [ ] **Implement missing mid-combat card manipulation**
   - **Scry** (inspect & selectively discard top cards of draw pile)
   - **Discover / Choose 1 of N** card creation in combat
@@ -67,8 +69,8 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
 - [ ] **Implement Ultimates, Companions/Pets & Archetypes**
   - Wire `UltimatePointsView` (currently only in `UIGameTest.unity`) to combat ultimate charge gain, ultimate cast abilities, **Companions/Pets**, and **Archetypes**.
 - [ ] **Expand Enemy AI beyond static intent loops**
-  - Replace plain-text `NextIntent.IntentName` on [`EnemyView.cs`](../Assets/_Project/Scripts/Views/EnemyView.cs) with StS intent icons (Attack / Multi-hit / Defend / Buff / Debuff / Unknown) and live damage numbers.
-  - Add conditional & phase-driven AI (HP-threshold splits, multi-phase bosses, turn-based cycles, reactive triggers when cards are played, Enrage/Artifact/Ritual passives, and Stun/Taunt/Heal/Status-injection intents).
+  - *(Completed)* Replaced plain-text intent with icon-based [`EnemyIntentHUD.cs`](../Assets/_Project/Scripts/UI/Combat/EnemyIntentHUD.cs) + live buff-adjusted damage/Will numbers and hover tooltips.
+  - Remaining: conditional & phase-driven AI (HP-threshold splits, multi-phase bosses, turn-based cycles, reactive triggers when cards are played, Enrage/Artifact/Ritual passives, and Stun/Taunt/Heal/Status-injection intents).
 - [ ] **Retire or replace legacy `Perk` condition stubs**
   - [`OnEnemyAttackCondition.cs`](../Assets/_Project/Scripts/Perk%20Condtions/OnEnemyAttackCondition.cs) returns `true` unconditionally and is the sole condition under `Perk Condtions/`; finish consolidating passive triggers under `RelicCombatTriggerSystem`.
 
@@ -119,8 +121,8 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
 - [ ] **Expand `SettingsAnimateablePanel.prefab` & `SettingsController`**
   - Currently limited to `MasterVolume`, `MusicVolume`, and `SFXVolume` sliders (and `LoadAudioWithoutNotify` does not push saved mixer floats on startup). Add Resolution / Display Mode / VSync / FPS Cap, Fast Mode toggle, Screen Shake toggle, Card Confirmation, Language selector, Keybind Rebinding, and Reset Save.
 - [ ] **Add Live Damage / Shield / Lethal Previews & Keyword Tooltips**
-  - Dynamically calculate and display buff/debuff-adjusted damage on hovered/dragged cards and enemy intents, plus projected HP/Shield loss on `CombatantView` sliders.
-  - Implement hover **Keyword Tooltips** (`*Tooltip*` script search currently returns `0` files) for buffs, debuffs, Stress, Relics, Potions, and Card Keywords.
+  - *(Completed)* Live Target Damage/Lethal & Non-Damage X-Cost Reticles ([`CombatTargetingPresenter.cs`](../Assets/_Project/Scripts/Views/CombatTargetingPresenter.cs)), projected HP-bar damage shading ([`CombatantView.cs`](../Assets/_Project/Scripts/Views/CombatantView.cs)), Card Keyword Tooltips ([`CombatKeywordTooltipUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatKeywordTooltipUI.cs)), Hero & Enemy Buff/Debuff Hover Tooltips ([`CombatStatusTooltipUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatStatusTooltipUI.cs)), and Enemy Intent Hover Tooltips ([`EnemyIntentHUD.cs`](../Assets/_Project/Scripts/UI/Combat/EnemyIntentHUD.cs)).
+  - Remaining: live buff-adjusted card descriptions on hand cards and hover Keyword Tooltips on Relics/Potions outside combat.
 - [ ] **Install & Wire Localization Framework (Miro Frame 9 Spec)**
   - [`Packages/manifest.json`](../Packages/manifest.json) has no localization package (`com.unity.localization`). Add localization infrastructure and import `en`, `zh-Hant`, `ja`, and `ko` string tables.
 
@@ -128,10 +130,12 @@ Master backlog comparing the current Unity codebase against **Slay the Spire**, 
 
 ## P4 — Audio, VFX & Art Integration Backlog
 
+- [x] **Add Procedural Double-Blink Scene Transitions, Map Node Activation & Staggered Scene Entrances**
+  - Replaced legacy `Loading.unity` transitions with curved procedural double-blink eyelids ([`BlinkSceneTransition.cs`](../Assets/_Project/Scripts/General/Scenes/BlinkSceneTransition.cs)), added juicy Map node click activation choreography (`ProceduralMapRendererUI.PlayNodeActivationTransition`), and added staggered scene entrances across `Game.unity` ([`CombatSceneEntranceDirector.cs`](../Assets/_Project/Scripts/VFX/CombatSceneEntranceDirector.cs)), `Map.unity`, `RunRewards.unity`, `Merchant.unity`, `Rest.unity`, `Treasure.unity`, and `Event.unity`.
 - [x] **Wire the 60 unreferenced Character Voicepack WAVs**
   - Connected `Aira` and `Ember` voice cues (`SfxID.Aira_*` / `SfxID.Ember_*`) to combat card plays, damage taken, and healing via [`CharacterVoiceDirector.cs`](../Assets/_Project/Scripts/Audio/CharacterVoiceDirector.cs) (auto-attached in `ActionSystem.Awake()`).
 - [x] **Add Core Combat Procedural Juice Pack**
-  - Added [`CombatJuiceDirector.cs`](../Assets/_Project/Scripts/VFX/CombatJuiceDirector.cs) (hit-stop, impact-scaled camera shake & zoom punch, played-card comet ribbon trails, Boss Entrance banners, Will threshold callouts, `E`/`A`/`D` combat hotkeys), procedural combatant idle breathing / directional attack lunges / hurt recoil / enemy death dissolve, parabolic color-coded floating combat numbers, and live HP-bar projected damage preview shading.
+  - Added [`CombatJuiceDirector.cs`](../Assets/_Project/Scripts/VFX/CombatJuiceDirector.cs) (hit-stop, impact-scaled camera shake & zoom punch, played-card comet ribbon trails, Boss Entrance banners, `+ High Will` / `- Low Will` callouts, `E`/`A`/`D` combat hotkeys), procedural combatant idle breathing / directional attack lunges / hurt recoil / enemy death dissolve, parabolic color-coded floating combat numbers, and live HP-bar projected damage preview shading.
 - [ ] **Fill empty global Audio/VFX director slots & triage unused pools**
   - On `GameManager.prefab` -> `GameActionAudioDirector`, populate empty `sfxName` entries on `playCardSfx`, `drawCardsBatchSfx`, `dealDamageSfx`, `healSfx`, and `gainShieldSfx`; assign `playCardVfx` on `GameActionVfxDirector`.
   - Review the `267` sidelined audio clips moved to `NotUsed/` ([`AudioSetupReport.md`](../Assets/_Project/Sounds/AudioSetupReport.md)) and `50` unused CFXR/Hit VFX prefabs ([`VfxAssignmentReport.md`](../Assets/_Project/Scripts/VFX/VfxAssignmentReport.md)).
@@ -164,13 +168,13 @@ Scene/prefab audit comparing current Unity UI (`Assets/_Project/Scenes/` & `Asse
   - Remaining: place multi-hero `HeroStressPanelUI`, `HeroStressBarView`, `UltimatePointsView`, **Breakdown / Fear State banner**, and **Companion / Summon Turn Intent & HP frames**.
 - [ ] **Add Live Combat Math, Tooltips & Turn Prompts**
   - *(Completed)* Card hover **Keyword Tooltips** ([`CombatKeywordTooltipUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatKeywordTooltipUI.cs)), **Enemy Intent Hover Tooltips** ([`EnemyIntentHUD.cs`](../Assets/_Project/Scripts/UI/Combat/EnemyIntentHUD.cs)), **Hero & Enemy Stacked Buff/Debuff Icon Hover Tooltips** ([`CombatStatusTooltipUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatStatusTooltipUI.cs)), **Relic Hover Tooltips** ([`TopBarRelicSlotsUI.cs`](../Assets/_Project/Scripts/UI/Relics/TopBarRelicSlotsUI.cs)), **Live Target Damage / Lethal & Taunt Preview Reticles** ([`CombatTargetingPresenter.cs`](../Assets/_Project/Scripts/Views/CombatTargetingPresenter.cs)), **Turn Phase Banner** (`PLAYER TURN` / `ENEMY TURN`), and **Play-Rejection / Hand-Full Toast** ([`CombatFeedbackBannerUI.cs`](../Assets/_Project/Scripts/UI/Combat/CombatFeedbackBannerUI.cs)).
-  - Remaining: tooltips on Potions, projected HP-bar loss shading, and **Mid-Combat Card Picker Modals** (Scry, Discover, Discard/Exhaust/Upgrade pickers).
+  - Remaining: tooltips on Potions and **Mid-Combat Card Picker Modals** (Scry, Discover, Discard/Exhaust/Upgrade pickers).
 
 ### C. Existing Map & Non-Combat Scene UI Gaps
 - [ ] **`MainMenu.unity`**: Only has `Play`, `Settings`, `Credits`, `Exit`. Add **Continue / Resume Run**, **Game Modes** (Standard, Daily, Custom Seed/Modifiers), **Compendium** (Card Library, Relic Gallery, Potion List, Enemy Bestiary), **Run History & Lifetime Stats**, **Achievements**, Language switcher, and **Quit Confirmation** popup.
 - [ ] **`Levels.unity`**: *(Completed)* Added two-stage Celestial **Party Setup** (`Aura` & `Ember`, 3-slot tarot cards, Ultimates, Innate + Future Unlockable Talents, 5-icon roster strip, animated chibi sprites) via [`PartySetupUI.cs`](../Assets/_Project/Scripts/Levels/PartySetupUI.cs). Remaining: **Difficulty selector (`Difficulty : Easy`)**, **Level Reward preview panel**, and **Ascension / Seed** controls.
-- [ ] **`Map.unity`**: Add the **Map Legend panel** sketched in Miro Frame 1 (`Elite Boss`, `Enemy`, `Rest`, `Merchant`, `Event`), **Act Boss icon/preview** at top of scroll map, clickable **RunDeckContainer**, and **PotionBelt / RelicList** HUD.
-- [x] **`Merchant.unity`**: Built [`MerchantShopUI.cs`](../Assets/_Project/Scripts/Map/Merchant/MerchantShopUI.cs) with 8 card offers (`2×4`), 3 Relic pedestals beside an escalating circular `RESET` (`10g → 20g → 30g...`), talking vendor + `Vendor Text` dialogue, `Item desc` hover inspector, Deck Viewer, and escalating Deck-Grid Card Removal (`75g → 100g...`) (Potion shelf remains optional).
+- [ ] **`Map.unity`**: *(Completed)* Built procedural Left-to-Right map with Legend bar, node activation transition, and staggered return reveal via [`ProceduralMapRendererUI.cs`](../Assets/_Project/Scripts/UI/Map/ProceduralMapRendererUI.cs). Remaining: **Act Boss icon/preview** at top of scroll map, clickable **RunDeckContainer**, and **PotionBelt / RelicList** HUD.
+- [x] **`Merchant.unity`**: Built [`MerchantShopUI.cs`](../Assets/_Project/Scripts/Map/Merchant/MerchantShopUI.cs) + Edit-Mode scene baker [`MerchantShopEditorBaker.cs`](../Assets/_Project/Scripts/Editor/MerchantShopEditorBaker.cs) with 8 card offers (`2×4`), 3 Relic pedestals beside an escalating circular `RESET` (`10g → 20g → 30g...`), talking vendor + `Vendor Text` dialogue, `Item desc` hover inspector, Deck Viewer, and escalating Deck-Grid Card Removal (`75g → 100g...`) (Potion shelf remains optional).
 - [x] **`Rest.unity`**: Built [`RestSiteUI.cs`](../Assets/_Project/Scripts/Map/Rest/RestSiteUI.cs) with flickering campfire embers, **Rest**, **Calm Mind**, and interactive **Smith** Deck-Grid Upgrade Picker + `Card → Card+` side-by-side preview modal.
 - [x] **`Treasure.unity`**: Built [`TreasureRoomUI.cs`](../Assets/_Project/Scripts/Map/Treasure/TreasureRoomUI.cs) with interactive rattling chest burst animation, Gold claim, and random Relic showcase with 5-slot `RelicSwapModalUI` integration.
 - [x] **`Event.unity`**: Built data-driven [`NarrativeEventData.cs`](../Assets/_Project/Scripts/Data/NarrativeEventData.cs) + [`NarrativeEventUI.cs`](../Assets/_Project/Scripts/Map/Event/NarrativeEventUI.cs) with 6 handcrafted chapter-themed events, requirement-locked choices, outcome previews, and result feedback.

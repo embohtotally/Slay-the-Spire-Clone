@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f672b53157b39404ea8e6ca6201ec503, type: 3}
+  m_Name: BossRelic_SearingLantern
+  m_EditorClassIdentifier: 
+  <Title>k__BackingField: Searing Lantern
+  <Description>k__BackingField: '+1 Max Mana at the start of every turn. Trade-off:
+    Start every combat with -15 Will.'
+  <Image>k__BackingField: {fileID: 0}
+  <Rarity>k__BackingField: 3
+  <Unique>k__BackingField: 1
+  <GoldValue>k__BackingField: 300
+  <Reactions>k__BackingField: []
+  <BonusMaxMana>k__BackingField: 1
+  <StartCombatWillDelta>k__BackingField: -15
+  <DisableRestSiteHeal>k__BackingField: 0
+  <MerchantDiscountPercent>k__BackingField: 0
+  <BonusOpeningDraw>k__BackingField: 0
+  references:
+    version: 2
+    RefIds: []

@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
+  m_Name: Utility_ForesightScry
+  m_EditorClassIdentifier: 
+  <Image>k__BackingField: {fileID: 0}
+  <Title>k__BackingField: Arcane Foresight
+  <Description>k__BackingField: Scry 3. Gain 5 Shield and draw 1 card.
+  <Tier>k__BackingField: 0
+  <Mana>k__BackingField: 1
+  <XBonus>k__BackingField: 0
+  <Type>k__BackingField: 1
+  <Keywords>k__BackingField: 0
+  <OwnerCharacterId>k__BackingField: Aira
+  <TargetType>k__BackingField: 1
+  <ManualTargetEffect>k__BackingField:
+    rid: -2
+  <OtherEffects>k__BackingField:
+  - <TargetMode>k__BackingField:
+      rid: 8960002081742127195
+    <Effect>k__BackingField:
+      rid: 8960002081742127196
+  - <TargetMode>k__BackingField:
+      rid: 8960002081742127197
+    <Effect>k__BackingField:
+      rid: 8960002081742127198
+  - <TargetMode>k__BackingField:
+      rid: 8960002081742127199
+    <Effect>k__BackingField:
+      rid: 8960002081742127200
+  <PersistPowerInCombat>k__BackingField: 0
+  <PowerPassives>k__BackingField: []
+  <OnDrawEffects>k__BackingField: []
+  <EndTurnInHandEffects>k__BackingField: []
+  <HoverSfx>k__BackingField: 5
+  <PlaySfx>k__BackingField: 0
+  <PlayParticle>k__BackingField: {fileID: 0}
+  <PlayVfx>k__BackingField:
+    prefab: {fileID: 0}
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scaleMultiplier: {x: 1, y: 1, z: 1}
+    parentToTarget: 0
+    destroyAfter: 3
+  <VisualType>k__BackingField: 0
+  <HeroAnimationTrigger>k__BackingField: 
+  <TargetAnimationTrigger>k__BackingField: 
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 8960002081742127195
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
+      data: 
+    - rid: 8960002081742127196
+      type: {class: ScryEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
+      data:
+        amount: 3
+    - rid: 8960002081742127197
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
+      data: 
+    - rid: 8960002081742127198
+      type: {class: GainShieldEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
+      data:
+        shieldAmount: 5
+    - rid: 8960002081742127199
+      type: {class: HeroTM, ns: PlushieOdyssey.Combat.Targeting, asm: Assembly-CSharp}
+      data: 
+    - rid: 8960002081742127200
+      type: {class: DrawEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
+      data:
+        amount: 0

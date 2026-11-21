@@ -88,6 +88,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d0541efdf2bfbcd49b84bfa5fafa3b25, type: 2}
   - {fileID: 11400000, guid: 37dd437683c9ed748845ad7ae6af72d3, type: 2}
   - {fileID: 11400000, guid: 062751ac9b8a19148a02d69ac848e1eb, type: 2}
+  - {fileID: 11400000, guid: 4b58dbff359382e4d9c5f3938cf8ca80, type: 2}
+  - {fileID: 11400000, guid: f0d7fc830a4dca5448ccaa2f9f813a42, type: 2}
+  - {fileID: 11400000, guid: c865fdd59b0e1504f97c1f558fc9adf2, type: 2}
+  - {fileID: 11400000, guid: b95ab6cabdd6ed645b014a1483d564d4, type: 2}
+  - {fileID: 11400000, guid: 7a9315c52a5189448be52a59048c5e0b, type: 2}
+  - {fileID: 11400000, guid: 639e4b955a2b3dd47871f358ab71092f, type: 2}
+  - {fileID: 11400000, guid: 5608d0c63679eef469bc4c014f46f0d5, type: 2}
+  - {fileID: 11400000, guid: c7202e567b10a384195ba7dd192768a8, type: 2}
+  - {fileID: 11400000, guid: ad0ecd86a89552548bcbd82af0613c08, type: 2}
+  - {fileID: 11400000, guid: b7aa71bf6ec2f1743a8b466c6209d37d, type: 2}
   upgradeRecipes:
   - BaseCard: {fileID: 11400000, guid: 8aa55b5aa214ec64b8c38b14d92fb8d7, type: 2}
     UpgradedCard: {fileID: 11400000, guid: 80af5434f9a9498c908361cc60b0a981, type: 2}

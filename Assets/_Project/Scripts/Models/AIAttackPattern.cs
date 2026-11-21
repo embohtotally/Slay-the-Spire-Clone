@@ -5,6 +5,7 @@ namespace PlushieOdyssey.Combat.Models
         Random,
         SequentialLoop,
         SequentialStop,
-        RandomNoRepeat
+        RandomNoRepeat,
+        ConditionalWeighted
     }
 }

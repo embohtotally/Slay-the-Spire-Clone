@@ -40,10 +40,12 @@ namespace PlushieOdyssey.Map
 
         private MapGraph graph;
         private GameObject chapterBannerRoot;
+        private bool isActivatingNode;
 
         public MapGraph CurrentGraph => graph;
         public string ActiveChapterHeaderText => mapTitleText != null ? mapTitleText.text : string.Empty;
         public bool IsChapterBannerVisible => chapterBannerRoot != null && chapterBannerRoot.activeSelf;
+        public bool IsActivatingNode => isActivatingNode;
 
         private void Start()
         {
@@ -65,7 +67,7 @@ namespace PlushieOdyssey.Map
                 // Allow standalone Map.unity preview even if GameManager wasn't loaded first
                 graph = GenerateMapForLevel(progression?.CurrentLevel);
                 UpdateChapterHeader(progression?.CurrentLevel, null);
-                RenderCurrentGraph(null, animateEntrance: true);
+                BeginStaggeredMapEntrance(null, null, 0, string.Empty);
                 return;
             }
 
@@ -137,16 +139,65 @@ namespace PlushieOdyssey.Map
             UpdateChapterHeader(activeLevel, RunManager.Instance);
 
             graph.RefreshAvailability(RunManager.Instance.CurrentMapNodeId);
-            RenderCurrentGraph(RunManager.Instance.CurrentMapNodeId, animateEntrance: true);
 
+            int bannerChapterNum = 0;
+            string bannerSubtitle = string.Empty;
             if (newlyEnteredChapter != null)
             {
-                ShowChapterTransitionBanner(newlyEnteredChapter.LevelNumber, newlyEnteredChapter.Description);
+                bannerChapterNum = newlyEnteredChapter.LevelNumber;
+                bannerSubtitle = newlyEnteredChapter.Description;
             }
             else if (RunManager.Instance.CurrentChapterNumber > 1 && string.IsNullOrEmpty(RunManager.Instance.CurrentMapNodeId) && (activeLevel == null))
             {
-                ShowChapterTransitionBanner(RunManager.Instance.CurrentChapterNumber, RunManager.Instance.CurrentChapterName);
+                bannerChapterNum = RunManager.Instance.CurrentChapterNumber;
+                bannerSubtitle = RunManager.Instance.CurrentChapterName;
             }
+
+            BeginStaggeredMapEntrance(RunManager.Instance.CurrentMapNodeId, newlyEnteredChapter, bannerChapterNum, bannerSubtitle);
+        }
+
+        private void BeginStaggeredMapEntrance(string currentNodeId, LevelDefinition newlyEnteredChapter, int bannerChapterNum, string bannerSubtitle)
+        {
+            // Pre-hide map title & renderer while eyelids are still closed so the entire staggered cascade
+            // plays live as the blink opens instead of everything popping on screen at once!
+            CanvasGroup titleCg = null;
+            RectTransform titleRt = mapTitleText != null ? mapTitleText.rectTransform : null;
+            Vector2 titleHomePos = titleRt != null ? titleRt.anchoredPosition : Vector2.zero;
+
+            if (titleRt != null)
+            {
+                if (!titleRt.TryGetComponent(out titleCg))
+                {
+                    titleCg = titleRt.gameObject.AddComponent<CanvasGroup>();
+                }
+                titleCg.DOKill();
+                titleRt.DOKill();
+                titleCg.alpha = 0f;
+                titleRt.anchoredPosition = titleHomePos + new Vector2(0f, 36f);
+            }
+
+            if (proceduralRenderer != null)
+            {
+                proceduralRenderer.PrepareHiddenForEntrance();
+            }
+
+            BlinkSceneTransition.RunWhenRevealing(this, () =>
+            {
+                if (this == null || !isActiveAndEnabled) return;
+
+                if (titleRt != null && titleCg != null)
+                {
+                    titleCg.DOFade(1f, 0.28f).SetDelay(0.04f).SetEase(Ease.OutQuad).SetUpdate(true);
+                    titleRt.DOAnchorPos(titleHomePos, 0.34f).SetDelay(0.04f).SetEase(Ease.OutCubic).SetUpdate(true);
+                }
+
+                RenderCurrentGraph(currentNodeId, animateEntrance: true);
+
+                if (bannerChapterNum > 0)
+                {
+                    ShowChapterTransitionBanner(bannerChapterNum, bannerSubtitle);
+                }
+            });
         }
 
         private bool TryAdvanceDirectlyToNextChapter(LevelProgressionManager progression, out LevelDefinition nextLevel)
@@ -330,9 +381,11 @@ namespace PlushieOdyssey.Map
 
         public void SelectNode(MapNode selectedNode)
         {
+            if (isActivatingNode || BlinkSceneTransition.IsTransitioning) return;
             if (selectedNode == null || graph == null) return;
             if (!selectedNode.IsAvailable || selectedNode.IsVisited) return;
 
+            isActivatingNode = true;
             graph.MarkVisited(selectedNode.Id);
             if (RunManager.Instance != null)
             {
@@ -340,6 +393,18 @@ namespace PlushieOdyssey.Map
             }
 
             graph.RefreshAvailability(selectedNode.Id);
+
+            if (proceduralRenderer != null)
+            {
+                proceduralRenderer.PlayNodeActivationTransition(selectedNode, () =>
+                {
+                    isActivatingNode = false;
+                    HandleNode(selectedNode);
+                });
+                return;
+            }
+
+            isActivatingNode = false;
             RenderCurrentGraph(selectedNode.Id, animateEntrance: false);
             HandleNode(selectedNode);
         }

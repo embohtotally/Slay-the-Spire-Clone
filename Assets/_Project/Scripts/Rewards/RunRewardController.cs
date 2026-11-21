@@ -1,3 +1,4 @@
+using DG.Tweening;
 using PlushieOdyssey.Audio;
 using PlushieOdyssey.Core;
 using PlushieOdyssey.Core.Scenes;
@@ -167,8 +168,47 @@ namespace PlushieOdyssey.Rewards
             if (titleText != null) titleText.text = title;
 
             RefreshRewardViews();
+            PlayStaggeredRewardsEntrance();
             rewardsOpenedSfx?.Play(this, transform);
             OnRewardsOpened?.Invoke();
+        }
+
+        private void PlayStaggeredRewardsEntrance()
+        {
+            if (rewardRoot != null)
+            {
+                Transform rootTf = rewardRoot.transform;
+                rootTf.DOKill();
+                if (!rewardRoot.TryGetComponent(out CanvasGroup rootCg)) rootCg = rewardRoot.AddComponent<CanvasGroup>();
+                rootCg.DOKill();
+                rootCg.alpha = 0f;
+                rootCg.DOFade(1f, 0.24f).SetEase(Ease.OutQuad).SetUpdate(true);
+            }
+
+            if (titleText != null)
+            {
+                Transform titleTf = titleText.transform;
+                titleTf.DOKill();
+                titleTf.localScale = Vector3.one * 0.80f;
+                titleTf.DOScale(Vector3.one, 0.32f).SetDelay(0.06f).SetEase(Ease.OutBack).SetUpdate(true);
+            }
+
+            int shown = 0;
+            for (int i = 0; i < optionViews.Count; i++)
+            {
+                RunRewardOptionView view = optionViews[i];
+                if (view == null || !view.gameObject.activeSelf) continue;
+                Transform tf = view.transform;
+                tf.DOKill();
+                tf.localScale = Vector3.one * 0.78f;
+                if (!view.TryGetComponent(out CanvasGroup cg)) cg = view.gameObject.AddComponent<CanvasGroup>();
+                cg.DOKill();
+                cg.alpha = 0f;
+                float delay = 0.14f + shown * 0.085f;
+                tf.DOScale(Vector3.one, 0.30f).SetDelay(delay).SetEase(Ease.OutBack).SetUpdate(true);
+                cg.DOFade(1f, 0.22f).SetDelay(delay).SetUpdate(true);
+                shown++;
+            }
         }
 
         public void ClaimReward(int rewardIndex)

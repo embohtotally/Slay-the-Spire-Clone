@@ -14,6 +14,7 @@ All links to external assets will be listed here too.
 ## Project planning & backlog
 
 - [Implementation To-Do List](ProjectDocs/TODO.md) — prioritized backlog of unimplemented features, half-wired systems, UI/input gaps, and asset integration tasks.
+- [2026-11-20 Recommendations](ProjectDocs/TODO_RECOMMENDATIONS.md) — recent Slay the Spire & Witch's Apocalyptic Journey feature, polish, and technical debt recommendations.
 
 ## Code documentation
 

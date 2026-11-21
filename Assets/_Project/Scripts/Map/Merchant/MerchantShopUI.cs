@@ -350,9 +350,14 @@ namespace PlushieOdyssey.Map.Merchant
             RefreshEquippedRelicStrip(highlightIndex: -1);
             RefreshResetButtonVisuals(animatePrice: false);
             ClearInspector();
-            PlayShopEntranceAnimation();
-            SayVendorLine(PickRandom(greetingLines), playTalkAnim: true);
-            Tune.SFX(SfxID.shop_open);
+            PrepareShopHiddenForEntrance();
+            BlinkSceneTransition.RunWhenRevealing(this, () =>
+            {
+                if (this == null || !isActiveAndEnabled) return;
+                PlayShopEntranceAnimation();
+                SayVendorLine(PickRandom(greetingLines), playTalkAnim: true);
+                Tune.SFX(SfxID.shop_open);
+            });
         }
 
         private void OnDisable()
@@ -1210,6 +1215,27 @@ namespace PlushieOdyssey.Map.Merchant
         // ------------------------------------------------------------------
         // Procedural Animations (Entrance, Hover, Purchase, Reset, Vendor)
         // ------------------------------------------------------------------
+        private void PrepareShopHiddenForEntrance()
+        {
+            if (_stallRoot != null) _stallRoot.localScale = new Vector3(0.92f, 0.92f, 1f);
+            if (_vendorAnimRoot != null)
+            {
+                _vendorAnimRoot.anchoredPosition = _vendorAnimBasePos + new Vector2(0f, -64f);
+                _vendorAnimRoot.localScale = new Vector3(0.76f, 0.76f, 1f);
+            }
+            for (int i = 0; i < _cardSlots.Count; i++)
+            {
+                CardSlotUI slot = _cardSlots[i];
+                if (slot?.ContentRoot != null) slot.ContentRoot.localScale = Vector3.zero;
+            }
+            for (int i = 0; i < _relicSlots.Count; i++)
+            {
+                RelicSlotUI slot = _relicSlots[i];
+                if (slot?.ContentRoot != null) slot.ContentRoot.localScale = Vector3.zero;
+            }
+            if (_resetButtonRoot != null) _resetButtonRoot.localScale = Vector3.zero;
+        }
+
         private void PlayShopEntranceAnimation()
         {
             _activeEntranceSequence?.Kill();
