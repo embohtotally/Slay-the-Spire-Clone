@@ -26,6 +26,8 @@ namespace PlushieOdyssey.Map
 
         [Header("Scene Routing")]
         [SerializeField] private string combatSceneName = "Game";
+        [SerializeField] private string tutorialCombatSceneName = "GameTutorial";
+        [SerializeField] private bool enableFirstBattleTutorial = true;
         [SerializeField] private string merchantSceneName = "Merchant";
         [SerializeField] private string restSceneName = "Rest";
         [SerializeField] private string eventSceneName = "Event";
@@ -455,12 +457,7 @@ namespace PlushieOdyssey.Map
                     global::PlushieOdyssey.Core.Logger.LogWarning($"Map node {node.Id} ({node.Type}) has no EncounterData. Combat will use MatchSetupSystem fallback enemies.");
                 }
 
-                string sceneToLoad = combatSceneName;
-                if (PlayerPrefs.GetInt("HasPlayedCardTutorial", 0) == 0 && !string.IsNullOrEmpty(sceneToLoad))
-                {
-                    sceneToLoad = combatSceneName; // Route straight to active Game.unity scene
-                }
-
+                string sceneToLoad = ResolveCombatSceneName(node.Type);
                 SceneLoader.LoadScene(sceneToLoad);
                 return;
             }
@@ -484,6 +481,20 @@ namespace PlushieOdyssey.Map
             {
                 global::PlushieOdyssey.Core.Logger.Log($"Resolved map node: {node.Type}.");
             }
+        }
+
+        public string ResolveCombatSceneName(MapNodeType nodeType)
+        {
+            if (enableFirstBattleTutorial &&
+                nodeType == MapNodeType.Enemy &&
+                PlayerPrefs.GetInt(PlushieOdyssey.Tutorials.TutorialManager.TutorialCompletedPrefKey, 0) == 0 &&
+                !string.IsNullOrWhiteSpace(tutorialCombatSceneName) &&
+                (!Application.isPlaying || Application.CanStreamedLevelBeLoaded(tutorialCombatSceneName)))
+            {
+                return tutorialCombatSceneName;
+            }
+
+            return combatSceneName;
         }
     }
 }

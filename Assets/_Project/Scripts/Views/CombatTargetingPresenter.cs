@@ -505,7 +505,7 @@ namespace PlushieOdyssey.Combat.Views
 
             if (includeManual && card.ManualTargetEffect != null)
             {
-                total += EstimateEffectDamage(card.ManualTargetEffect, target, caster, xMultiplier);
+                total += EstimateEffectDamage(card.ManualTargetEffect, target, caster, xMultiplier, card);
             }
 
             if (card.OtherEffects != null)
@@ -516,7 +516,7 @@ namespace PlushieOdyssey.Combat.Views
                     List<CombatantView> autoTargets = auto.TargetMode.GetTargets(caster);
                     if (autoTargets != null && autoTargets.Contains(target))
                     {
-                        total += EstimateEffectDamage(auto.Effect, target, caster, xMultiplier);
+                        total += EstimateEffectDamage(auto.Effect, target, caster, xMultiplier, card);
                     }
                 }
             }
@@ -524,15 +524,29 @@ namespace PlushieOdyssey.Combat.Views
             return total;
         }
 
-        private static int EstimateEffectDamage(Effect effect, CombatantView target, CombatantView caster, int xMultiplier = 1)
+        private static int EstimateEffectDamage(Effect effect, CombatantView target, CombatantView caster, int xMultiplier = 1, Card sourceCard = null)
         {
             if (xMultiplier <= 0) return 0;
 
+            int bonus = sourceCard != null ? sourceCard.CombatUpgradeBonus : 0;
+
+            if (effect is MultiHitDamageEffect multi)
+            {
+                int hits = multi.ResolveHitCount(xMultiplier);
+                int perHitRaw = multi.ResolveDamagePerHit(xMultiplier) + bonus;
+                if (hits <= 0 || perHitRaw <= 0) return 0;
+                int perHitCalc = BuffSystem.Instance != null
+                    ? BuffSystem.Instance.CalculateExpectedDamage(perHitRaw, caster, target)
+                    : perHitRaw;
+                return perHitCalc * hits;
+            }
+
             int raw = effect switch
             {
-                DealDamageEffect dmg => dmg.DamageAmount * xMultiplier,
-                BeamAttackEffect beam => beam.DamageAmount * xMultiplier,
-                ConditionalDamageEffect cond => cond.EvaluateDamage(new List<CombatantView> { target }, caster) * xMultiplier,
+                DealDamageEffect dmg => (dmg.DamageAmount + bonus) * xMultiplier,
+                BeamAttackEffect beam => (beam.DamageAmount + bonus) * xMultiplier,
+                ConditionalDamageEffect cond => (cond.EvaluateDamage(new List<CombatantView> { target }, caster) + bonus) * xMultiplier,
+                ComboDamageEffect combo => (combo.EvaluateDamage(sourceCard) + bonus) * xMultiplier,
                 _ => 0
             };
 

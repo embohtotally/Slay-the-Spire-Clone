@@ -122,6 +122,7 @@ namespace PlushieOdyssey.UI.Combat
         private RelicSwapModalUI _relicSwapModal;
         private BuffSystem _subscribedBuffSystem;
         private DamageOverTimeSystem _subscribedDotSystem;
+        private EnemyPassiveSystem _subscribedPassiveSystem;
 
         public EnemyView HoveredEnemy => _hoveredEnemy;
         public bool IsTooltipVisible => _tooltipRoot != null && _tooltipRoot.gameObject.activeSelf;
@@ -221,7 +222,9 @@ namespace PlushieOdyssey.UI.Combat
             if (_worldCamera == null) _worldCamera = Camera.main;
             if (_canvas == null || _widgetsLayer == null) return;
 
-            if (_subscribedBuffSystem != BuffSystem.Instance || _subscribedDotSystem != DamageOverTimeSystem.Instance)
+            if (_subscribedBuffSystem != BuffSystem.Instance ||
+                _subscribedDotSystem != DamageOverTimeSystem.Instance ||
+                _subscribedPassiveSystem != EnemyPassiveSystem.Instance)
             {
                 UnsubscribeStatusSystems();
                 SubscribeStatusSystems();
@@ -627,6 +630,7 @@ namespace PlushieOdyssey.UI.Combat
                 (_handController != null && _handController.IsCardInteracting) ||
                 (_relicSwapModal != null && _relicSwapModal.IsOpen) ||
                 CombatMapOverlayUI.IsAnyOpen ||
+                CombatCardPickerUI.IsAnyOpen ||
                 Time.timeScale == 0f;
 
             if (suppressHover)
@@ -945,6 +949,13 @@ namespace PlushieOdyssey.UI.Combat
                 _subscribedDotSystem.StatusEffectsChanged -= RefreshAllEnemyStatuses;
                 _subscribedDotSystem.StatusEffectsChanged += RefreshAllEnemyStatuses;
             }
+
+            _subscribedPassiveSystem = EnemyPassiveSystem.Instance;
+            if (_subscribedPassiveSystem != null)
+            {
+                _subscribedPassiveSystem.EnemyPassivesChanged -= RefreshAllEnemyStatuses;
+                _subscribedPassiveSystem.EnemyPassivesChanged += RefreshAllEnemyStatuses;
+            }
         }
 
         private void UnsubscribeStatusSystems()
@@ -959,6 +970,12 @@ namespace PlushieOdyssey.UI.Combat
             {
                 _subscribedDotSystem.StatusEffectsChanged -= RefreshAllEnemyStatuses;
                 _subscribedDotSystem = null;
+            }
+
+            if (_subscribedPassiveSystem != null)
+            {
+                _subscribedPassiveSystem.EnemyPassivesChanged -= RefreshAllEnemyStatuses;
+                _subscribedPassiveSystem = null;
             }
         }
 

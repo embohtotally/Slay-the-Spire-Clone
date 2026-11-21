@@ -57,12 +57,23 @@ namespace PlushieOdyssey.UI.Combat
             new("Innate", "Innate", "Always starts in your opening hand on Turn 1.", new Color(1f, 0.88f, 0.52f)),
             new("Unplayable", "Unplayable", "Cannot be played from your hand.", new Color(0.62f, 0.62f, 0.68f)),
             new("X-Cost", "X-Cost", "Consumes all remaining Mana when played. Effects multiply by the Mana spent (X).", new Color(0.98f, 0.78f, 0.34f)),
+            new("Power", "Power", "Dissolves from your deck for the rest of combat and grants a permanent combat passive.", new Color(0.95f, 0.78f, 0.30f)),
+            new("Scry", "Scry", "Inspect the top cards of your Draw Pile and discard any of them.", new Color(0.45f, 0.85f, 1f)),
+            new("Discover", "Discover", "Choose 1 of 3 cards to add to your hand for this battle.", new Color(0.62f, 0.88f, 0.96f)),
+            new("Status", "Status", "Clutter card added during battle that vanishes when combat ends.", new Color(0.84f, 0.56f, 0.42f)),
+            new("Curse", "Curse", "Harmful card that clutters your hand or triggers negative effects.", new Color(0.74f, 0.38f, 0.84f)),
             new("Dexterity", "Dexterity", "Increases Shield gained from cards.", new Color(0.40f, 0.86f, 0.75f)),
             new("Frail", "Frail", "Reduces Shield gained from cards by 25%.", new Color(0.95f, 0.62f, 0.42f)),
             new("Thorns", "Thorns", "When hit by an attack, deals return damage to the attacker.", new Color(0.96f, 0.48f, 0.48f)),
             new("Artifact", "Artifact", "Negates the next incoming debuff.", new Color(1f, 0.84f, 0.35f)),
             new("Barricade", "Barricade", "Shield is no longer cleared at the start of your turn.", new Color(0.42f, 0.74f, 1f)),
             new("Redirect", "Redirect", "Redirects incoming enemy attacks to the protected ally.", new Color(0.55f, 0.85f, 1f)),
+            new("Power", "Power", "Remains active for the rest of combat after being played (does not enter Discard or Exhaust).", new Color(1f, 0.84f, 0.36f)),
+            new("Scry", "Scry", "Look at the top cards of your Draw Pile and choose any to Discard.", new Color(0.54f, 0.86f, 1f)),
+            new("Discover", "Discover", "Choose 1 of 3 cards to add directly to your hand for this combat.", new Color(0.96f, 0.78f, 0.42f)),
+            new("Upgrade", "Combat Upgrade", "Enhances the card for the rest of this battle (+3 potency and -1 Mana cost or +1 X).", new Color(0.42f, 0.96f, 0.56f)),
+            new("Status", "Status Card", "Temporary clutter card added during combat. Removed automatically when combat ends.", new Color(0.84f, 0.54f, 0.44f)),
+            new("Curse", "Curse Card", "Unplayable negative card that clutters your deck until removed at a Merchant or Event.", new Color(0.76f, 0.38f, 0.88f)),
             new("AP", "Mana / AP", "Action Points spent to play cards each turn.", new Color(1f, 0.80f, 0.35f))
         };
 

@@ -29,12 +29,14 @@ namespace PlushieOdyssey.Combat.Systems
 
         private int _bonusOpeningDrawFromTalents;
         private int _bonusStartingShieldFromTalents;
+        private int _bonusOpeningDrawFromRelics;
 
         private void Start()
         {
             List<HeroData> activeParty = ResolveActiveParty();
             HeroSystem.Instance.Setup(activeParty);
             CollectUnlockedTalentBonuses(activeParty);
+            ApplyPassiveRelicModifiers();
 
             List<EnemyData> enemiesForThisMatch = enemyDataList;
             if (!forceInspectorEnemies && RunManager.Instance != null && RunManager.Instance.SelectedEncounter != null)
@@ -118,10 +120,40 @@ namespace PlushieOdyssey.Combat.Systems
             return heroTeam ?? new List<HeroData>();
         }
 
+        private void ApplyPassiveRelicModifiers()
+        {
+            _bonusOpeningDrawFromRelics = 0;
+            RunRelicManager relicMgr = RunRelicManager.Instance;
+            if (relicMgr == null || !relicMgr.HasRelics) return;
+
+            int bonusMana = 0;
+            int willDelta = 0;
+            IReadOnlyList<RelicData> relics = relicMgr.CurrentRelics;
+            for (int i = 0; i < relics.Count; i++)
+            {
+                RelicData r = relics[i];
+                if (r == null) continue;
+                bonusMana += r.BonusMaxMana;
+                willDelta += r.StartCombatWillDelta;
+                _bonusOpeningDrawFromRelics += Mathf.Max(0, r.BonusOpeningDraw);
+            }
+
+            if (bonusMana != 0 && ManaSystem.Instance != null)
+            {
+                ManaSystem.Instance.ModifyMaxMana(bonusMana, alsoModifyCurrent: true);
+            }
+
+            if (willDelta != 0 && HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null)
+            {
+                if (willDelta < 0) HeroSystem.Instance.HeroView.DrainWillFromAllHeroes(-willDelta);
+                else HeroSystem.Instance.HeroView.AddWillToAllHeroes(willDelta);
+            }
+        }
+
         private void DrawStartingHand()
         {
             if (yourTurnSfx != global::PlushieOdyssey.Audio.SfxID.None) global::PlushieOdyssey.Audio.Tune.SFX(yourTurnSfx);
-            int totalDraw = Mathf.Max(1, startingHandSize + _bonusOpeningDrawFromTalents);
+            int totalDraw = Mathf.Max(1, startingHandSize + _bonusOpeningDrawFromTalents + _bonusOpeningDrawFromRelics);
             DrawCardsGA drawCardsGA = new(totalDraw);
             ActionSystem.Instance.Perform(drawCardsGA);
         }

@@ -22,7 +22,8 @@ namespace PlushieOdyssey.Rewards
         ReduceStress,
         CardReward,
         Relic,
-        Potion
+        Potion,
+        BossRelicChest
     }
 
     [Serializable]
@@ -48,6 +49,7 @@ namespace PlushieOdyssey.Rewards
                 RunRewardType.CardReward => "Card Reward",
                 RunRewardType.Relic => RelicOverride != null ? $"Relic: {RelicOverride.Title}" : "Relic Reward",
                 RunRewardType.Potion => PotionOverride != null ? $"Potion: {PotionOverride.Title}" : "Potion Reward",
+                RunRewardType.BossRelicChest => "Boss Relic Chest (Choose 1 of 3)",
                 _ => "Reward"
             };
         }
@@ -64,6 +66,7 @@ namespace PlushieOdyssey.Rewards
                 RunRewardType.CardReward => "Choose one card to add to your run deck. You may skip the card choice.",
                 RunRewardType.Relic => RelicOverride != null && !string.IsNullOrWhiteSpace(RelicOverride.Description) ? RelicOverride.Description : "Claim a permanent relic for this run.",
                 RunRewardType.Potion => PotionOverride != null && !string.IsNullOrWhiteSpace(PotionOverride.Description) ? PotionOverride.Description : "Add a combat potion to your belt.",
+                RunRewardType.BossRelicChest => "Open the Boss Chest and pick 1 of 3 high-impact Boss Relics with trade-offs.",
                 _ => string.Empty
             };
         }
@@ -82,6 +85,7 @@ namespace PlushieOdyssey.Rewards
         [Header("Card Reward Scene")]
         [SerializeField] private string cardRewardSceneName = "CardReward";
         [SerializeField] private RelicRewardPool relicRewardPool;
+        [SerializeField] private List<RelicData> bossRelicChoices = new();
         [SerializeField] private PotionRewardPool potionRewardPool;
         [SerializeField] private bool grantRelicOnEliteOrBoss = true;
 
@@ -148,14 +152,19 @@ namespace PlushieOdyssey.Rewards
                 }
             }
 
-            // Automatically append a Relic drop when coming from an Elite or Boss encounter
-            if (grantRelicOnEliteOrBoss && relicRewardPool != null &&
-                !activeRewards.Exists(r => r.Type == RunRewardType.Relic) &&
+            // Automatically append a Boss 3-Relic Choice Chest after Act Bosses, or a random Relic drop after Elites
+            if (grantRelicOnEliteOrBoss &&
                 RunManager.Instance != null && RunManager.Instance.CurrentMap != null &&
                 !string.IsNullOrEmpty(RunManager.Instance.CurrentMapNodeId))
             {
                 var node = RunManager.Instance.CurrentMap.GetNode(RunManager.Instance.CurrentMapNodeId);
-                if (node != null && (node.Type == PlushieOdyssey.Map.MapNodeType.Elite || node.Type == PlushieOdyssey.Map.MapNodeType.Boss))
+                if (node != null && node.Type == PlushieOdyssey.Map.MapNodeType.Boss &&
+                    !activeRewards.Exists(r => r.Type == RunRewardType.BossRelicChest))
+                {
+                    activeRewards.Add(new RunRewardDefinition { Type = RunRewardType.BossRelicChest });
+                }
+                else if (node != null && node.Type == PlushieOdyssey.Map.MapNodeType.Elite &&
+                         relicRewardPool != null && !activeRewards.Exists(r => r.Type == RunRewardType.Relic))
                 {
                     if (relicRewardPool.TryGetRandomRelic(RunRelicManager.EnsureInstance(), out RelicData dropRelic, RelicRarityMask.All))
                     {
@@ -253,7 +262,20 @@ namespace PlushieOdyssey.Rewards
                 case RunRewardType.Potion:
                     ClaimPotionReward(rewardIndex, reward);
                     break;
+
+                case RunRewardType.BossRelicChest:
+                    ClaimBossRelicChest(rewardIndex);
+                    break;
             }
+        }
+
+        private void ClaimBossRelicChest(int rewardIndex)
+        {
+            BossRelicPickerUI picker = BossRelicPickerUI.EnsureInstance(GetComponentInParent<Canvas>()?.rootCanvas);
+            picker.Open(relicRewardPool, chosenRelic =>
+            {
+                MarkRewardClaimed(rewardIndex);
+            }, bossRelicChoices);
         }
 
         private void ClaimRelicReward(int rewardIndex, RunRewardDefinition reward)

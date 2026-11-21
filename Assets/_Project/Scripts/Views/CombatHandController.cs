@@ -59,6 +59,10 @@ namespace PlushieOdyssey.Combat.Views
         private bool _originalBlocksRaycasts;
         private IDisposable _contextLease;
         private RelicSwapModalUI _relicSwapModal;
+        private BuffSystem _subBuffSystem;
+        private HeroView _subHeroView;
+        private CardSystem _subCardSystem;
+        private PowerSystem _subPowerSystem;
         private Vector2? _simulatedPointerPos;
 
         public bool IsCardInteracting => _active != null || _targeting;
@@ -80,6 +84,7 @@ namespace PlushieOdyssey.Combat.Views
         private bool IsModalBlocking =>
             CombatMapOverlayUI.IsAnyOpen ||
             CombatPileViewerUI.IsAnyOpen ||
+            CombatCardPickerUI.IsAnyOpen ||
             (_relicSwapModal != null && _relicSwapModal.IsOpen) ||
             Time.timeScale == 0f;
 
@@ -112,6 +117,7 @@ namespace PlushieOdyssey.Combat.Views
             if (_relicSwapModal == null) _relicSwapModal = FindFirstObjectByType<RelicSwapModalUI>();
             if (_inputRouter != null && _inputRouter.isActiveAndEnabled)
                 _contextLease = _inputRouter.EnterContext(this, InputContext.Combat, this);
+            SubscribeDynamicTextSources();
             RefreshCardStates();
         }
 
@@ -119,6 +125,7 @@ namespace PlushieOdyssey.Combat.Views
         {
             CancelInteraction();
             ClearHover(false);
+            UnsubscribeDynamicTextSources();
             if (_handView != null)
             {
                 _handView.CardAdded -= RegisterCard;
@@ -133,6 +140,16 @@ namespace PlushieOdyssey.Combat.Views
 
         private void LateUpdate()
         {
+            if (_subBuffSystem != BuffSystem.Instance ||
+                _subCardSystem != CardSystem.Instance ||
+                _subPowerSystem != PowerSystem.Instance ||
+                (_subHeroView == null && HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null))
+            {
+                UnsubscribeDynamicTextSources();
+                SubscribeDynamicTextSources();
+                RefreshCardStates();
+            }
+
             if (!CanReceiveInput && _active != null)
             {
                 CancelInteraction();
@@ -263,15 +280,48 @@ namespace PlushieOdyssey.Combat.Views
                 if (_playService == null)
                 {
                     view.SetBlocked(false);
+                    if (view.Card != null) view.SetLiveDescription(CardDynamicDescriptionFormatter.FormatForHand(view.Card));
                     continue;
                 }
 
-                view.SetDisplayedCost(_playService.GetEffectiveManaCost(view.Card));
+                int effectiveCost = _playService.GetEffectiveManaCost(view.Card);
+                int baseCost = view.Card != null ? view.Card.Mana : effectiveCost;
+                bool canAfford = ManaSystem.Instance == null || ManaSystem.Instance.HasEnoughMana(effectiveCost);
+                view.SetDisplayedCost(effectiveCost, baseCost, canAfford);
+                if (view.Card != null)
+                {
+                    view.SetLiveDescription(CardDynamicDescriptionFormatter.FormatForHand(view.Card));
+                }
                 view.SetBlocked(_playService.GetFailure(view.Card, requireTarget: false) != CardPlayFailure.None);
             }
 
             if (_useHoverPreview && _hovered != null && _hovered.View != null && _hoverPreview != null)
                 _hoverPreview.Show(_hovered.View.DisplayData, _hoverPosition, _hovered.View.IsBlocked);
+        }
+
+        private void SubscribeDynamicTextSources()
+        {
+            _subBuffSystem = BuffSystem.Instance;
+            _subCardSystem = CardSystem.Instance;
+            _subPowerSystem = PowerSystem.Instance;
+            _subHeroView = HeroSystem.Instance != null ? HeroSystem.Instance.HeroView : null;
+
+            if (_subBuffSystem != null) _subBuffSystem.StatusEffectsChanged += RefreshCardStates;
+            if (_subHeroView != null) _subHeroView.StressStateChanged += RefreshCardStates;
+            if (_subCardSystem != null) _subCardSystem.CardsPlayedThisTurnChanged += RefreshCardStates;
+            if (_subPowerSystem != null) _subPowerSystem.PowersChanged += RefreshCardStates;
+        }
+
+        private void UnsubscribeDynamicTextSources()
+        {
+            if (_subBuffSystem != null) _subBuffSystem.StatusEffectsChanged -= RefreshCardStates;
+            if (_subHeroView != null) _subHeroView.StressStateChanged -= RefreshCardStates;
+            if (_subCardSystem != null) _subCardSystem.CardsPlayedThisTurnChanged -= RefreshCardStates;
+            if (_subPowerSystem != null) _subPowerSystem.PowersChanged -= RefreshCardStates;
+            _subBuffSystem = null;
+            _subHeroView = null;
+            _subCardSystem = null;
+            _subPowerSystem = null;
         }
 
         private void RegisterCard(CardView view)

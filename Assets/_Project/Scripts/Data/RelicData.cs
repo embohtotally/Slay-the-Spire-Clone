@@ -31,5 +31,12 @@ namespace PlushieOdyssey.Data
         [field: Header("Combat Reactions")]
         [field: Tooltip("Optional trigger/effect rules used by RelicCombatTriggerSystem during combat.")]
         [field: SerializeField] public List<RelicReactionDefinition> Reactions { get; private set; } = new();
+
+        [field: Header("Passive Run & Boss Relic Trade-Offs")]
+        [field: SerializeField] public int BonusMaxMana { get; private set; }
+        [field: SerializeField] public int StartCombatWillDelta { get; private set; }
+        [field: SerializeField] public bool DisableRestSiteHeal { get; private set; }
+        [field: SerializeField, Range(0, 75)] public int MerchantDiscountPercent { get; private set; }
+        [field: SerializeField, Min(0)] public int BonusOpeningDraw { get; private set; }
     }
 }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Utility_ForesightScry
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 0}
+  <Image>k__BackingField: {fileID: 2054458977, guid: 56ce11f854e5896488c9b008fe7faaf5, type: 3}
   <Title>k__BackingField: Arcane Foresight
   <Description>k__BackingField: Scry 3. Gain 5 Shield and draw 1 card.
   <Tier>k__BackingField: 0
@@ -79,4 +79,4 @@ MonoBehaviour:
     - rid: 8960002081742127200
       type: {class: DrawEffect, ns: PlushieOdyssey.Combat.Effects, asm: Assembly-CSharp}
       data:
-        amount: 0
+        amount: 1

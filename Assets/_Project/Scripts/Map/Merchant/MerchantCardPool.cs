@@ -42,7 +42,9 @@ namespace PlushieOdyssey.Map.Merchant
         public MerchantOfferType Type { get; }
         public CardData Card { get; }
         public CardUpgradeRecipe UpgradeRecipe { get; }
-        public int Price { get; }
+        public int OriginalPrice { get; private set; }
+        public int Price { get; private set; }
+        public bool IsOnSale { get; private set; }
         public bool IsSold { get; private set; }
 
         public CardData PreviewCard => Type == MerchantOfferType.UpgradeCard ? UpgradeRecipe?.UpgradedCard : Card;
@@ -51,14 +53,30 @@ namespace PlushieOdyssey.Map.Merchant
         {
             Type = MerchantOfferType.NewCard;
             Card = card;
-            Price = Mathf.Max(0, price);
+            OriginalPrice = Mathf.Max(0, price);
+            Price = OriginalPrice;
         }
 
         public MerchantOffer(CardUpgradeRecipe upgradeRecipe, int price)
         {
             Type = MerchantOfferType.UpgradeCard;
             UpgradeRecipe = upgradeRecipe;
-            Price = Mathf.Max(0, price);
+            OriginalPrice = Mathf.Max(0, price);
+            Price = OriginalPrice;
+        }
+
+        public void ApplyDiscountPercent(int percent)
+        {
+            int clamped = Mathf.Clamp(percent, 0, 90);
+            if (clamped <= 0) return;
+            Price = Mathf.Max(1, Mathf.RoundToInt(Price * (1f - clamped / 100f)));
+        }
+
+        public void ApplyHalfPriceSale()
+        {
+            if (IsOnSale) return;
+            IsOnSale = true;
+            Price = Mathf.Max(1, Mathf.FloorToInt(Price * 0.5f));
         }
 
         public string GetTitle()

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Utility_ArcaneDiscovery
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 0}
+  <Image>k__BackingField: {fileID: 2054458977, guid: 56ce11f854e5896488c9b008fe7faaf5, type: 3}
   <Title>k__BackingField: Arcane Discovery
   <Description>k__BackingField: Discover 1 of 3 cards and add it to your hand costing
     0 Mana this turn. Exhaust.

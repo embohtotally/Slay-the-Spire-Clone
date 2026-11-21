@@ -1480,6 +1480,8 @@ MonoBehaviour:
   mapView: {fileID: 0}
   mapTitleText: {fileID: 0}
   combatSceneName: Game
+  tutorialCombatSceneName: GameTutorial
+  enableFirstBattleTutorial: 1
   merchantSceneName: Merchant
   restSceneName: Rest
   eventSceneName: Event
@@ -1778,20 +1780,6 @@ MonoBehaviour:
     variation: 0
   playMusicOn: 2
   stopMusicOnDisable: 0
-  enableDynamicCombatMusic: 1
-  bossMusicOverride:
-    musicId: 0
-    musicName: 
-    playMode: 1
-    fadeDuration: 1
-    variation: 0
-  lowHpMusicOverride:
-    musicId: 0
-    musicName: 
-    playMode: 1
-    fadeDuration: 1
-    variation: 0
-  lowHpThresholdFraction: 0.3
   sceneEnterSfx:
     sfxId: 0
     sfxName: scene_enter

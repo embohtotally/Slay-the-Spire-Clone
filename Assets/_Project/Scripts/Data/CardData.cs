@@ -45,7 +45,39 @@ namespace PlushieOdyssey.Data
         Ethereal = 1 << 2,
         Innate = 1 << 3,
         Unplayable = 1 << 4,
-        XCost = 1 << 5
+        XCost = 1 << 5,
+        PlayableInLowWill = 1 << 6,
+        Status = 1 << 7,
+        Curse = 1 << 8
+    }
+
+    public enum PowerPassiveTrigger
+    {
+        TurnStart = 0,
+        TurnEnd = 1,
+        OnAttackCardPlayed = 2,
+        OnBuffCardPlayed = 3,
+        OnAnyCardPlayed = 4,
+        OnEnterHighWill = 5,
+        OnEnterLowWill = 6
+    }
+
+    [Serializable]
+    public class PowerPassiveDefinition
+    {
+        [SerializeField] private string passiveId;
+        [SerializeField] private string displayName;
+        [SerializeField, TextArea(1, 3)] private string description;
+        [SerializeField] private PowerPassiveTrigger trigger = PowerPassiveTrigger.TurnStart;
+        [SerializeField] private Color badgeColor = new(0.95f, 0.78f, 0.36f, 1f);
+        [SerializeField] private List<AutoTargetEffect> effects = new();
+
+        public string PassiveId => passiveId;
+        public string DisplayName => displayName;
+        public string Description => description;
+        public PowerPassiveTrigger Trigger => trigger;
+        public Color BadgeColor => badgeColor;
+        public List<AutoTargetEffect> Effects => effects;
     }
 
     [CreateAssetMenu(menuName = "Data/Card")]
@@ -59,9 +91,15 @@ namespace PlushieOdyssey.Data
         [field: SerializeField, Min(0), Tooltip("Optional bonus added to X when playing an X-cost card (e.g., 1 for an 'X+1' upgraded card).")] public int XBonus { get; private set; } = 0;
         [field: SerializeField, Tooltip("Attack: Deals damage (blocked during - Low Will).\nBuff: Healing, Shielding, Utility.\nPower: Permanent passive effect.")] public CardType Type { get; private set; } = CardType.Attack;
         [field: SerializeField] public CardKeywords Keywords { get; private set; } = CardKeywords.None;
+        [field: SerializeField] public string OwnerCharacterId { get; private set; }
         [field: SerializeField] public CardTargetType TargetType { get; private set; } = CardTargetType.Enemy;
         [field: SerializeReference, SR] public Effect ManualTargetEffect { get; private set; } = null;
         [field: SerializeField] public List<AutoTargetEffect> OtherEffects { get; private set; }
+        [field: Header("Power & Clutter Hooks")]
+        [field: SerializeField] public bool PersistPowerInCombat { get; private set; }
+        [field: SerializeField] public List<PowerPassiveDefinition> PowerPassives { get; private set; } = new();
+        [field: SerializeField] public List<AutoTargetEffect> OnDrawEffects { get; private set; } = new();
+        [field: SerializeField] public List<AutoTargetEffect> EndTurnInHandEffects { get; private set; } = new();
         [field: SerializeField] public SfxID HoverSfx { get; private set; } = SfxID.hover;
         [field: SerializeField] public SfxID PlaySfx { get; private set; } = SfxID.None;
 

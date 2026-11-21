@@ -34,6 +34,9 @@ namespace PlushieOdyssey.Combat.Views
         public bool IsBlocked { get; private set; }
         public bool IsSelected { get; private set; }
 
+        private Color _defaultManaColor = Color.white;
+        private bool _capturedManaColor;
+
         public void Setup(Card card)
         {
             if (card == null)
@@ -42,10 +45,28 @@ namespace PlushieOdyssey.Combat.Views
                 return;
             }
 
+            CaptureDefaultManaColor();
             Card = card;
             CardData = null;
             ApplyDisplay(new CardDisplayData(card.Title, card.Description, card.Mana,
                 card.Type, card.Image, card.Tier, card.IsXCost));
+        }
+
+        public void RefreshFromCard()
+        {
+            if (Card == null) return;
+            SetText(titleText, Card.Title);
+            SetText(descriptionText, CardDynamicDescriptionFormatter.FormatForHand(Card));
+            if (Card.IsXCost)
+            {
+                SetText(manaText, "X");
+            }
+        }
+
+        public void SetLiveDescription(string formattedDescription)
+        {
+            if (!HasContent) return;
+            SetText(descriptionText, formattedDescription);
         }
 
         public void Setup(CardData cardData)
@@ -78,14 +99,42 @@ namespace PlushieOdyssey.Combat.Views
 
         public void SetDisplayedCost(int cost)
         {
+            SetDisplayedCost(cost, Card != null ? Card.Mana : DisplayData.Mana, canAfford: true);
+        }
+
+        public void SetDisplayedCost(int effectiveCost, int baseCost, bool canAfford)
+        {
             if (!HasContent) return;
+            CaptureDefaultManaColor();
+
             if (DisplayData.IsXCost)
             {
                 SetText(manaText, DisplayData.CostLabel);
+                if (manaText != null)
+                {
+                    int avail = Systems.ManaSystem.Instance != null ? Systems.ManaSystem.Instance.AvailableMana : 0;
+                    manaText.color = avail > 0 ? new Color(1f, 0.88f, 0.36f, 1f) : new Color(1f, 0.44f, 0.44f, 1f);
+                }
                 return;
             }
-            DisplayData = DisplayData.WithCost(Mathf.Max(0, cost));
+
+            int clamped = Mathf.Max(0, effectiveCost);
+            DisplayData = DisplayData.WithCost(clamped);
             SetText(manaText, DisplayData.CostLabel);
+            if (manaText != null)
+            {
+                if (!canAfford) manaText.color = new Color(1f, 0.38f, 0.38f, 1f);
+                else if (clamped < baseCost) manaText.color = new Color(0.35f, 1f, 0.54f, 1f);
+                else if (clamped > baseCost) manaText.color = new Color(1f, 0.56f, 0.38f, 1f);
+                else manaText.color = _defaultManaColor;
+            }
+        }
+
+        private void CaptureDefaultManaColor()
+        {
+            if (_capturedManaColor || manaText == null) return;
+            _capturedManaColor = true;
+            _defaultManaColor = manaText.color;
         }
 
         public void SetBlocked(bool blocked)

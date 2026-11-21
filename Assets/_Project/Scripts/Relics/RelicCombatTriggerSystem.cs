@@ -20,6 +20,9 @@ namespace PlushieOdyssey.Relics
         [SerializeField] private bool logMissingRelicManager;
 
         private readonly HashSet<string> oncePerCombatKeys = new();
+        private HeroView subscribedHero;
+        private bool wasHighWill;
+        private bool wasLowWill;
 
         private void OnEnable()
         {
@@ -35,6 +38,7 @@ namespace PlushieOdyssey.Relics
             ActionSystem.SubscribeReaction<HealGA>(OnHealedPost, ReactionTiming.POST);
             ActionSystem.SubscribeReaction<KillEnemyGA>(OnEnemyKilledPost, ReactionTiming.POST);
             ActionSystem.SubscribeReaction<CombatWonGA>(OnCombatWonPost, ReactionTiming.POST);
+            TrySubscribeHeroWill();
         }
 
         private void OnDisable()
@@ -51,6 +55,54 @@ namespace PlushieOdyssey.Relics
             ActionSystem.UnsubscribeReaction<HealGA>(OnHealedPost, ReactionTiming.POST);
             ActionSystem.UnsubscribeReaction<KillEnemyGA>(OnEnemyKilledPost, ReactionTiming.POST);
             ActionSystem.UnsubscribeReaction<CombatWonGA>(OnCombatWonPost, ReactionTiming.POST);
+            UnsubscribeHeroWill();
+        }
+
+        private void Update()
+        {
+            if (subscribedHero == null && HeroSystem.Instance != null && HeroSystem.Instance.HeroView != null)
+            {
+                TrySubscribeHeroWill();
+            }
+        }
+
+        private void TrySubscribeHeroWill()
+        {
+            HeroView hero = HeroSystem.Instance != null ? HeroSystem.Instance.HeroView : null;
+            if (hero == null || hero == subscribedHero) return;
+            UnsubscribeHeroWill();
+            subscribedHero = hero;
+            subscribedHero.StressStateChanged += OnHeroWillStateChanged;
+            wasHighWill = subscribedHero.IsHighWill;
+            wasLowWill = subscribedHero.IsLowWill;
+        }
+
+        private void UnsubscribeHeroWill()
+        {
+            if (subscribedHero != null)
+            {
+                subscribedHero.StressStateChanged -= OnHeroWillStateChanged;
+                subscribedHero = null;
+            }
+        }
+
+        private void OnHeroWillStateChanged()
+        {
+            if (subscribedHero == null) return;
+            bool isHigh = subscribedHero.IsHighWill;
+            bool isLow = subscribedHero.IsLowWill;
+
+            if (isHigh && !wasHighWill)
+            {
+                TriggerRelics(RelicTriggerType.EnteredHighWill, ReactionTiming.POST, null);
+            }
+            if (!isLow && wasLowWill)
+            {
+                TriggerRelics(RelicTriggerType.RecoveredFromLowWill, ReactionTiming.POST, null);
+            }
+
+            wasHighWill = isHigh;
+            wasLowWill = isLow;
         }
 
         [Button("Test Combat Started Trigger", EButtonEnableMode.Playmode)]
@@ -160,7 +212,10 @@ namespace PlushieOdyssey.Relics
                     GameAction reactionAction = reaction.CreateReaction(context);
                     if (reactionAction == null) continue;
 
-                    ActionSystem.Instance.AddReaction(reactionAction);
+                    if (ActionSystem.Instance.IsPerforming)
+                        ActionSystem.Instance.AddReaction(reactionAction);
+                    else
+                        ActionSystem.Instance.Enqueue(reactionAction);
                     if (reaction.OncePerCombat) oncePerCombatKeys.Add(onceKey);
 
                     if (logTriggeredRelics)

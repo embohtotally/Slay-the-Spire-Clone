@@ -77,8 +77,21 @@ namespace PlushieOdyssey.Map.Rest
         private TextMeshProUGUI _restDescText;
         private TextMeshProUGUI _calmDescText;
         private TextMeshProUGUI _smithDescText;
+        private Button _restActionButton;
+        private Button _banterButton;
+        private TextMeshProUGUI _banterBtnLabel;
         private Button _continueButton;
         private RectTransform _continueBtnRect;
+        private bool _banterTaken;
+
+        // Campfire Companion Banter Modal
+        private GameObject _banterModalRoot;
+        private Image _banterSpeakerPortrait;
+        private TextMeshProUGUI _banterSpeakerName;
+        private TextMeshProUGUI _banterDialogueBody;
+        private TextMeshProUGUI _banterNextLabel;
+        private readonly List<(string speaker, Sprite portrait, string line)> _banterScript = new();
+        private int _banterLineIndex;
 
         // Smith Picker & Preview Modal
         private GameObject _smithModalRoot;
@@ -128,6 +141,15 @@ namespace PlushieOdyssey.Map.Rest
         public bool TryRestHeal()
         {
             if (_actionTaken) return false;
+            if (IsRestHealDisabledByRelic(out RelicData blocker))
+            {
+                Tune.SFX(SfxID.cannot_afford);
+                if (_narrativeText != null)
+                {
+                    _narrativeText.text = $"You cannot Rest to heal HP while carrying '{blocker.Title}'! Choose Calm Mind or Smith instead.";
+                }
+                return false;
+            }
             EnsureRuntimeManagers();
             RunManager rm = RunManager.Instance;
             int maxHp = Mathf.Max(1, rm.HeroMaxHealth);
@@ -140,6 +162,52 @@ namespace PlushieOdyssey.Map.Rest
             Tune.SFX(SfxID.rest_heal);
             FlashFire(new Color(0.45f, 0.96f, 0.62f, 0.65f));
             return true;
+        }
+
+        public bool TryOpenCompanionBanter()
+        {
+            if (_banterTaken) return false;
+            EnsureRuntimeManagers();
+            BuildBanterModalIfNeeded();
+            BuildCompanionBanterScript();
+            _banterLineIndex = 0;
+            ShowCurrentBanterLine();
+            _banterModalRoot.SetActive(true);
+            _banterModalRoot.transform.SetAsLastSibling();
+            Tune.SFX(SfxID.ui_panel_open);
+            return true;
+        }
+
+        public void AdvanceCompanionBanter()
+        {
+            if (_banterModalRoot == null || !_banterModalRoot.activeSelf) return;
+            _banterLineIndex++;
+            if (_banterLineIndex < _banterScript.Count)
+            {
+                Tune.SFX(SfxID.dialogue_advance);
+                ShowCurrentBanterLine();
+                return;
+            }
+
+            // Finish banter: award +10 Will and +35 Hero Bond XP without consuming the primary Rest/Calm/Smith choice!
+            _banterModalRoot.SetActive(false);
+            _banterTaken = true;
+            if (_banterButton != null) _banterButton.interactable = false;
+            if (_banterBtnLabel != null) _banterBtnLabel.text = "BANTER SHARED ✓";
+
+            RunManager rm = RunManager.Instance;
+            if (rm != null)
+            {
+                rm.ReduceStress(10);
+            }
+
+            if (_narrativeText != null)
+            {
+                _narrativeText.text = "A heartfelt fireside conversation warms the party! (+10 Will & +35 Companion Bond XP)";
+            }
+            Tune.SFX(SfxID.stress_reduce);
+            FlashFire(new Color(1f, 0.72f, 0.88f, 0.65f));
+            RefreshStatusReadout();
         }
 
         public bool TryCalmMind()
@@ -223,6 +291,23 @@ namespace PlushieOdyssey.Map.Rest
             }
         }
 
+        public static bool IsRestHealDisabledByRelic(out RelicData blockingRelic)
+        {
+            blockingRelic = null;
+            RunRelicManager mgr = RunRelicManager.Instance;
+            if (mgr == null || !mgr.HasRelics) return false;
+            IReadOnlyList<RelicData> relics = mgr.CurrentRelics;
+            for (int i = 0; i < relics.Count; i++)
+            {
+                if (relics[i] != null && relics[i].DisableRestSiteHeal)
+                {
+                    blockingRelic = relics[i];
+                    return true;
+                }
+            }
+            return false;
+        }
+
         // ------------------------------------------------------------------
         // Internal Helpers
         // ------------------------------------------------------------------
@@ -287,7 +372,21 @@ namespace PlushieOdyssey.Map.Rest
             if (_statusGoldText != null) _statusGoldText.text = $"{gold}g";
 
             int healAmt = Mathf.Max(1, Mathf.CeilToInt(maxHp * healPercent));
-            if (_restDescText != null) _restDescText.text = $"Restore {Mathf.RoundToInt(healPercent * 100f)}% Max HP (+{healAmt} HP).";
+            bool restBlocked = IsRestHealDisabledByRelic(out RelicData blockerRelic);
+            if (_restDescText != null)
+            {
+                _restDescText.text = restBlocked
+                    ? $"<color=#FF6B6B><b>BLOCKED BY {blockerRelic.Title.ToUpperInvariant()}</b></color>\nCannot heal HP at Campfires."
+                    : $"Restore {Mathf.RoundToInt(healPercent * 100f)}% Max HP (+{healAmt} HP).";
+            }
+            if (restBlocked && _actionButtons.Count > 0 && _actionButtons[0] != null)
+            {
+                _actionButtons[0].interactable = false;
+                if (_actionCards.Count > 0 && _actionCards[0] != null && _actionCards[0].TryGetComponent(out CanvasGroup rcg))
+                {
+                    rcg.alpha = 0.45f;
+                }
+            }
             if (_calmDescText != null) _calmDescText.text = $"Steady your mind and restore +{stressReduction} Will.";
 
             int upgradableCount = GetAvailableUpgradesForCurrentDeck().Count;
@@ -441,12 +540,12 @@ namespace PlushieOdyssey.Map.Rest
                 _embers.Add(new EmberMote { Rect = eRt, Image = eImg, BaseX = bx, SpeedY = UnityEngine.Random.Range(24f, 56f), SwayAmp = UnityEngine.Random.Range(14f, 38f), Phase = UnityEngine.Random.Range(0f, 6.28f), BaseAlpha = a });
             }
 
-            // Top Header & Run Status Bar
+            // Top Header & Run Status Bar (offset cleanly beneath Unified Run Top Bar)
             RectTransform headerBanner = CreateRect(_root, "CampfireBanner", layer);
             headerBanner.anchorMin = headerBanner.anchorMax = new Vector2(0.5f, 1f);
             headerBanner.pivot = new Vector2(0.5f, 1f);
-            headerBanner.anchoredPosition = new Vector2(0f, -24f);
-            headerBanner.sizeDelta = new Vector2(520f, 68f);
+            headerBanner.anchoredPosition = new Vector2(0f, -58f);
+            headerBanner.sizeDelta = new Vector2(520f, 64f);
             Image bImg = headerBanner.gameObject.AddComponent<Image>();
             bImg.sprite = nameplateSprite != null ? nameplateSprite : solid;
             bImg.color = Color.white;
@@ -454,11 +553,11 @@ namespace PlushieOdyssey.Map.Rest
             titleTxt.alignment = TextAlignmentOptions.Center;
             titleTxt.text = "CAMPFIRE REST SITE";
 
-            // Top-left status pills (HP, Will, Gold)
+            // Top-left status pills (hidden when Unified RunSceneTopBarUI is active to avoid duplication)
             RectTransform statusBar = CreateRect(_root, "StatusBar", layer);
             statusBar.anchorMin = statusBar.anchorMax = new Vector2(0f, 1f);
             statusBar.pivot = new Vector2(0f, 1f);
-            statusBar.anchoredPosition = new Vector2(28f, -26f);
+            statusBar.anchoredPosition = new Vector2(28f, -58f);
             statusBar.sizeDelta = new Vector2(540f, 52f);
             HorizontalLayoutGroup shlg = statusBar.gameObject.AddComponent<HorizontalLayoutGroup>();
             shlg.spacing = 12f;
@@ -481,8 +580,25 @@ namespace PlushieOdyssey.Map.Rest
             ahlg.childControlHeight = false;
 
             BuildCampfireActionCard(actionsRow, "REST", "Recover HP", healIconSprite, new Color(0.36f, 0.86f, 0.54f, 1f), font, out _restDescText, () => TryRestHeal());
+            if (_actionButtons.Count > 0) _restActionButton = _actionButtons[0];
             BuildCampfireActionCard(actionsRow, "CALM MIND", "Restore Will", calmIconSprite, new Color(0.40f, 0.84f, 1f, 1f), font, out _calmDescText, () => TryCalmMind());
             BuildCampfireActionCard(actionsRow, "SMITH", "Upgrade a Card", smithIconSprite != null ? smithIconSprite : restIconSprite, new Color(1f, 0.78f, 0.34f, 1f), font, out _smithDescText, OpenSmithPicker);
+
+            // Bonus Campfire Companion Banter pill button (does not consume main Rest/Calm/Smith choice!)
+            RectTransform banterBtnRt = CreateRect(_root, "CompanionBanterButton", layer);
+            banterBtnRt.anchorMin = banterBtnRt.anchorMax = new Vector2(1f, 1f);
+            banterBtnRt.pivot = new Vector2(1f, 1f);
+            banterBtnRt.anchoredPosition = new Vector2(-34f, -64f);
+            banterBtnRt.sizeDelta = new Vector2(280f, 54f);
+            Image banterBg = banterBtnRt.gameObject.AddComponent<Image>();
+            banterBg.sprite = buttonSprite != null ? buttonSprite : solid;
+            banterBg.color = new Color(0.95f, 0.74f, 0.86f, 1f);
+            _banterButton = banterBtnRt.gameObject.AddComponent<Button>();
+            _banterButton.targetGraphic = banterBg;
+            _banterButton.onClick.AddListener(() => TryOpenCompanionBanter());
+            _banterBtnLabel = MakeText(banterBtnRt, "Label", font, 19f, FontStyles.Bold, new Color(0.24f, 0.10f, 0.16f, 1f));
+            _banterBtnLabel.alignment = TextAlignmentOptions.Center;
+            _banterBtnLabel.text = "COMPANION BANTER (+Will)";
 
             // Bottom Narrative Bar (Panel Box Text_0.png) + Continue to Map Button
             RectTransform dlgRt = CreateRect(_root, "NarrativeBox", layer);
@@ -724,6 +840,108 @@ namespace PlushieOdyssey.Map.Rest
 
             _previewOverlay.SetActive(false);
             _smithModalRoot.SetActive(false);
+        }
+
+        private void BuildBanterModalIfNeeded()
+        {
+            if (_banterModalRoot != null || _root == null) return;
+            int layer = _root.gameObject.layer;
+            TMP_FontAsset font = fontAsset != null ? fontAsset : TMP_Settings.defaultFontAsset;
+            Sprite solid = GetSolid();
+
+            _banterModalRoot = new GameObject("CompanionBanterModal", typeof(RectTransform), typeof(Image));
+            _banterModalRoot.layer = layer;
+            RectTransform mRt = (RectTransform)_banterModalRoot.transform;
+            mRt.SetParent(_root, false);
+            Stretch(mRt);
+            Image dim = _banterModalRoot.GetComponent<Image>();
+            dim.sprite = solid;
+            dim.color = new Color(0.03f, 0.02f, 0.06f, 0.78f);
+
+            RectTransform box = CreateRect(mRt, "BanterWindow", layer);
+            box.anchorMin = box.anchorMax = new Vector2(0.5f, 0.42f);
+            box.sizeDelta = new Vector2(1060f, 360f);
+            Image boxBg = box.gameObject.AddComponent<Image>();
+            boxBg.sprite = panelSprite != null ? panelSprite : solid;
+            boxBg.color = new Color(0.14f, 0.11f, 0.16f, 0.98f);
+
+            RectTransform portRt = CreateRect(box, "Portrait", layer);
+            portRt.anchorMin = portRt.anchorMax = new Vector2(0f, 0.5f);
+            portRt.pivot = new Vector2(0f, 0.5f);
+            portRt.anchoredPosition = new Vector2(30f, 0f);
+            portRt.sizeDelta = new Vector2(220f, 280f);
+            _banterSpeakerPortrait = portRt.gameObject.AddComponent<Image>();
+            _banterSpeakerPortrait.preserveAspect = true;
+            _banterSpeakerPortrait.raycastTarget = false;
+
+            _banterSpeakerName = MakeText(box, "Speaker", font, 28f, FontStyles.Bold, new Color(1f, 0.88f, 0.52f, 1f));
+            _banterSpeakerName.rectTransform.anchorMin = new Vector2(0.26f, 0.74f);
+            _banterSpeakerName.rectTransform.anchorMax = new Vector2(0.95f, 0.92f);
+            _banterSpeakerName.alignment = TextAlignmentOptions.MidlineLeft;
+
+            _banterDialogueBody = MakeText(box, "Body", font, 22f, FontStyles.Normal, new Color(0.96f, 0.93f, 0.88f, 1f));
+            _banterDialogueBody.rectTransform.anchorMin = new Vector2(0.26f, 0.24f);
+            _banterDialogueBody.rectTransform.anchorMax = new Vector2(0.95f, 0.72f);
+            _banterDialogueBody.alignment = TextAlignmentOptions.TopLeft;
+            _banterDialogueBody.textWrappingMode = TextWrappingModes.Normal;
+
+            RectTransform nextRt = CreateRect(box, "NextBtn", layer);
+            nextRt.anchorMin = nextRt.anchorMax = new Vector2(1f, 0f);
+            nextRt.pivot = new Vector2(1f, 0f);
+            nextRt.anchoredPosition = new Vector2(-28f, 22f);
+            nextRt.sizeDelta = new Vector2(240f, 54f);
+            Image nextImg = nextRt.gameObject.AddComponent<Image>();
+            nextImg.sprite = buttonSprite != null ? buttonSprite : solid;
+            nextImg.color = new Color(0.96f, 0.84f, 0.52f, 1f);
+            Button nextBtn = nextRt.gameObject.AddComponent<Button>();
+            nextBtn.onClick.AddListener(AdvanceCompanionBanter);
+            _banterNextLabel = MakeText(nextRt, "Label", font, 20f, FontStyles.Bold, new Color(0.22f, 0.12f, 0.04f, 1f));
+            _banterNextLabel.alignment = TextAlignmentOptions.Center;
+            _banterNextLabel.text = "NEXT >";
+
+            _banterModalRoot.SetActive(false);
+        }
+
+        private void BuildCompanionBanterScript()
+        {
+            _banterScript.Clear();
+            IReadOnlyList<HeroData> party = RunManager.Instance?.SelectedParty;
+            HeroData first = party != null && party.Count > 0 ? party[0] : null;
+            HeroData second = party != null && party.Count > 1 ? party[1] : null;
+
+            string nameA = first != null ? first.EffectiveDisplayName : "Aira";
+            Sprite portA = first != null ? first.GetPortraitForWill(false, false, true) : null;
+            string nameB = second != null ? second.EffectiveDisplayName : "Ember";
+            Sprite portB = second != null ? second.GetPortraitForWill(false, false, true) : portA;
+
+            if (second != null)
+            {
+                _banterScript.Add((nameA, portA, $"\"The lantern fire feels steadier tonight, {nameB}. Even with the Spire looming ahead, having you at my side keeps my Will bright.\""));
+                _banterScript.Add((nameB, portB, $"\"Don't get soft on me now, {nameA}! Keep weaving those spells—I'll hold the front line so nothing breaks our rhythm.\""));
+                _banterScript.Add((nameA, portA, "\"Deal. Let's sharpen our resolve and climb the next floor together!\"  <color=#64E8FF>(+10 Will, +35 Bond XP)</color>"));
+            }
+            else
+            {
+                _banterScript.Add((nameA, portA, "\"The embers drift upward like tiny constellations... Every card in this deck carries a memory worth fighting for.\""));
+                _banterScript.Add((nameA, portA, "\"Take a slow breath. Tomorrow's battles won't shake our Will.\"  <color=#64E8FF>(+10 Will, +35 Bond XP)</color>"));
+            }
+        }
+
+        private void ShowCurrentBanterLine()
+        {
+            if (_banterLineIndex < 0 || _banterLineIndex >= _banterScript.Count) return;
+            var (speaker, portrait, line) = _banterScript[_banterLineIndex];
+            if (_banterSpeakerName != null) _banterSpeakerName.text = speaker.ToUpperInvariant();
+            if (_banterDialogueBody != null) _banterDialogueBody.text = line;
+            if (_banterSpeakerPortrait != null)
+            {
+                _banterSpeakerPortrait.sprite = portrait;
+                _banterSpeakerPortrait.enabled = portrait != null;
+            }
+            if (_banterNextLabel != null)
+            {
+                _banterNextLabel.text = _banterLineIndex >= _banterScript.Count - 1 ? "CLAIM +10 WILL" : "NEXT >";
+            }
         }
 
         private void PopulateSmithGrid()

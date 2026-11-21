@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using PlushieOdyssey.Combat.Models;
 using PlushieOdyssey.Combat.Systems;
 using PlushieOdyssey.Data;
@@ -30,7 +31,17 @@ namespace PlushieOdyssey.Combat.Views
         public static event Action<EnemyView> AnyIntentConsumed;
 
         private int currentIntentIndex = -1;
+        private int turnCounter = 0;
+        private int consecutiveIntentUses = 0;
+        private readonly System.Collections.Generic.Dictionary<int, int> intentCooldowns = new();
         private BuffSystem subscribedBuffSystem;
+
+        // Live runtime state for visible enemy passive traits
+        public int ModeShiftDamageRemaining { get; private set; }
+        public int ModeShiftShieldReward { get; private set; }
+        public int ModeShiftCurrentThreshold { get; private set; }
+        public int TimeWarpCount { get; private set; }
+        public int TimeWarpLimit { get; private set; }
 
         private void OnEnable()
         {
@@ -52,11 +63,15 @@ namespace PlushieOdyssey.Combat.Views
         {
             Data = enemyData;
             currentIntentIndex = -1;
+            turnCounter = 0;
+            consecutiveIntentUses = 0;
+            intentCooldowns.Clear();
             NextIntent = null;
             CurrentIntentSnapshot = null;
             IsIntentVisible = false;
+            InitializePassiveState(enemyData);
 
-            SetupBase(enemyData.Health, enemyData.Image);
+            SetupBase(Mathf.Max(1, enemyData.Health), enemyData.Image);
 
             if (spriteRenderer != null)
             {
@@ -101,6 +116,9 @@ namespace PlushieOdyssey.Combat.Views
         {
             if (Data != null && Data.Intents != null && Data.Intents.Count > 0)
             {
+                turnCounter++;
+                TickCooldowns();
+
                 if (Data.AttackPattern == AIAttackPattern.SequentialLoop)
                 {
                     currentIntentIndex = (currentIntentIndex + 1) % Data.Intents.Count;
@@ -121,12 +139,20 @@ namespace PlushieOdyssey.Combat.Views
                     }
                     currentIntentIndex = newIndex;
                 }
+                else if (Data.AttackPattern == AIAttackPattern.ConditionalWeighted)
+                {
+                    currentIntentIndex = PickConditionalWeightedIndex();
+                }
                 else // Random
                 {
                     currentIntentIndex = UnityEngine.Random.Range(0, Data.Intents.Count);
                 }
 
                 NextIntent = Data.Intents[currentIntentIndex];
+                if (NextIntent != null && NextIntent.CooldownTurns > 0)
+                {
+                    intentCooldowns[currentIntentIndex] = NextIntent.CooldownTurns;
+                }
             }
             else
             {
@@ -232,6 +258,151 @@ namespace PlushieOdyssey.Combat.Views
 
             subscribedBuffSystem = BuffSystem.Instance;
             subscribedBuffSystem.StatusEffectsChanged += RefreshIntentDisplay;
+        }
+
+        private void InitializePassiveState(EnemyData enemyData)
+        {
+            ModeShiftDamageRemaining = 0;
+            ModeShiftShieldReward = 0;
+            ModeShiftCurrentThreshold = 0;
+            TimeWarpCount = 0;
+            TimeWarpLimit = 0;
+
+            if (enemyData?.PassiveTraits == null) return;
+            for (int i = 0; i < enemyData.PassiveTraits.Count; i++)
+            {
+                EnemyPassiveTrait trait = enemyData.PassiveTraits[i];
+                if (trait == null) continue;
+                if (trait.PassiveType == EnemyPassiveType.ModeShift)
+                {
+                    ModeShiftCurrentThreshold = Mathf.Max(1, trait.Value);
+                    ModeShiftDamageRemaining = ModeShiftCurrentThreshold;
+                    ModeShiftShieldReward = Mathf.Max(1, trait.SecondaryValue > 0 ? trait.SecondaryValue : 12);
+                }
+                else if (trait.PassiveType == EnemyPassiveType.TimeWarp)
+                {
+                    TimeWarpLimit = Mathf.Max(2, trait.Value);
+                    TimeWarpCount = 0;
+                }
+            }
+        }
+
+        public bool RecordModeShiftDamage(int damage, out int shieldReward)
+        {
+            shieldReward = 0;
+            if (ModeShiftCurrentThreshold <= 0 || damage <= 0) return false;
+            ModeShiftDamageRemaining -= damage;
+            if (ModeShiftDamageRemaining <= 0)
+            {
+                shieldReward = ModeShiftShieldReward;
+                ModeShiftCurrentThreshold += 10;
+                ModeShiftDamageRemaining = ModeShiftCurrentThreshold;
+                return true;
+            }
+            return false;
+        }
+
+        public bool IncrementTimeWarp(int limit)
+        {
+            TimeWarpLimit = Mathf.Max(2, limit);
+            TimeWarpCount++;
+            if (TimeWarpCount >= TimeWarpLimit)
+            {
+                TimeWarpCount = 0;
+                return true;
+            }
+            return false;
+        }
+
+        private void TickCooldowns()
+        {
+            if (intentCooldowns.Count == 0) return;
+            var keys = new System.Collections.Generic.List<int>(intentCooldowns.Keys);
+            for (int i = 0; i < keys.Count; i++)
+            {
+                int k = keys[i];
+                intentCooldowns[k] = Mathf.Max(0, intentCooldowns[k] - 1);
+            }
+        }
+
+        private int PickConditionalWeightedIndex()
+        {
+            int count = Data.Intents.Count;
+            if (count <= 1) return 0;
+
+            float hpPct = MaxHealth > 0 ? Mathf.Clamp01((float)CurrentHealth / MaxHealth) : 1f;
+
+            // Turn 1 opener priority
+            if (turnCounter == 1)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    EnemyIntent intent = Data.Intents[i];
+                    if (intent != null && intent.TurnOneOpener)
+                    {
+                        UpdateConsecutiveTracker(i);
+                        return i;
+                    }
+                }
+            }
+
+            var eligible = new System.Collections.Generic.List<int>();
+            var hpFallback = new System.Collections.Generic.List<int>();
+
+            for (int i = 0; i < count; i++)
+            {
+                EnemyIntent intent = Data.Intents[i];
+                if (intent == null) continue;
+
+                float minHp = Mathf.Clamp01(intent.MinHpPercent);
+                float maxHp = intent.MaxHpPercent <= 0f ? 1f : Mathf.Clamp01(intent.MaxHpPercent);
+                if (hpPct < minHp || hpPct > maxHp) continue;
+
+                hpFallback.Add(i);
+
+                if (intentCooldowns.TryGetValue(i, out int cd) && cd > 0) continue;
+                if (intent.MaxConsecutiveUses > 0 && i == currentIntentIndex && consecutiveIntentUses >= intent.MaxConsecutiveUses) continue;
+
+                eligible.Add(i);
+            }
+
+            System.Collections.Generic.List<int> pool = eligible.Count > 0 ? eligible : hpFallback;
+            if (pool.Count == 0)
+            {
+                int fallbackIdx = UnityEngine.Random.Range(0, count);
+                UpdateConsecutiveTracker(fallbackIdx);
+                return fallbackIdx;
+            }
+
+            float totalWeight = 0f;
+            for (int i = 0; i < pool.Count; i++)
+            {
+                totalWeight += Mathf.Max(0.05f, Data.Intents[pool[i]].Weight);
+            }
+
+            float roll = UnityEngine.Random.Range(0f, totalWeight);
+            float accum = 0f;
+            int chosen = pool[pool.Count - 1];
+            for (int i = 0; i < pool.Count; i++)
+            {
+                accum += Mathf.Max(0.05f, Data.Intents[pool[i]].Weight);
+                if (roll <= accum)
+                {
+                    chosen = pool[i];
+                    break;
+                }
+            }
+
+            UpdateConsecutiveTracker(chosen);
+            return chosen;
+        }
+
+        private void UpdateConsecutiveTracker(int chosenIndex)
+        {
+            if (chosenIndex == currentIntentIndex)
+                consecutiveIntentUses++;
+            else
+                consecutiveIntentUses = 1;
         }
     }
 }

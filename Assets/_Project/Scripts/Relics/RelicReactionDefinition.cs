@@ -19,7 +19,9 @@ namespace PlushieOdyssey.Relics
         DamageTaken,
         Healed,
         EnemyKilled,
-        CombatWon
+        CombatWon,
+        EnteredHighWill,
+        RecoveredFromLowWill
     }
 
     public enum RelicCombatantFilter

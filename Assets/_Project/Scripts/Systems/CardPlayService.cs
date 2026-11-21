@@ -79,10 +79,13 @@ namespace PlushieOdyssey.Combat.Systems
                 _heroView == null || !_heroView.isActiveAndEnabled)
                 return CardPlayFailure.MissingBackend;
             if (!_cardSystem.ContainsCard(card)) return CardPlayFailure.NotInHand;
-            if (IsTurnLocked) return CardPlayFailure.Busy;
+            if (IsTurnLocked || PlushieOdyssey.UI.Combat.CombatCardPickerUI.IsAnyOpen) return CardPlayFailure.Busy;
+            bool lowWillBlocksAttack = card.Type == PlushieOdyssey.Data.CardType.Attack &&
+                                       (_heroView.HealthPenalty > 0 || _heroView.IsLowWill) &&
+                                       !card.HasKeyword(PlushieOdyssey.Data.CardKeywords.PlayableInLowWill);
             if (_heroView.CurrentHealth <= 0 ||
                 card.HasKeyword(PlushieOdyssey.Data.CardKeywords.Unplayable) ||
-                (card.Type == PlushieOdyssey.Data.CardType.Attack && _heroView.HealthPenalty > 0))
+                lowWillBlocksAttack)
                 return CardPlayFailure.Blocked;
             if (_tutorial != null && _tutorial.isActiveAndEnabled && !_tutorial.CanInteractWithCard(card))
                 return CardPlayFailure.TutorialBlocked;

@@ -34,9 +34,32 @@ namespace PlushieOdyssey.Combat.Systems
                 performEffectGA.XMultiplier);
             if (effectAction != null)
             {
+                if (performEffectGA.PotencyBonus > 0)
+                {
+                    ApplyPotencyBonus(effectAction, performEffectGA.PotencyBonus);
+                }
                 ActionSystem.Instance.AddReaction(effectAction);
             }
             yield return null;
+        }
+
+        private static void ApplyPotencyBonus(GameAction action, int bonus)
+        {
+            switch (action)
+            {
+                case DealDamageGA dmg when !dmg.IsThornsDamage && dmg.Amount > 0:
+                    dmg.Amount += bonus;
+                    break;
+                case GainShieldGA shield when shield.Amount > 0:
+                    shield.Amount += bonus;
+                    break;
+                case SequentialGameAction seq when seq.Actions != null:
+                    for (int i = 0; i < seq.Actions.Count; i++) ApplyPotencyBonus(seq.Actions[i], bonus);
+                    break;
+                case SimultaneousGA sim when sim.Actions != null:
+                    for (int i = 0; i < sim.Actions.Count; i++) ApplyPotencyBonus(sim.Actions[i], bonus);
+                    break;
+            }
         }
     #endregion
     }

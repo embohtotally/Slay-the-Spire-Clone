@@ -15,7 +15,7 @@ MonoBehaviour:
   <Title>k__BackingField: Coffee-Stained Crown
   <Description>k__BackingField: '+1 Max Mana at the start of every turn. Trade-off:
     You can no longer Rest (Heal) at Campfires.'
-  <Image>k__BackingField: {fileID: 0}
+  <Image>k__BackingField: {fileID: 21300000, guid: dfc77bc2e5f47014d96bfad1582b6653, type: 3}
   <Rarity>k__BackingField: 3
   <Unique>k__BackingField: 1
   <GoldValue>k__BackingField: 300

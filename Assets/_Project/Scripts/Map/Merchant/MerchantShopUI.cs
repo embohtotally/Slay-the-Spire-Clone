@@ -19,13 +19,22 @@ namespace PlushieOdyssey.Map.Merchant
     public sealed class MerchantRelicOffer
     {
         public RelicData Relic { get; }
-        public int Price { get; }
+        public int OriginalPrice { get; private set; }
+        public int Price { get; private set; }
         public bool IsSold { get; private set; }
 
         public MerchantRelicOffer(RelicData relic, int price)
         {
             Relic = relic;
-            Price = Mathf.Max(0, price);
+            OriginalPrice = Mathf.Max(0, price);
+            Price = OriginalPrice;
+        }
+
+        public void ApplyDiscountPercent(int percent)
+        {
+            int clamped = Mathf.Clamp(percent, 0, 90);
+            if (clamped <= 0) return;
+            Price = Mathf.Max(1, Mathf.RoundToInt(Price * (1f - clamped / 100f)));
         }
 
         public void MarkSold()
@@ -175,6 +184,7 @@ namespace PlushieOdyssey.Map.Merchant
             public RunDeckCardView CardView;
             public TextMeshProUGUI PriceText;
             public Image PricePill;
+            public GameObject SaleTagRoot;
             public RectTransform SoldStampRoot;
             public CanvasGroup SoldStampGroup;
             public MerchantOffer Offer;
@@ -500,8 +510,14 @@ namespace PlushieOdyssey.Map.Merchant
             if (offer == null || offer.PreviewCard == null) return;
 
             CardData card = offer.PreviewCard;
-            string statusTag = offer.IsSold ? "SOLD OUT" : $"{card.Type.ToString().ToUpper()} • {card.Tier.ToString().ToUpper()}";
-            string priceStr = offer.IsSold ? "SOLD" : $"{offer.Price}g";
+            string statusTag = offer.IsSold
+                ? "SOLD OUT"
+                : (offer.IsOnSale
+                    ? $"50% OFF SALE! • {card.Type.ToString().ToUpper()}"
+                    : $"{card.Type.ToString().ToUpper()} • {card.Tier.ToString().ToUpper()}");
+            string priceStr = offer.IsSold
+                ? "SOLD"
+                : (offer.Price < offer.OriginalPrice ? $"<s>{offer.OriginalPrice}g</s> {offer.Price}g" : $"{offer.Price}g");
             Color priceColor = offer.IsSold
                 ? new Color(0.76f, 0.20f, 0.18f, 1f)
                 : (CanAfford(offer.Price) ? new Color(0.55f, 0.35f, 0.04f, 1f) : new Color(0.76f, 0.18f, 0.16f, 1f));
@@ -628,6 +644,7 @@ namespace PlushieOdyssey.Map.Merchant
             ordered.AddRange(fresh);
             ordered.AddRange(repeats);
 
+            int relicDiscount = GetEquippedMerchantDiscountPercent();
             int target = Mathf.Max(1, cardOfferCount);
             for (int i = 0; i < target; i++)
             {
@@ -635,14 +652,38 @@ namespace PlushieOdyssey.Map.Merchant
                 {
                     if (!allowDuplicateOffers || allCandidates.Count == 0) break;
                     MerchantOffer src = allCandidates[UnityEngine.Random.Range(0, allCandidates.Count)];
-                    _activeCardOffers.Add(CloneOffer(src));
+                    MerchantOffer cloned = CloneOffer(src);
+                    if (relicDiscount > 0) cloned.ApplyDiscountPercent(relicDiscount);
+                    _activeCardOffers.Add(cloned);
                     continue;
                 }
 
                 MerchantOffer picked = ordered[0];
                 ordered.RemoveAt(0);
+                if (relicDiscount > 0) picked.ApplyDiscountPercent(relicDiscount);
                 _activeCardOffers.Add(picked);
             }
+
+            // Pick 1 random card offer per shop visit/reset for a 50%-OFF Sale Tag!
+            if (_activeCardOffers.Count > 0)
+            {
+                int saleIdx = UnityEngine.Random.Range(0, _activeCardOffers.Count);
+                _activeCardOffers[saleIdx].ApplyHalfPriceSale();
+            }
+        }
+
+        private static int GetEquippedMerchantDiscountPercent()
+        {
+            RunRelicManager mgr = RunRelicManager.Instance;
+            if (mgr == null || !mgr.HasRelics) return 0;
+            int total = 0;
+            IReadOnlyList<RelicData> relics = mgr.CurrentRelics;
+            for (int i = 0; i < relics.Count; i++)
+            {
+                if (relics[i] != null && relics[i].MerchantDiscountPercent > 0)
+                    total += relics[i].MerchantDiscountPercent;
+            }
+            return Mathf.Clamp(total, 0, 75);
         }
 
         private void PopulateRelicOffers(HashSet<RelicData> preferredAvoid)
@@ -674,12 +715,15 @@ namespace PlushieOdyssey.Map.Merchant
             ordered.AddRange(fresh);
             ordered.AddRange(repeats);
 
+            int relicDiscount = GetEquippedMerchantDiscountPercent();
             int target = Mathf.Max(1, relicOfferCount);
             for (int i = 0; i < target && i < ordered.Count; i++)
             {
                 RelicData relic = ordered[i];
-                int price = relic.GoldValue > 0 ? relic.GoldValue : fallbackRelicPrice;
-                _activeRelicOffers.Add(new MerchantRelicOffer(relic, price));
+                int basePrice = relic.GoldValue > 0 ? relic.GoldValue : fallbackRelicPrice;
+                MerchantRelicOffer relicOffer = new(relic, basePrice);
+                if (relicDiscount > 0) relicOffer.ApplyDiscountPercent(relicDiscount);
+                _activeRelicOffers.Add(relicOffer);
             }
         }
 
@@ -706,11 +750,14 @@ namespace PlushieOdyssey.Map.Merchant
                         slot.CardView.Setup(slot.Offer.PreviewCard, 1, i);
                         FitCardViewIntoContainer(slot.CardView, slot.CardContainer);
                     }
+                    UpdateSlotSaleTag(slot);
                     ResetSlotVisualState(slot.SoldStampRoot, slot.SoldStampGroup, slot.ContentRoot, slot.ContentGroup, slot.RestContentPos);
+                    UpdateSlotSaleTag(slot);
                 }
                 else
                 {
                     slot.Offer = null;
+                    if (slot.SaleTagRoot != null) slot.SaleTagRoot.SetActive(false);
                     slot.Root.gameObject.SetActive(false);
                 }
             }
@@ -753,6 +800,65 @@ namespace PlushieOdyssey.Map.Merchant
             }
 
             RefreshAllAffordability();
+        }
+
+        private void UpdateSlotSaleTag(CardSlotUI slot)
+        {
+            if (slot == null || slot.Root == null) return;
+            bool showSale = slot.Offer != null && slot.Offer.IsOnSale && !slot.Offer.IsSold;
+            if (!showSale)
+            {
+                if (slot.SaleTagRoot != null) slot.SaleTagRoot.SetActive(false);
+                return;
+            }
+
+            if (slot.SaleTagRoot == null)
+            {
+                Transform existing = slot.Root.Find("SaleRibbonTag");
+                if (existing != null)
+                {
+                    slot.SaleTagRoot = existing.gameObject;
+                }
+                else
+                {
+                    GameObject tagGo = new("SaleRibbonTag", typeof(RectTransform), typeof(Image));
+                    tagGo.layer = slot.Root.gameObject.layer;
+                    RectTransform rt = (RectTransform)tagGo.transform;
+                    rt.SetParent(slot.Root, false);
+                    rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
+                    rt.pivot = new Vector2(0.5f, 0.5f);
+                    rt.anchoredPosition = new Vector2(-24f, -18f);
+                    rt.sizeDelta = new Vector2(92f, 28f);
+                    rt.localRotation = Quaternion.Euler(0f, 0f, -14f);
+
+                    Image bg = tagGo.GetComponent<Image>();
+                    bg.sprite = solidSprite != null ? solidSprite : s_solidSprite;
+                    bg.color = new Color(0.86f, 0.16f, 0.22f, 0.98f);
+                    bg.raycastTarget = false;
+
+                    GameObject txtGo = new("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                    txtGo.layer = tagGo.layer;
+                    RectTransform tRt = (RectTransform)txtGo.transform;
+                    tRt.SetParent(rt, false);
+                    tRt.anchorMin = Vector2.zero;
+                    tRt.anchorMax = Vector2.one;
+                    tRt.offsetMin = tRt.offsetMax = Vector2.zero;
+                    TextMeshProUGUI tmp = txtGo.GetComponent<TextMeshProUGUI>();
+                    tmp.text = "50% OFF";
+                    tmp.fontSize = 14.5f;
+                    tmp.fontStyle = FontStyles.Bold;
+                    tmp.alignment = TextAlignmentOptions.Center;
+                    tmp.color = new Color(1f, 0.94f, 0.56f, 1f);
+                    tmp.raycastTarget = false;
+                    if (fontAsset != null) tmp.font = fontAsset;
+                    else if (TMP_Settings.defaultFontAsset != null) tmp.font = TMP_Settings.defaultFontAsset;
+
+                    slot.SaleTagRoot = tagGo;
+                }
+            }
+
+            slot.SaleTagRoot.SetActive(true);
+            slot.SaleTagRoot.transform.SetAsLastSibling();
         }
 
         private static Color GetRelicIconTint(RelicData relic)
@@ -905,6 +1011,7 @@ namespace PlushieOdyssey.Map.Merchant
         private void RefreshAllAffordability()
         {
             Color affordableGold = new(1f, 0.89f, 0.46f, 1f);
+            Color saleGreen = new(0.45f, 1.00f, 0.62f, 1f);
             Color unaffordableRed = new(1f, 0.45f, 0.42f, 1f);
             Color soldMuted = new(0.68f, 0.56f, 0.46f, 0.72f);
 
@@ -912,15 +1019,25 @@ namespace PlushieOdyssey.Map.Merchant
             {
                 if (slot.Offer == null || slot.PriceText == null) continue;
                 slot.PriceText.DOKill();
+                if (slot.SaleTagRoot != null)
+                {
+                    slot.SaleTagRoot.SetActive(slot.Offer.IsOnSale && !slot.Offer.IsSold);
+                }
                 if (slot.Offer.IsSold)
                 {
                     slot.PriceText.text = "SOLD";
                     slot.PriceText.color = soldMuted;
+                    if (slot.SaleTagRoot != null) slot.SaleTagRoot.SetActive(false);
                 }
                 else
                 {
-                    slot.PriceText.text = $"{slot.Offer.Price}g";
-                    slot.PriceText.color = CanAfford(slot.Offer.Price) ? affordableGold : unaffordableRed;
+                    bool discounted = slot.Offer.Price < slot.Offer.OriginalPrice;
+                    slot.PriceText.text = discounted
+                        ? $"<size=72%><color=#C8A88C><s>{slot.Offer.OriginalPrice}g</s></color></size> {slot.Offer.Price}g"
+                        : $"{slot.Offer.Price}g";
+                    slot.PriceText.color = CanAfford(slot.Offer.Price)
+                        ? (discounted ? saleGreen : affordableGold)
+                        : unaffordableRed;
                 }
             }
 
@@ -935,8 +1052,13 @@ namespace PlushieOdyssey.Map.Merchant
                 }
                 else
                 {
-                    slot.PriceText.text = $"{slot.Offer.Price}g";
-                    slot.PriceText.color = CanAfford(slot.Offer.Price) ? affordableGold : unaffordableRed;
+                    bool discounted = slot.Offer.Price < slot.Offer.OriginalPrice;
+                    slot.PriceText.text = discounted
+                        ? $"<size=72%><color=#C8A88C><s>{slot.Offer.OriginalPrice}g</s></color></size> {slot.Offer.Price}g"
+                        : $"{slot.Offer.Price}g";
+                    slot.PriceText.color = CanAfford(slot.Offer.Price)
+                        ? (discounted ? saleGreen : affordableGold)
+                        : unaffordableRed;
                 }
             }
 

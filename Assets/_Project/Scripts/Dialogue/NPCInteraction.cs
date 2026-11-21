@@ -83,6 +83,12 @@ namespace PlushieOdyssey.Dialogue
         // [SerializeField] GameManager gameManager;
 
         public bool IsDialogueActive => isDialogueActive;
+        public bool CurrentLineAllowsClickToAdvance => currentLineAllowsClickToAdvance;
+
+        [Header("Tutorial / Prompt Hint (Optional)")]
+        [SerializeField] private TextMeshProUGUI continueHintText;
+        [SerializeField] private string clickToContinueHint = "Click or press Space to continue ▸";
+        [SerializeField] private string interactiveActionHint = "Follow Ember's instructions to continue!";
 
         private bool isPlayerInRange = false;
         private bool isPatrolling = false;
@@ -128,12 +134,15 @@ namespace PlushieOdyssey.Dialogue
         {
             // gameManager = FindFirstObjectByType<GameManager>();
             dialogueQueue = new Queue<NPCDialogueLine>();
-            dialogueUI.SetActive(false);
-            //if (dialogueUIB != null) dialogueUIB.SetActive(false);
+            if (dialogueUI != null)
+            {
+                dialogueUI.SetActive(false);
 
-            // Auto-find text components from named children (now searches recursively)
-            speakerText  = FindTextRecursive(dialogueUI.transform, "Name");
-            dialogueText = FindTextRecursive(dialogueUI.transform, "Dialogue Lines");
+                // Auto-find text components from named children if not explicitly wired
+                if (speakerText == null) speakerText = FindTextRecursive(dialogueUI.transform, "Name");
+                if (dialogueText == null) dialogueText = FindTextRecursive(dialogueUI.transform, "Dialogue Lines");
+                if (continueHintText == null) continueHintText = FindTextRecursive(dialogueUI.transform, "ContinueHint");
+            }
             if (dialogueUIB != null)
             {
                 dialogueUIB.SetActive(false); // Hide B if it exists, as we use the same for both now
@@ -193,8 +202,9 @@ namespace PlushieOdyssey.Dialogue
             // Advance Dialogue
             if (isDialogueActive)
             {
-                bool advancePressed = (currentLineAllowsClickToAdvance && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
-                                      (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.fKey.wasPressedThisFrame));
+                bool advancePressed = currentLineAllowsClickToAdvance &&
+                                      ((Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
+                                       (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.fKey.wasPressedThisFrame)));
                 if (advancePressed)
                 {
                     Debug.Log("[NPCInteraction] Advance pressed in Update!");
@@ -310,6 +320,12 @@ namespace PlushieOdyssey.Dialogue
             var currentLine = dialogueQueue.Dequeue();
             currentLineAllowsClickToAdvance = !currentLine.disableClickToAdvance;
 
+            if (continueHintText != null)
+            {
+                continueHintText.gameObject.SetActive(true);
+                continueHintText.text = currentLineAllowsClickToAdvance ? clickToContinueHint : interactiveActionHint;
+            }
+
             bool speakerAActive = currentLine.isSpeakerAActive;
 
             // Show the dialogue box (same for both speakers)
@@ -331,52 +347,58 @@ namespace PlushieOdyssey.Dialogue
             Color bright = Color.white;
             Color dim = new Color(0.8f, 0.8f, 0.8f, 1f);
 
-            if (currentLine.speakerImageA != null)
+            if (speakerImageA != null)
             {
-                speakerImageA.enabled = true;
-                speakerImageA.sprite = currentLine.speakerImageA;
-
-                if (!isSpeakerAVisible)
+                if (currentLine.speakerImageA != null)
                 {
-                    speakerImageA.rectTransform.anchoredPosition = originalSpeakerAPos + speakerAStartOffset;
-                    speakerImageA.rectTransform.DOAnchorPos(originalSpeakerAPos, animationDuration).SetUpdate(true).SetEase(Ease.OutBack);
-                    isSpeakerAVisible = true;
+                    speakerImageA.enabled = true;
+                    speakerImageA.sprite = currentLine.speakerImageA;
+
+                    if (!isSpeakerAVisible)
+                    {
+                        speakerImageA.rectTransform.anchoredPosition = originalSpeakerAPos + speakerAStartOffset;
+                        speakerImageA.rectTransform.DOAnchorPos(originalSpeakerAPos, animationDuration).SetUpdate(true).SetEase(Ease.OutBack);
+                        isSpeakerAVisible = true;
+                    }
+
+                    // Calculate dimmed scale based on YOUR default scale (e.g. 5 becomes 4.5)
+                    Vector3 dimmedScaleA = defaultScaleA * 0.9f;
+
+                    speakerImageA.transform.localScale = currentLine.isSpeakerAActive ? defaultScaleA : dimmedScaleA;
+                    speakerImageA.color = currentLine.isSpeakerAActive ? bright : dim;
                 }
-
-                // Calculate dimmed scale based on YOUR default scale (e.g. 5 becomes 4.5)
-                Vector3 dimmedScaleA = defaultScaleA * 0.9f;
-
-                speakerImageA.transform.localScale = currentLine.isSpeakerAActive ? defaultScaleA : dimmedScaleA;
-                speakerImageA.color = currentLine.isSpeakerAActive ? bright : dim;
-            }
-            else
-            {
-                speakerImageA.enabled = false;
-                isSpeakerAVisible = false;
-            }
-
-            if (currentLine.speakerImageB != null)
-            {
-                speakerImageB.enabled = true;
-                speakerImageB.sprite = currentLine.speakerImageB;
-
-                if (!isSpeakerBVisible)
+                else
                 {
-                    speakerImageB.rectTransform.anchoredPosition = originalSpeakerBPos + speakerBStartOffset;
-                    speakerImageB.rectTransform.DOAnchorPos(originalSpeakerBPos, animationDuration).SetUpdate(true).SetEase(Ease.OutBack);
-                    isSpeakerBVisible = true;
+                    speakerImageA.enabled = false;
+                    isSpeakerAVisible = false;
                 }
-
-                // Calculate dimmed scale based on YOUR default scale
-                Vector3 dimmedScaleB = defaultScaleB * 0.9f;
-
-                speakerImageB.transform.localScale = currentLine.isSpeakerAActive ? dimmedScaleB : defaultScaleB;
-                speakerImageB.color = currentLine.isSpeakerAActive ? dim : bright;
             }
-            else
+
+            if (speakerImageB != null)
             {
-                speakerImageB.enabled = false;
-                isSpeakerBVisible = false;
+                if (currentLine.speakerImageB != null)
+                {
+                    speakerImageB.enabled = true;
+                    speakerImageB.sprite = currentLine.speakerImageB;
+
+                    if (!isSpeakerBVisible)
+                    {
+                        speakerImageB.rectTransform.anchoredPosition = originalSpeakerBPos + speakerBStartOffset;
+                        speakerImageB.rectTransform.DOAnchorPos(originalSpeakerBPos, animationDuration).SetUpdate(true).SetEase(Ease.OutBack);
+                        isSpeakerBVisible = true;
+                    }
+
+                    // Calculate dimmed scale based on YOUR default scale
+                    Vector3 dimmedScaleB = defaultScaleB * 0.9f;
+
+                    speakerImageB.transform.localScale = currentLine.isSpeakerAActive ? dimmedScaleB : defaultScaleB;
+                    speakerImageB.color = currentLine.isSpeakerAActive ? dim : bright;
+                }
+                else
+                {
+                    speakerImageB.enabled = false;
+                    isSpeakerBVisible = false;
+                }
             }
             // --- FIX END ---
         }
@@ -387,16 +409,17 @@ namespace PlushieOdyssey.Dialogue
             // Time.timeScale = previousTimeScale;
 
             isDialogueActive = false;
-            dialogueUI.SetActive(false);
+            if (dialogueUI != null) dialogueUI.SetActive(false);
             if (dialogueUIB != null) dialogueUIB.SetActive(false);
             if (skipButton != null) skipButton.SetActive(false);
             if (blurPanel != null) blurPanel.SetActive(false);
 
             if (speakerText != null) speakerText.text = "";
             if (dialogueText != null) dialogueText.text = "";
+            if (continueHintText != null) continueHintText.text = "";
 
-            speakerImageA.enabled = false;
-            speakerImageB.enabled = false;
+            if (speakerImageA != null) speakerImageA.enabled = false;
+            if (speakerImageB != null) speakerImageB.enabled = false;
 
             hasTriggered = oneTimeOnly || hasTriggered;
 

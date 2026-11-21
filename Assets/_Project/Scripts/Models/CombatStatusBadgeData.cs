@@ -168,7 +168,124 @@ namespace PlushieOdyssey.Combat.Models
                 }
             }
 
+            // 5. Persistent Power badges (Hero only)
+            if (target is HeroView && PowerSystem.Instance != null)
+            {
+                List<CombatStatusBadgeData> powerBadges = PowerSystem.Instance.CollectPowerBadges();
+                if (powerBadges != null && powerBadges.Count > 0)
+                {
+                    results.AddRange(powerBadges);
+                }
+            }
+
+            // 6. Visible Enemy Passive Traits (Spiky, Mode Shift, Regenerate, Ritual, Enrage, Time Warp, Will-Eater Aura)
+            if (target is EnemyView enemyView && enemyView.Data?.PassiveTraits != null)
+            {
+                for (int i = 0; i < enemyView.Data.PassiveTraits.Count; i++)
+                {
+                    Data.EnemyPassiveTrait trait = enemyView.Data.PassiveTraits[i];
+                    if (trait != null)
+                    {
+                        results.Add(CreateEnemyPassiveBadge(enemyView, trait, i));
+                    }
+                }
+            }
+
             return results;
+        }
+
+        public static CombatStatusBadgeData CreatePowerBadge(
+            string passiveId,
+            string title,
+            string description,
+            int stacks,
+            Color accentColor,
+            Data.PowerPassiveTrigger trigger)
+        {
+            string code = BuildTwoLetterCode(title, "PW");
+            string triggerFooter = trigger switch
+            {
+                Data.PowerPassiveTrigger.TurnStart => "Power • Triggers at Turn Start",
+                Data.PowerPassiveTrigger.TurnEnd => "Power • Triggers at Turn End",
+                Data.PowerPassiveTrigger.OnAttackCardPlayed => "Power • Triggers on Attack",
+                Data.PowerPassiveTrigger.OnBuffCardPlayed => "Power • Triggers on Buff",
+                Data.PowerPassiveTrigger.OnAnyCardPlayed => "Power • Triggers on Card Play",
+                Data.PowerPassiveTrigger.OnEnterHighWill => "Power • Triggers on + High Will",
+                Data.PowerPassiveTrigger.OnEnterLowWill => "Power • Triggers on - Low Will",
+                _ => "Persistent Combat Power"
+            };
+
+            return new CombatStatusBadgeData
+            {
+                Id = $"Power_{passiveId}",
+                Title = title,
+                ShortCode = code,
+                StackLabel = stacks > 1 ? stacks.ToString() : string.Empty,
+                StackValue = Mathf.Max(1, stacks),
+                RemainingTurns = 999,
+                IsDebuff = false,
+                IconKey = StatusIconKey.Buff,
+                AccentColor = accentColor,
+                Description = string.IsNullOrWhiteSpace(description) ? "Active for the remainder of combat." : description,
+                DurationFooter = triggerFooter
+            };
+        }
+
+        private static CombatStatusBadgeData CreateEnemyPassiveBadge(EnemyView enemy, Data.EnemyPassiveTrait trait, int index)
+        {
+            string title = trait.GetDisplayTitle();
+            int val = Mathf.Max(1, trait.Value);
+            int sec = Mathf.Max(1, trait.SecondaryValue > 0 ? trait.SecondaryValue : 12);
+
+            (string code, string stackLabel, StatusIconKey icon, Color color, string autoDesc) = trait.PassiveType switch
+            {
+                Data.EnemyPassiveType.Spiky => (
+                    "SP", val.ToString(), StatusIconKey.Thorns, new Color(1.00f, 0.68f, 0.24f, 1f),
+                    $"Deals <color=#FFD659><b>{val}</b></color> damage back whenever struck by an attack."),
+                Data.EnemyPassiveType.Regenerate => (
+                    "RG", val.ToString(), StatusIconKey.Buff, new Color(0.32f, 0.90f, 0.56f, 1f),
+                    $"Restores <color=#59E892><b>{val} HP</b></color> at the end of its turn."),
+                Data.EnemyPassiveType.Ritual => (
+                    "RT", val.ToString(), StatusIconKey.Attack, new Color(1.00f, 0.54f, 0.26f, 1f),
+                    $"Gains <color=#FFD659><b>+{val} Strength</b></color> at the end of each turn."),
+                Data.EnemyPassiveType.Enrage => (
+                    "EN", val.ToString(), StatusIconKey.Attack, new Color(1.00f, 0.36f, 0.32f, 1f),
+                    $"Whenever you play a Buff/Skill card, gains <color=#FF766B><b>+{val} Strength</b></color>."),
+                Data.EnemyPassiveType.TimeWarp => (
+                    "TW", $"{enemy.TimeWarpCount}/{Mathf.Max(2, val)}", StatusIconKey.Intangible, new Color(0.76f, 0.48f, 1.00f, 1f),
+                    $"After you play <color=#D18BFF><b>{Mathf.Max(2, val)}</b></color> cards ({enemy.TimeWarpCount}/{Mathf.Max(2, val)}), ends your turn and gains <color=#FFD659><b>+{Mathf.Max(1, trait.SecondaryValue > 0 ? trait.SecondaryValue : 2)} Strength</b></color>."),
+                Data.EnemyPassiveType.ModeShift => (
+                    "MS", Mathf.Max(1, enemy.ModeShiftDamageRemaining).ToString(), StatusIconKey.Defend, new Color(0.30f, 0.80f, 1.00f, 1f),
+                    $"After taking <color=#56D0FF><b>{Mathf.Max(1, enemy.ModeShiftDamageRemaining)}</b></color> more damage, shifts defensively and gains <color=#56D0FF><b>{sec} Shield</b></color>."),
+                Data.EnemyPassiveType.WillEaterAura => (
+                    "WE", val.ToString(), StatusIconKey.WillFear, new Color(0.88f, 0.36f, 0.96f, 1f),
+                    $"Drains <color=#E48BFF><b>{val} Will</b></color> from your party at the start of every turn."),
+                _ => ("PS", val.ToString(), StatusIconKey.Unknown, Color.white, "Enemy passive trait.")
+            };
+
+            return new CombatStatusBadgeData
+            {
+                Id = $"EnemyPassive_{trait.PassiveType}_{index}",
+                Title = title,
+                ShortCode = code,
+                StackLabel = stackLabel,
+                StackValue = val,
+                RemainingTurns = 999,
+                IsDebuff = false,
+                IconKey = icon,
+                AccentColor = color,
+                Description = !string.IsNullOrWhiteSpace(trait.CustomDescription) ? trait.CustomDescription : autoDesc,
+                DurationFooter = "Enemy Passive Trait"
+            };
+        }
+
+        private static string BuildTwoLetterCode(string text, string fallback)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return fallback;
+            string[] parts = text.Trim().Split(new[] { ' ', '-', '_' }, System.StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2) return (parts[0][0].ToString() + parts[1][0]).ToUpperInvariant();
+            string clean = parts[0];
+            return clean.Length >= 2 ? clean.Substring(0, 2).ToUpperInvariant() : clean.ToUpperInvariant();
         }
 
         public static List<CombatStatusBadgeData> CollectWillOnly(RunHeroStressState state)

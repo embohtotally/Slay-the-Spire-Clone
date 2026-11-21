@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Curse_Regret
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 0}
+  <Image>k__BackingField: {fileID: 21300000, guid: a56b6f34f4ef2f747819d599af1379d1, type: 3}
   <Title>k__BackingField: Regret
   <Description>k__BackingField: Unplayable. Curse. At the end of your turn, lose
     HP equal to the number of cards in your hand.

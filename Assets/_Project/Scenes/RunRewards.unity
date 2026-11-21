@@ -199,6 +199,10 @@ MonoBehaviour:
     PotionOverride: {fileID: 0}
   cardRewardSceneName: CardReward
   relicRewardPool: {fileID: 11400000, guid: aa91c2e91f89d174dbce292334c53009, type: 2}
+  bossRelicChoices:
+  - {fileID: 11400000, guid: d1a4d7a2c9f60b740b5c7c5fc67a421a, type: 2}
+  - {fileID: 11400000, guid: 1f11220f45bbbb24e9af0bd3135aef59, type: 2}
+  - {fileID: 11400000, guid: 5e34f8dbb5b8ee54c8e31302cc5bd2e0, type: 2}
   potionRewardPool: {fileID: 0}
   grantRelicOnEliteOrBoss: 1
   rewardRoot: {fileID: 1019761420}

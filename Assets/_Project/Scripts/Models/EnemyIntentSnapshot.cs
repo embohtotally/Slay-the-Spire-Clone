@@ -348,6 +348,20 @@ namespace PlushieOdyssey.Combat.Models
                     hitCount++;
                     break;
 
+                case MultiHitDamageEffect multi:
+                    int perHitDmg = BuffSystem.Instance != null
+                        ? BuffSystem.Instance.CalculateExpectedDamage(multi.DamagePerHit, enemy, hero)
+                        : multi.DamagePerHit;
+                    totalDamage += perHitDmg * multi.HitCount;
+                    hitCount += multi.HitCount;
+                    break;
+
+                case InjectCardEffect inject:
+                    hasDebuff = true;
+                    string cardTitle = inject.CardToInject != null ? inject.CardToInject.Title : "Status";
+                    detailClauses.Add($"shuffle <color=#FF8A80><b>{inject.Count} {cardTitle}</b></color> into your deck");
+                    break;
+
                 case BeamAttackEffect beam:
                     int calcBeam = BuffSystem.Instance != null
                         ? BuffSystem.Instance.CalculateExpectedDamage(beam.DamageAmount, enemy, hero)

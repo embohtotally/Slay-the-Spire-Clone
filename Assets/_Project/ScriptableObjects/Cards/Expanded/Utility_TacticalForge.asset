@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c37689a416add443b3af5c06fdb9d04, type: 3}
   m_Name: Utility_TacticalForge
   m_EditorClassIdentifier: 
-  <Image>k__BackingField: {fileID: 0}
+  <Image>k__BackingField: {fileID: 1597602930, guid: 28ea9aba4895f93488dbba35627d3515, type: 3}
   <Title>k__BackingField: Tactical Forge
   <Description>k__BackingField: Gain 6 Shield. Choose a card in your hand to Upgrade
     for the rest of combat.

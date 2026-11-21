@@ -85,6 +85,7 @@ namespace PlushieOdyssey.UI.Combat
         private RunManager _subscribedRunManager;
         private BuffSystem _subscribedBuffSystem;
         private DamageOverTimeSystem _subscribedDotSystem;
+        private PowerSystem _subscribedPowerSystem;
         private StatusCell _hoveredCell;
         private Canvas _rootCanvas;
         private CombatHandController _handController;
@@ -275,7 +276,8 @@ namespace PlushieOdyssey.UI.Combat
         {
             if (_subscribedRunManager != RunManager.Instance ||
                 _subscribedBuffSystem != BuffSystem.Instance ||
-                _subscribedDotSystem != DamageOverTimeSystem.Instance)
+                _subscribedDotSystem != DamageOverTimeSystem.Instance ||
+                _subscribedPowerSystem != PowerSystem.Instance)
             {
                 UnsubscribeAll();
                 SubscribeAll();
@@ -299,6 +301,7 @@ namespace PlushieOdyssey.UI.Combat
                 (_relicSwapModal != null && _relicSwapModal.IsOpen) ||
                 CombatMapOverlayUI.IsAnyOpen ||
                 CombatPileViewerUI.IsAnyOpen ||
+                CombatCardPickerUI.IsAnyOpen ||
                 Time.timeScale == 0f;
 
             if (suppressHover)
@@ -874,6 +877,13 @@ namespace PlushieOdyssey.UI.Combat
                 _subscribedDotSystem.StatusEffectsChanged -= RefreshStatusGrids;
                 _subscribedDotSystem.StatusEffectsChanged += RefreshStatusGrids;
             }
+
+            _subscribedPowerSystem = PowerSystem.Instance;
+            if (_subscribedPowerSystem != null)
+            {
+                _subscribedPowerSystem.PowersChanged -= RefreshStatusGrids;
+                _subscribedPowerSystem.PowersChanged += RefreshStatusGrids;
+            }
         }
 
         private void UnsubscribeAll()
@@ -899,6 +909,11 @@ namespace PlushieOdyssey.UI.Combat
             {
                 _subscribedDotSystem.StatusEffectsChanged -= RefreshStatusGrids;
                 _subscribedDotSystem = null;
+            }
+            if (_subscribedPowerSystem != null)
+            {
+                _subscribedPowerSystem.PowersChanged -= RefreshStatusGrids;
+                _subscribedPowerSystem = null;
             }
         }
 

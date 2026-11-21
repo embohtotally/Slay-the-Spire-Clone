@@ -9,12 +9,14 @@ namespace PlushieOdyssey.Combat.Actions
         public List<CombatantView> Targets { get; private set; }
         public int Amount { get; private set; }
         public CombatantView Caster { get; private set; }
+        public bool IgnoreImmunity { get; private set; }
 
-        public ModifyStressGA(int amount, List<CombatantView> targets, CombatantView caster)
+        public ModifyStressGA(int amount, List<CombatantView> targets, CombatantView caster, bool ignoreImmunity = false)
         {
             Amount = amount;
             Targets = targets;
             Caster = caster;
+            IgnoreImmunity = ignoreImmunity;
         }
     }
 }

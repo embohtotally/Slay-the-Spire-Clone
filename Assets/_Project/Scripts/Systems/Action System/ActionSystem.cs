@@ -46,6 +46,10 @@ namespace PlushieOdyssey.Combat.Actions
             EnsureCombatSystem<CombatJuiceDirector>();
             EnsureCombatSystem<CombatSceneEntranceDirector>();
             EnsureCombatSystem<PlushieOdyssey.Audio.CharacterVoiceDirector>();
+            EnsureCombatSystem<PowerSystem>();
+            EnsureCombatSystem<EnemyPassiveSystem>();
+            EnsureCombatSystem<PlushieOdyssey.UI.Combat.CombatLogUI>();
+            EnsureCombatSystem<PlushieOdyssey.UI.Combat.CombatCardPickerUI>();
         }
 
         private void EnsureCombatSystem<T>() where T : UnityEngine.MonoBehaviour

@@ -88,7 +88,7 @@ namespace PlushieOdyssey.Combat.Systems
                 {
                     if (modifyStressGA.Amount > 0)
                     {
-                        if (BuffSystem.Instance != null && BuffSystem.Instance.HasBuff(target, Models.BuffType.FearImmunity))
+                        if (!modifyStressGA.IgnoreImmunity && BuffSystem.Instance != null && BuffSystem.Instance.HasBuff(target, Models.BuffType.FearImmunity))
                         {
                             GameManager.GenerateFloatingText("Will Protected!", target.transform, 1f, 1f, "#FFD54F");
                             continue;

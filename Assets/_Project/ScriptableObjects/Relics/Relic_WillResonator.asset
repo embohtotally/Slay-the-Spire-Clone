@@ -15,7 +15,7 @@ MonoBehaviour:
   <Title>k__BackingField: Will Resonator
   <Description>k__BackingField: Whenever you enter + High Will, gain +1 Mana & +6
     Shield. When recovering from - Low Will, draw 1 card.
-  <Image>k__BackingField: {fileID: 0}
+  <Image>k__BackingField: {fileID: 21300000, guid: a56b6f34f4ef2f747819d599af1379d1, type: 3}
   <Rarity>k__BackingField: 2
   <Unique>k__BackingField: 1
   <GoldValue>k__BackingField: 180
